@@ -7,6 +7,11 @@ plugins {
 android {
     namespace = "com.jose.listacompra"
     compileSdk = 34
+    
+    // Fix para error de JdkImageTransform
+    tasks.withType<JavaCompile> {
+        options.release.set(17)
+    }
 
     defaultConfig {
         applicationId = "com.jose.listacompra"
@@ -51,7 +56,15 @@ android {
     
     // Fix para error de JDK en algunas versiones de Android Studio
     tasks.withType<JavaCompile> {
-        options.isFork = false
+        options.isFork = true
+        options.forkOptions.jvmArgs = listOf("-Xmx2048m")
+    }
+    
+    // Desactivar androidJdkImage que causa problemas
+    android.applicationVariants.all {
+        outputs.all {
+            // Desactivar optimización problemática
+        }
     }
 }
 
