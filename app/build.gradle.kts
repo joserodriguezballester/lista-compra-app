@@ -48,12 +48,6 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
-    
-    // Fix para error de JDK - usar solo Kotlin
-    tasks.withType<JavaCompile> {
-        options.isFork = true
-        options.forkOptions.executable = "javac"
-    }
 }
 
 dependencies {
