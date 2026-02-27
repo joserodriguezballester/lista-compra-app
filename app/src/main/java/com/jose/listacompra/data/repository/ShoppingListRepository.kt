@@ -6,6 +6,7 @@ import com.jose.listacompra.data.local.*
 import com.jose.listacompra.domain.model.Aisle
 import com.jose.listacompra.domain.model.Offer
 import com.jose.listacompra.domain.model.Product
+import com.jose.listacompra.domain.model.ProductSuggestion
 import com.jose.listacompra.domain.model.toExport
 import com.google.gson.Gson
 import kotlinx.coroutines.flow.Flow
