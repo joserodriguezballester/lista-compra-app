@@ -1,6 +1,7 @@
 package com.jose.listacompra.data.local
 
 import android.content.Context
+import com.jose.listacompra.data.repository.ShoppingListRepository
 
 /**
  * Carga datos iniciales de la lista de Carrefour de Jose
