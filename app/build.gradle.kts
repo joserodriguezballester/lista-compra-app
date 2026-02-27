@@ -7,11 +7,6 @@ plugins {
 android {
     namespace = "com.jose.listacompra"
     compileSdk = 34
-    
-    // Fix para error de JdkImageTransform
-    tasks.withType<JavaCompile> {
-        options.release.set(17)
-    }
 
     defaultConfig {
         applicationId = "com.jose.listacompra"
@@ -36,11 +31,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = "11"
     }
     buildFeatures {
         compose = true
@@ -51,19 +46,6 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
-        }
-    }
-    
-    // Fix para error de JDK en algunas versiones de Android Studio
-    tasks.withType<JavaCompile> {
-        options.isFork = true
-        options.forkOptions.jvmArgs = listOf("-Xmx2048m")
-    }
-    
-    // Desactivar androidJdkImage que causa problemas
-    android.applicationVariants.all {
-        outputs.all {
-            // Desactivar optimización problemática
         }
     }
 }
