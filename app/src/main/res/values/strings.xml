@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">Lista Compra</string>
+    <string name="add_product">Añadir producto</string>
+    <string name="product_name">Nombre del producto</string>
+    <string name="aisle">Pasillo</string>
+    <string name="quantity">Cantidad</string>
+    <string name="price">Precio estimado</string>
+    <string name="add">Añadir</string>
+    <string name="cancel">Cancelar</string>
+    <string name="delete">Eliminar</string>
+    <string name="manage_aisles">Gestionar pasillos</string>
+    <string name="new_aisle">Nuevo pasillo</string>
+    <string name="aisle_name">Nombre del pasillo</string>
+    <string name="emoji">Emoji</string>
+    <string name="close">Cerrar</string>
+    <string name="total">Total</string>
+    <string name="purchased">Comprado</string>
+</resources>
