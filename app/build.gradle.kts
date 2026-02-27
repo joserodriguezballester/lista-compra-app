@@ -6,12 +6,12 @@ plugins {
 
 android {
     namespace = "com.jose.listacompra"
-    compileSdk = 34
+    compileSdk = 33
 
     defaultConfig {
         applicationId = "com.jose.listacompra"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 33
         versionCode = 1
         versionName = "1.0"
 
@@ -47,6 +47,12 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
+    }
+    
+    // Fix para error de JDK - usar solo Kotlin
+    tasks.withType<JavaCompile> {
+        options.isFork = true
+        options.forkOptions.executable = "javac"
     }
 }
 
