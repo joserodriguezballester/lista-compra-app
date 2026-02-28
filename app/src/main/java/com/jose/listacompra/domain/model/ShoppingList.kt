@@ -1,6 +1,24 @@
 package com.jose.listacompra.domain.model
 
 /**
+ * Modelo de dominio para una lista de compras
+ */
+data class ShoppingList(
+    val id: Long = 0,
+    val name: String,
+    val fechaCreacion: Long = System.currentTimeMillis(),
+    val estado: String = "ACTIVA"  // "ACTIVA" o "ARCHIVADA"
+) {
+    companion object {
+        const val ESTADO_ACTIVA = "ACTIVA"
+        const val ESTADO_ARCHIVADA = "ARCHIVADA"
+    }
+    
+    fun isActive(): Boolean = estado == ESTADO_ACTIVA
+    fun isArchived(): Boolean = estado == ESTADO_ARCHIVADA
+}
+
+/**
  * Modelo para exportación/importación JSON
  */
 data class ShoppingListExport(

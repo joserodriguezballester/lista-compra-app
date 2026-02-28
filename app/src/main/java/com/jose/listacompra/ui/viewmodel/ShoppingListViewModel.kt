@@ -4,14 +4,17 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.jose.listacompra.data.local.InitialDataSeeder
+import com.jose.listacompra.data.preferences.ListPreferences
 import com.jose.listacompra.data.repository.ShoppingListRepository
 import com.jose.listacompra.domain.model.Aisle
 import com.jose.listacompra.domain.model.Offer
 import com.jose.listacompra.domain.model.Product
+import com.jose.listacompra.domain.model.ShoppingList
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 data class ShoppingListUiState(
+    val currentList: ShoppingList? = null,
     val aisles: List<Aisle> = emptyList(),
     val products: List<Product> = emptyList(),
     val offers: List<Offer> = emptyList(),
@@ -27,9 +30,13 @@ data class ShoppingListUiState(
 class ShoppingListViewModel(application: Application) : AndroidViewModel(application) {
     
     private val repository = ShoppingListRepository(application)
+    private val listPreferences = ListPreferences(application)
     
     private val _uiState = MutableStateFlow(ShoppingListUiState())
     val uiState: StateFlow<ShoppingListUiState> = _uiState.asStateFlow()
+    
+    private val _currentListId = MutableStateFlow<Long?>(null)
+    val currentListId: StateFlow<Long?> = _currentListId.asStateFlow()
     
     init {
         viewModelScope.launch {
@@ -38,11 +45,34 @@ class ShoppingListViewModel(application: Application) : AndroidViewModel(applica
             
             // 2. Crear ofertas por defecto
             repository.initializeDefaultOffers()
-
-            // 3. Cargar datos iniciales de Carrefour (solo primera vez)
+            
+            // 3. Cargar lista guardada o crear una por defecto
+            val savedListId = listPreferences.selectedListId.first()
+            val listId = if (savedListId != -1L && repository.getListById(savedListId) != null) {
+                savedListId
+            } else {
+                // Crear lista por defecto si no hay ninguna
+                repository.createDefaultListIfNeeded()
+            }
+            
+            _currentListId.value = listId
+            listPreferences.setSelectedListId(listId)
+            
+            // 4. Cargar datos iniciales de Carrefour (solo primera vez)
             InitialDataSeeder.seedIfNeeded(repository)
-
-            // 4. Cargar datos en UI
+            
+            // 5. Cargar datos en UI
+            loadData()
+        }
+    }
+    
+    /**
+     * Cambia a otra lista de compras
+     */
+    fun switchToList(listId: Long) {
+        viewModelScope.launch {
+            _currentListId.value = listId
+            listPreferences.setSelectedListId(listId)
             loadData()
         }
     }
@@ -50,8 +80,11 @@ class ShoppingListViewModel(application: Application) : AndroidViewModel(applica
     private suspend fun loadData() {
         _uiState.update { it.copy(isLoading = true) }
         
+        val listId = _currentListId.value ?: return
+        
+        val currentList = repository.getListById(listId)
         val aisles = repository.getAllAisles()
-        val products = repository.getAllProducts()
+        val products = repository.getAllProducts(listId)
         val offers = repository.getAllOffers()
         
         // Calcular totales
@@ -63,6 +96,7 @@ class ShoppingListViewModel(application: Application) : AndroidViewModel(applica
         
         _uiState.update {
             it.copy(
+                currentList = currentList,
                 aisles = aisles,
                 products = products,
                 offers = offers,
@@ -77,6 +111,15 @@ class ShoppingListViewModel(application: Application) : AndroidViewModel(applica
     }
     
     /**
+     * Recarga los datos de la lista actual
+     */
+    fun refreshData() {
+        viewModelScope.launch {
+            loadData()
+        }
+    }
+    
+    /**
      * Añade un producto con posible oferta aplicada
      */
     fun addProduct(
@@ -87,9 +130,11 @@ class ShoppingListViewModel(application: Application) : AndroidViewModel(applica
         offerId: Long? = null
     ) {
         viewModelScope.launch {
+            val listId = _currentListId.value ?: return@launch
             val product = Product(
                 name = name,
                 aisleId = aisleId,
+                shoppingListId = listId,
                 quantity = quantity,
                 estimatedPrice = price,
                 offerId = offerId,
@@ -113,10 +158,12 @@ class ShoppingListViewModel(application: Application) : AndroidViewModel(applica
         notes: String = ""
     ) {
         viewModelScope.launch {
+            val listId = _currentListId.value ?: return@launch
             val product = Product(
                 id = productId,
                 name = name,
                 aisleId = aisleId,
+                shoppingListId = listId,
                 quantity = quantity,
                 estimatedPrice = price,
                 offerId = offerId,
@@ -205,7 +252,8 @@ class ShoppingListViewModel(application: Application) : AndroidViewModel(applica
     
     fun clearPurchased() {
         viewModelScope.launch {
-            repository.deletePurchasedProducts()
+            val listId = _currentListId.value ?: return@launch
+            repository.deletePurchasedProducts(listId)
             loadData()
         }
     }

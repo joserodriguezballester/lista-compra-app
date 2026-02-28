@@ -7,6 +7,7 @@ import com.jose.listacompra.domain.model.Aisle
 import com.jose.listacompra.domain.model.Offer
 import com.jose.listacompra.domain.model.Product
 import com.jose.listacompra.domain.model.ProductSuggestion
+import com.jose.listacompra.domain.model.ShoppingList
 import com.jose.listacompra.domain.model.toExport
 import com.google.gson.Gson
 import kotlinx.coroutines.flow.Flow
@@ -21,11 +22,75 @@ class ShoppingListRepository(context: Context) {
     ).fallbackToDestructiveMigration()  // Para actualizar versión de BD
      .build()
     
+    private val shoppingListDao = db.shoppingListDao()
     private val aisleDao = db.aisleDao()
     private val offerDao = db.offerDao()
     private val productDao = db.productDao()
     private val historyDao = db.productHistoryDao()
     private val gson = Gson()
+    
+    // ========== LISTAS DE COMPRAS ==========
+    
+    suspend fun getActiveLists(): List<ShoppingList> {
+        return shoppingListDao.getActiveLists().map { it.toDomain() }
+    }
+    
+    suspend fun getArchivedLists(): List<ShoppingList> {
+        return shoppingListDao.getArchivedLists().map { it.toDomain() }
+    }
+    
+    suspend fun getAllLists(): List<ShoppingList> {
+        return shoppingListDao.getAllLists().map { it.toDomain() }
+    }
+    
+    suspend fun getListById(id: Long): ShoppingList? {
+        return shoppingListDao.getListById(id)?.toDomain()
+    }
+    
+    suspend fun createList(name: String, useDefaultAisles: Boolean = true): Long {
+        val list = ShoppingListEntity(
+            name = name,
+            fechaCreacion = System.currentTimeMillis(),
+            estado = "ACTIVA"
+        )
+        return shoppingListDao.insertList(list)
+    }
+    
+    suspend fun updateList(list: ShoppingList) {
+        shoppingListDao.updateList(list.toEntity())
+    }
+    
+    suspend fun deleteList(list: ShoppingList) {
+        // Solo permitir eliminar si está archivada
+        if (list.isArchived()) {
+            shoppingListDao.deleteList(list.toEntity())
+        }
+    }
+    
+    suspend fun archiveList(listId: Long) {
+        shoppingListDao.archiveList(listId)
+    }
+    
+    suspend fun unarchiveList(listId: Long) {
+        shoppingListDao.unarchiveList(listId)
+    }
+    
+    /**
+     * Crea una lista por defecto si no existe ninguna
+     */
+    suspend fun createDefaultListIfNeeded(): Long {
+        val lists = shoppingListDao.getAllLists()
+        return if (lists.isEmpty()) {
+            val defaultList = ShoppingListEntity(
+                name = "Mi Lista",
+                fechaCreacion = System.currentTimeMillis(),
+                estado = "ACTIVA"
+            )
+            shoppingListDao.insertList(defaultList)
+        } else {
+            lists.first().id
+        }
+    }
     
     // ========== OFERTAS ==========
     
@@ -190,12 +255,12 @@ class ShoppingListRepository(context: Context) {
     
     // ========== PRODUCTOS ==========
     
-    suspend fun getAllProducts(): List<Product> {
-        return productDao.getAllProducts().map { it.toDomain() }
+    suspend fun getAllProducts(listId: Long): List<Product> {
+        return productDao.getAllProducts(listId).map { it.toDomain() }
     }
     
-    suspend fun getProductsByAisle(aisleId: Long): List<Product> {
-        return productDao.getProductsByAisle(aisleId).map { it.toDomain() }
+    suspend fun getProductsByAisle(listId: Long, aisleId: Long): List<Product> {
+        return productDao.getProductsByAisle(listId, aisleId).map { it.toDomain() }
     }
     
     /**
@@ -208,7 +273,7 @@ class ShoppingListRepository(context: Context) {
     }
     
     /**
-     * Actualiza un producto recalculando el precio final
+     * Actualiza un producto existente con nuevos datos
      */
     suspend fun updateProduct(product: Product) {
         val finalPrice = calculateProductFinalPrice(product)
@@ -225,8 +290,8 @@ class ShoppingListRepository(context: Context) {
         productDao.updateProduct(updated.toEntity())
     }
     
-    suspend fun deletePurchasedProducts() {
-        productDao.deletePurchasedProducts()
+    suspend fun deletePurchasedProducts(listId: Long) {
+        productDao.deletePurchasedProducts(listId)
     }
     
     // ========== TOTALES ==========
@@ -234,8 +299,8 @@ class ShoppingListRepository(context: Context) {
     /**
      * Obtiene los totales calculados: con ofertas, sin ofertas y ahorro
      */
-    fun getTotals(): Flow<TotalsResult> = flow {
-        val products = productDao.getAllProducts().map { it.toDomain() }
+    fun getTotals(listId: Long): Flow<TotalsResult> = flow {
+        val products = productDao.getAllProducts(listId).map { it.toDomain() }
         
         val totalWithoutOffers = products.sumOf { 
             it.totalPriceWithoutOffer().toDouble() 
@@ -254,8 +319,8 @@ class ShoppingListRepository(context: Context) {
         ))
     }
     
-    fun getTotalEstimate(): Flow<Float> = flow {
-        val products = productDao.getAllProducts().map { it.toDomain() }
+    fun getTotalEstimate(listId: Long): Flow<Float> = flow {
+        val products = productDao.getAllProducts(listId).map { it.toDomain() }
         val total = products.sumOf { it.finalPriceToPay().toDouble() }.toFloat()
         emit(total)
     }
@@ -268,9 +333,9 @@ class ShoppingListRepository(context: Context) {
     
     // ========== EXPORT/IMPORT JSON ==========
     
-    suspend fun exportToJson(): String {
+    suspend fun exportToJson(listId: Long): String {
         val aisles = aisleDao.getAllAisles().map { it.toDomain() }
-        val products = productDao.getAllProducts().map { it.toDomain() }
+        val products = productDao.getAllProducts(listId).map { it.toDomain() }
         
         val export = com.jose.listacompra.domain.model.ShoppingListExport(
             aisles = aisles.map { it.toExport() },
@@ -280,12 +345,12 @@ class ShoppingListRepository(context: Context) {
         return gson.toJson(export)
     }
     
-    suspend fun importFromJson(json: String): Boolean {
+    suspend fun importFromJson(json: String, listId: Long): Boolean {
         return try {
             val export = gson.fromJson(json, com.jose.listacompra.domain.model.ShoppingListExport::class.java)
 
-            // Limpiar datos actuales
-            productDao.deleteAllProducts()
+            // Limpiar datos actuales de la lista
+            productDao.deleteAllProducts(listId)
 
             // Importar pasillos (solo custom)
             export.aisles.filter { !it.isDefault }.forEach { aisle ->
@@ -307,6 +372,7 @@ class ShoppingListRepository(context: Context) {
                         id = 0, // Nuevo ID autogenerado
                         name = product.name,
                         aisleId = product.aisleId,
+                        shoppingListId = listId,
                         quantity = product.quantity,
                         estimatedPrice = product.estimatedPrice,
                         offerId = null, // Las ofertas no se exportan/importan

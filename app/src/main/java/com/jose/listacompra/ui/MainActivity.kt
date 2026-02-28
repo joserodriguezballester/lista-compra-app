@@ -11,21 +11,34 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import com.jose.listacompra.data.preferences.ThemePreferences
+import com.jose.listacompra.ui.screens.ListsScreen
 import com.jose.listacompra.ui.screens.MainScreen
 import com.jose.listacompra.ui.screens.SplashScreen
 import com.jose.listacompra.ui.theme.ListaCompraTheme
 import com.jose.listacompra.ui.theme.ThemeViewModel
+import com.jose.listacompra.ui.viewmodel.ShoppingListViewModel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import androidx.lifecycle.ViewModelProvider
+
+sealed class Screen {
+    object Splash : Screen()
+    object Main : Screen()
+    object Lists : Screen()
+}
 
 class MainActivity : ComponentActivity() {
     
     private val themeViewModel: ThemeViewModel by viewModels()
+    private lateinit var shoppingListViewModel: ShoppingListViewModel
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
         val themePreferences = ThemePreferences(this)
+        
+        // Inicializar el ViewModel manualmente para poder usarlo en navegación
+        shoppingListViewModel = ViewModelProvider(this)[ShoppingListViewModel::class.java]
         
         setContent {
             // Estado para el color primario (null mientras carga)
@@ -34,6 +47,9 @@ class MainActivity : ComponentActivity() {
             
             // Observar el modo de tema desde el ViewModel
             val themeMode by themeViewModel.themeMode.collectAsState()
+            
+            // Estado de navegación
+            var currentScreen by remember { mutableStateOf<Screen>(Screen.Splash) }
             
             // Cargar el color guardado al iniciar
             LaunchedEffect(Unit) {
@@ -47,6 +63,12 @@ class MainActivity : ComponentActivity() {
                 lifecycleScope.launch {
                     themePreferences.setPrimaryColor(newColor)
                 }
+            }
+            
+            // Función para cambiar de lista
+            val onListSelected: (Long) -> Unit = { listId ->
+                shoppingListViewModel.switchToList(listId)
+                currentScreen = Screen.Main
             }
             
             // Mostrar pantalla de carga mientras se lee la preferencia
@@ -67,21 +89,34 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.fillMaxSize(),
                         color = MaterialTheme.colorScheme.background
                     ) {
-                        var showSplash by remember { mutableStateOf(true) }
-                        
-                        if (showSplash) {
-                            SplashScreen(
-                                onSplashFinished = {
-                                    showSplash = false
-                                }
-                            )
-                        } else {
-                            MainScreen(
-                                currentPrimaryColor = primaryColor ?: ThemePreferences.DEFAULT_COLOR,
-                                onColorChanged = onColorChanged,
-                                themeMode = themeMode,
-                                onThemeModeChange = { themeViewModel.setThemeMode(it) }
-                            )
+                        when (currentScreen) {
+                            is Screen.Splash -> {
+                                SplashScreen(
+                                    onSplashFinished = {
+                                        currentScreen = Screen.Main
+                                    }
+                                )
+                            }
+                            is Screen.Main -> {
+                                MainScreen(
+                                    viewModel = shoppingListViewModel,
+                                    currentPrimaryColor = primaryColor ?: ThemePreferences.DEFAULT_COLOR,
+                                    onColorChanged = onColorChanged,
+                                    themeMode = themeMode,
+                                    onThemeModeChange = { themeViewModel.setThemeMode(it) },
+                                    onNavigateToLists = {
+                                        currentScreen = Screen.Lists
+                                    }
+                                )
+                            }
+                            is Screen.Lists -> {
+                                ListsScreen(
+                                    onListSelected = onListSelected,
+                                    onNavigateBack = {
+                                        currentScreen = Screen.Main
+                                    }
+                                )
+                            }
                         }
                     }
                 }

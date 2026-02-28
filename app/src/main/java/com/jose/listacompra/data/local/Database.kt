@@ -7,6 +7,14 @@ import com.jose.listacompra.domain.model.Product
 
 // ==================== ENTIDADES ====================
 
+@Entity(tableName = "shopping_lists")
+data class ShoppingListEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String,           // Nombre de la lista (ej: "Carrefour Mislata")
+    val fechaCreacion: Long = System.currentTimeMillis(),  // Timestamp automático
+    val estado: String = "ACTIVA"  // "ACTIVA" o "ARCHIVADA"
+)
+
 @Entity(tableName = "aisles")
 data class AisleEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -26,11 +34,23 @@ data class OfferEntity(
     val formula: String      // Fórmula de cálculo (para referencia)
 )
 
-@Entity(tableName = "products")
+@Entity(
+    tableName = "products",
+    foreignKeys = [
+        ForeignKey(
+            entity = ShoppingListEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["shoppingListId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index("shoppingListId")]
+)
 data class ProductEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
     val aisleId: Long,
+    val shoppingListId: Long,    // FK a shopping_lists
     val quantity: Float,
     val estimatedPrice: Float?,  // Precio unitario normal
     val offerId: Long?,          // FK a offers (nullable)
@@ -41,6 +61,36 @@ data class ProductEntity(
 )
 
 // ==================== DAOs ====================
+
+@Dao
+interface ShoppingListDao {
+    @Query("SELECT * FROM shopping_lists WHERE estado = 'ACTIVA' ORDER BY fechaCreacion DESC")
+    suspend fun getActiveLists(): List<ShoppingListEntity>
+    
+    @Query("SELECT * FROM shopping_lists WHERE estado = 'ARCHIVADA' ORDER BY fechaCreacion DESC")
+    suspend fun getArchivedLists(): List<ShoppingListEntity>
+    
+    @Query("SELECT * FROM shopping_lists ORDER BY fechaCreacion DESC")
+    suspend fun getAllLists(): List<ShoppingListEntity>
+    
+    @Query("SELECT * FROM shopping_lists WHERE id = :id")
+    suspend fun getListById(id: Long): ShoppingListEntity?
+    
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertList(list: ShoppingListEntity): Long
+    
+    @Update
+    suspend fun updateList(list: ShoppingListEntity)
+    
+    @Delete
+    suspend fun deleteList(list: ShoppingListEntity)
+    
+    @Query("UPDATE shopping_lists SET estado = 'ARCHIVADA' WHERE id = :listId")
+    suspend fun archiveList(listId: Long)
+    
+    @Query("UPDATE shopping_lists SET estado = 'ACTIVA' WHERE id = :listId")
+    suspend fun unarchiveList(listId: Long)
+}
 
 @Dao
 interface AisleDao {
@@ -101,11 +151,11 @@ interface OfferDao {
 
 @Dao
 interface ProductDao {
-    @Query("SELECT * FROM products ORDER BY aisleId ASC, orderIndex ASC")
-    suspend fun getAllProducts(): List<ProductEntity>
+    @Query("SELECT * FROM products WHERE shoppingListId = :listId ORDER BY aisleId ASC, orderIndex ASC")
+    suspend fun getAllProducts(listId: Long): List<ProductEntity>
     
-    @Query("SELECT * FROM products WHERE aisleId = :aisleId ORDER BY orderIndex ASC")
-    suspend fun getProductsByAisle(aisleId: Long): List<ProductEntity>
+    @Query("SELECT * FROM products WHERE shoppingListId = :listId AND aisleId = :aisleId ORDER BY orderIndex ASC")
+    suspend fun getProductsByAisle(listId: Long, aisleId: Long): List<ProductEntity>
     
     @Query("SELECT * FROM products WHERE id = :id")
     suspend fun getProductById(id: Long): ProductEntity?
@@ -119,21 +169,22 @@ interface ProductDao {
     @Delete
     suspend fun deleteProduct(product: ProductEntity)
     
-    @Query("DELETE FROM products WHERE isPurchased = 1")
-    suspend fun deletePurchasedProducts()
+    @Query("DELETE FROM products WHERE shoppingListId = :listId AND isPurchased = 1")
+    suspend fun deletePurchasedProducts(listId: Long)
     
-    @Query("DELETE FROM products")
-    suspend fun deleteAllProducts()
+    @Query("DELETE FROM products WHERE shoppingListId = :listId")
+    suspend fun deleteAllProducts(listId: Long)
     
-    @Query("SELECT MAX(orderIndex) FROM products WHERE aisleId = :aisleId")
-    suspend fun getMaxOrderIndexInAisle(aisleId: Long): Int?
+    @Query("SELECT MAX(orderIndex) FROM products WHERE shoppingListId = :listId AND aisleId = :aisleId")
+    suspend fun getMaxOrderIndexInAisle(listId: Long, aisleId: Long): Int?
 }
 
 @Database(
-    entities = [AisleEntity::class, OfferEntity::class, ProductEntity::class, ProductHistoryEntity::class], 
-    version = 3
+    entities = [ShoppingListEntity::class, AisleEntity::class, OfferEntity::class, ProductEntity::class, ProductHistoryEntity::class], 
+    version = 4
 )
 abstract class ShoppingListDatabase : RoomDatabase() {
+    abstract fun shoppingListDao(): ShoppingListDao
     abstract fun aisleDao(): AisleDao
     abstract fun offerDao(): OfferDao
     abstract fun productDao(): ProductDao
@@ -145,6 +196,20 @@ abstract class ShoppingListDatabase : RoomDatabase() {
 }
 
 // ==================== CONVERTIDORES ====================
+
+fun ShoppingListEntity.toDomain(): com.jose.listacompra.domain.model.ShoppingList = com.jose.listacompra.domain.model.ShoppingList(
+    id = this.id,
+    name = this.name,
+    fechaCreacion = this.fechaCreacion,
+    estado = this.estado
+)
+
+fun com.jose.listacompra.domain.model.ShoppingList.toEntity(): ShoppingListEntity = ShoppingListEntity(
+    id = this.id,
+    name = this.name,
+    fechaCreacion = this.fechaCreacion,
+    estado = this.estado
+)
 
 fun AisleEntity.toDomain(): Aisle = Aisle(
     id = this.id,
@@ -184,6 +249,7 @@ fun ProductEntity.toDomain(): Product = Product(
     id = this.id,
     name = this.name,
     aisleId = this.aisleId,
+    shoppingListId = this.shoppingListId,
     quantity = this.quantity,
     estimatedPrice = this.estimatedPrice,
     offerId = this.offerId,
@@ -197,6 +263,7 @@ fun Product.toEntity(): ProductEntity = ProductEntity(
     id = this.id,
     name = this.name,
     aisleId = this.aisleId,
+    shoppingListId = this.shoppingListId,
     quantity = this.quantity,
     estimatedPrice = this.estimatedPrice,
     offerId = this.offerId,

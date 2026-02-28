@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Settings
@@ -87,7 +88,8 @@ fun MainScreen(
     currentPrimaryColor: Int = 0xFF4CAF50.toInt(),
     onColorChanged: (Int) -> Unit = {},
     themeMode: ThemeMode = ThemeMode.SYSTEM,
-    onThemeModeChange: (ThemeMode) -> Unit = {}
+    onThemeModeChange: (ThemeMode) -> Unit = {},
+    onNavigateToLists: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
@@ -131,7 +133,18 @@ fun MainScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("🛒 Lista de Compra") },
+                title = { 
+                    Column {
+                        Text("🛒 ${uiState.currentList?.name ?: "Lista de Compra"}")
+                        if (uiState.totalCount > 0) {
+                            Text(
+                                text = "${uiState.purchasedCount}/${uiState.totalCount} productos",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                },
                 actions = {
                     // Botón de cambio de tema
                     IconButton(onClick = { showThemeMenu = true }) {
@@ -149,6 +162,19 @@ fun MainScreen(
                         expanded = showThemeMenu,
                         onDismissRequest = { showThemeMenu = false }
                     ) {
+                        DropdownMenuItem(
+                            text = { Text("📋 Mis Listas") },
+                            onClick = {
+                                showThemeMenu = false
+                                onNavigateToLists()
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Default.List, contentDescription = null)
+                            }
+                        )
+                        
+                        HorizontalDivider()
+                        
                         DropdownMenuItem(
                             text = { Text("🌙 Modo Oscuro") },
                             onClick = {

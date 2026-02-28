@@ -8,6 +8,7 @@ data class Product(
     val id: Long = 0,
     val name: String,
     val aisleId: Long,
+    val shoppingListId: Long = 1,         // FK a lista de compras
     val quantity: Float = 1f,
     val estimatedPrice: Float? = null,    // Precio unitario normal
     val offerId: Long? = null,            // FK a oferta (nullable)
