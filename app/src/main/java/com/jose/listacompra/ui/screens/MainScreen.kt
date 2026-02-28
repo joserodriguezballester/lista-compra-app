@@ -173,7 +173,7 @@ fun MainScreen(
                             }
                         )
                         
-                        HorizontalDivider()
+                        Divider()
                         
                         DropdownMenuItem(
                             text = { Text("🌙 Modo Oscuro") },
@@ -206,7 +206,7 @@ fun MainScreen(
                             }
                         )
                         
-                        HorizontalDivider()
+                        Divider()
 
                         DropdownMenuItem(
                             text = { Text("🎨 Cambiar Color") },
