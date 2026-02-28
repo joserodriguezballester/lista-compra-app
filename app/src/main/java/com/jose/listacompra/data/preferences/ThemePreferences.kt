@@ -36,6 +36,15 @@ class ThemePreferences(private val context: Context) {
             0xFFFF9800.toInt(), // Naranja
             0xFF9C27B0.toInt(), // Morado
         )
+        
+        // Nombres de colores para UI
+        val COLOR_NAMES = mapOf(
+            0xFF4CAF50.toInt() to "Verde",
+            0xFF2196F3.toInt() to "Azul",
+            0xFFF44336.toInt() to "Rojo",
+            0xFFFF9800.toInt() to "Naranja",
+            0xFF9C27B0.toInt() to "Morado",
+        )
     }
     
     // ========== TEMA OSCURO/CLARO ==========

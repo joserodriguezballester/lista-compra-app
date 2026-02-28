@@ -104,10 +104,20 @@ class MainActivity : ComponentActivity() {
                                     viewModel = shoppingListViewModel,
                                     currentPrimaryColor = primaryColor ?: ThemePreferences.DEFAULT_COLOR,
                                     onColorChanged = onColorChanged,
-                                    themeModeString = themeMode,
-                                    onThemeToggle = { themeViewModel.toggleTheme() },
-                                    followSystem = followSystem,
-                                    onFollowSystemChange = { themeViewModel.setFollowSystem(it) },
+                                    themeMode = if (followSystem) com.jose.listacompra.ui.theme.ThemeMode.SYSTEM else if (themeMode == "dark") com.jose.listacompra.ui.theme.ThemeMode.DARK else com.jose.listacompra.ui.theme.ThemeMode.LIGHT,
+                                    onThemeModeChange = { mode ->
+                                        when (mode) {
+                                            com.jose.listacompra.ui.theme.ThemeMode.SYSTEM -> themeViewModel.setFollowSystem(true)
+                                            com.jose.listacompra.ui.theme.ThemeMode.DARK -> {
+                                                themeViewModel.setFollowSystem(false)
+                                                themeViewModel.setThemeMode("dark")
+                                            }
+                                            com.jose.listacompra.ui.theme.ThemeMode.LIGHT -> {
+                                                themeViewModel.setFollowSystem(false)
+                                                themeViewModel.setThemeMode("light")
+                                            }
+                                        }
+                                    },
                                     onNavigateToLists = {
                                         currentScreen = Screen.Lists
                                     }
