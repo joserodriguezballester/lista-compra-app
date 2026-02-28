@@ -37,6 +37,13 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+    
+    // Forzar uso de Java 17 para evitar error JdkImageTransform con Java 21
+    java {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(17))
+        }
+    }
     buildFeatures {
         compose = true
     }
