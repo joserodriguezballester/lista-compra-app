@@ -140,33 +140,7 @@ fun AddProductDialog(
                     }
                 }
 
-                // Cantidad y precio en la misma fila
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    OutlinedTextField(
-                        value = quantity,
-                        onValueChange = { quantity = it.filter { c -> c.isDigit() } },
-                        label = { Text("Cantidad") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true,
-                        modifier = Modifier.weight(0.4f)
-                    )
-
-                    OutlinedTextField(
-                        value = price,
-                        onValueChange = {
-                            price = it.filter { c -> c.isDigit() || c == '.' }
-                        },
-                        label = { Text("Precio ud") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        singleLine = true,
-                        modifier = Modifier.weight(0.6f)
-                    )
-                }
-                
-                // Selector de ofertas
+                // OFERTA ANTES DE CANTIDAD (para saber el mínimo requerido)
                 ExposedDropdownMenuBox(
                     expanded = offerExpanded,
                     onExpandedChange = { offerExpanded = it },
@@ -218,24 +192,97 @@ fun AddProductDialog(
                     }
                 }
                 
+                // Indicador de mínimo requerido para la oferta
+                if (selectedOffer != null) {
+                    val minRequired = when (selectedOffer?.code) {
+                        "3x2" -> 3
+                        "2x1", "2nd_50", "2nd_70" -> 2
+                        "4x3" -> 4
+                        else -> 1
+                    }
+                    val meetsMinimum = quantityFloat >= minRequired
+                    
+                    if (!meetsMinimum) {
+                        Text(
+                            text = "⚠️ Oferta ${selectedOffer?.name}: mínimo $minRequired unidades (tienes ${quantityFloat.toInt()})",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(start = 4.dp)
+                        )
+                    } else {
+                        Text(
+                            text = "✅ Oferta aplicable (${minRequired}+ unidades)",
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(start = 4.dp)
+                        )
+                    }
+                }
+                
+                // Cantidad y precio en la misma fila (DESPUÉS de la oferta)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = quantity,
+                        onValueChange = { quantity = it.filter { c -> c.isDigit() } },
+                        label = { Text("Cantidad") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
+                        isError = selectedOffer != null && quantityFloat < when (selectedOffer?.code) {
+                            "3x2" -> 3
+                            "2x1", "2nd_50", "2nd_70" -> 2
+                            "4x3" -> 4
+                            else -> 1
+                        },
+                        modifier = Modifier.weight(0.4f)
+                    )
+
+                    OutlinedTextField(
+                        value = price,
+                        onValueChange = {
+                            price = it.filter { c -> c.isDigit() || c == '.' }
+                        },
+                        label = { Text("Precio ud") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        singleLine = true,
+                        modifier = Modifier.weight(0.6f)
+                    )
+                }
+                
                 // Preview de oferta aplicada
                 if (offerPreview != null && priceFloat != null && priceFloat > 0) {
+                    // Verificar si cumple el mínimo para la oferta
+                    val minRequired = when (selectedOffer?.code) {
+                        "3x2" -> 3
+                        "2x1", "2nd_50", "2nd_70" -> 2
+                        "4x3" -> 4
+                        else -> 1
+                    }
+                    val meetsMinimum = selectedOffer == null || quantityFloat >= minRequired
+                    
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(
-                            containerColor = if (offerPreview.hasOffer && offerPreview.savings > 0)
-                                MaterialTheme.colorScheme.primaryContainer
-                            else
-                                MaterialTheme.colorScheme.surfaceVariant
+                            containerColor = when {
+                                !meetsMinimum -> MaterialTheme.colorScheme.errorContainer
+                                offerPreview.hasOffer && offerPreview.savings > 0 -> MaterialTheme.colorScheme.primaryContainer
+                                else -> MaterialTheme.colorScheme.surfaceVariant
+                            }
                         )
                     ) {
                         Column(
                             modifier = Modifier.padding(12.dp)
                         ) {
                             Text(
-                                text = if (offerPreview.hasOffer) "🏷️ Oferta aplicada" else "Precio calculado",
+                                text = when {
+                                    !meetsMinimum -> "⚠️ Oferta NO aplicable"
+                                    offerPreview.hasOffer -> "🏷️ Oferta aplicada"
+                                    else -> "Precio calculado"
+                                },
                                 style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.primary
+                                color = if (!meetsMinimum) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
                             )
                             
                             Spacer(modifier = Modifier.height(4.dp))

@@ -510,20 +510,29 @@ private fun ProductCard(
             } else {
                 // Producto no comprado: mostrar oferta, cantidad, precio, total
                 
-                // Indicador de oferta (si existe)
+                // Indicador de oferta (si existe) - con validación de mínimo
                 if (offer != null) {
+                    // Verificar si cumple el mínimo para la oferta
+                    val minRequired = when (offer.code) {
+                        "3x2" -> 3
+                        "2x1", "2nd_50", "2nd_70" -> 2
+                        "4x3" -> 4
+                        else -> 1
+                    }
+                    val meetsMinimum = product.quantity >= minRequired
+                    
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.padding(start = 28.dp, top = 2.dp)
                     ) {
                         Text(
-                            text = "🏷️ ",
+                            text = if (meetsMinimum) "🏷️ " else "⚠️ ",
                             style = MaterialTheme.typography.bodySmall
                         )
                         Text(
-                            text = offer.name,
+                            text = if (meetsMinimum) offer.name else "${offer.name} (¡faltan ${minRequired - product.quantity.toInt()}!)",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary,
+                            color = if (meetsMinimum) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
                             fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
                         )
                     }
@@ -563,7 +572,17 @@ private fun ProductCard(
                             )
                         }
                         
-                        // Total (con oferta aplicada si existe)
+                        // Total (con oferta aplicada si existe y cumple mínimo)
+                        val meetsMinimum = if (offer != null) {
+                            val minRequired = when (offer.code) {
+                                "3x2" -> 3
+                                "2x1", "2nd_50", "2nd_70" -> 2
+                                "4x3" -> 4
+                                else -> 1
+                            }
+                            product.quantity >= minRequired
+                        } else true
+                        
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
                                 text = "Total",
@@ -573,8 +592,12 @@ private fun ProductCard(
                             Text(
                                 text = "%.2f€".format(product.finalPriceToPay()),
                                 style = MaterialTheme.typography.bodySmall,
-                                color = if (product.hasOffer()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                                fontWeight = if (product.hasOffer()) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Normal
+                                color = when {
+                                    offer != null && !meetsMinimum -> MaterialTheme.colorScheme.error
+                                    product.hasOffer() -> MaterialTheme.colorScheme.primary
+                                    else -> MaterialTheme.colorScheme.onSurface
+                                },
+                                fontWeight = if (product.hasOffer() && meetsMinimum) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Normal
                             )
                         }
                     }
