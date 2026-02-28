@@ -31,6 +31,7 @@
 - [x] ~~Colores personalizables~~ ✅ **IMPLEMENTADO**
 - [x] ~~Feedback táctil (vibración)~~ ✅ **IMPLEMENTADO**
 - [x] ~~Listas múltiples~~ ✅ **IMPLEMENTADO**
+- [x] ~~Limpiar lista (eliminar comprados/vaciar)~~ ✅ **IMPLEMENTADO**
 
 ---
 
@@ -64,9 +65,10 @@
 
 | Función | Toca aquí | Qué hace |
 |---------|-----------|----------|
-| 🌙 **Cambiar tema** | Icono ☀️/🌙 en la barra superior | Cambia entre: Modo Claro / Modo Oscuro / Seguir Sistema |
+| 🌙 **Cambiar tema** | Icono 🌙/☀️ en la barra superior | Un toque alterna: Claro ↔ Oscuro. Menú ⋮ → "⚙️ Seguir sistema" para modo automático |
 | 🎨 **Cambiar color** | Icono paleta 🎨 en la barra superior | Elige entre 5 colores: Verde, Azul, Rojo, Naranja, Morado |
 | 🔀 **Reordenar pasillos** | Menú ⋮ → "Gestionar pasillos" → Arrastra el icono ≡ | Cambia el orden de los pasillos a tu gusto |
+| 🧹 **Limpiar lista** | Menú ⋮ → "🧹 Limpiar lista" | Elimina productos comprados o vacía la lista completa |
 
 ### 📳 Feedback Táctil (Vibración)
 - **Al marcar producto:** Vibración corta (60ms) para confirmar
