@@ -15,8 +15,11 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
@@ -38,6 +41,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jose.listacompra.domain.model.Aisle
 import com.jose.listacompra.domain.model.Offer
 import com.jose.listacompra.domain.model.Product
+import com.jose.listacompra.ui.theme.ThemeMode
 import com.jose.listacompra.ui.viewmodel.ShoppingListViewModel
 
 /**
@@ -77,13 +81,20 @@ private fun vibrateFeedback(context: Context, milliseconds: Long = 60L, isComple
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(viewModel: ShoppingListViewModel = viewModel()) {
+fun MainScreen(
+    viewModel: ShoppingListViewModel = viewModel(),
+    currentPrimaryColor: Int = 0xFF4CAF50.toInt(),
+    onColorChanged: (Int) -> Unit = {},
+    themeMode: ThemeMode = ThemeMode.SYSTEM,
+    onThemeModeChange: (ThemeMode) -> Unit = {}
+) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     var showAddProduct by remember { mutableStateOf(false) }
     var showManageAisles by remember { mutableStateOf(false) }
     var showEditProduct by remember { mutableStateOf<Product?>(null) }
     var showSnackbar by remember { mutableStateOf<String?>(null) }
+    var showThemeMenu by remember { mutableStateOf(false) }
     
     // Estado previo para detectar cuando se completa toda la lista
     var wasListComplete by remember { mutableStateOf(false) }
@@ -120,8 +131,65 @@ fun MainScreen(viewModel: ShoppingListViewModel = viewModel()) {
             TopAppBar(
                 title = { Text("🛒 Lista de Compra") },
                 actions = {
-                    IconButton(onClick = { showManageAisles = true }) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "Gestionar pasillos")
+                    // Botón de cambio de tema
+                    IconButton(onClick = { showThemeMenu = true }) {
+                        Icon(
+                            imageVector = when (themeMode) {
+                                ThemeMode.DARK -> Icons.Default.DarkMode
+                                else -> Icons.Default.LightMode
+                            },
+                            contentDescription = "Cambiar tema"
+                        )
+                    }
+                    
+                    // Menú de tema
+                    DropdownMenu(
+                        expanded = showThemeMenu,
+                        onDismissRequest = { showThemeMenu = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("🌙 Modo Oscuro") },
+                            onClick = {
+                                onThemeModeChange(ThemeMode.DARK)
+                                showThemeMenu = false
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Default.DarkMode, contentDescription = null)
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("☀️ Modo Claro") },
+                            onClick = {
+                                onThemeModeChange(ThemeMode.LIGHT)
+                                showThemeMenu = false
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Default.LightMode, contentDescription = null)
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("⚙️ Seguir Sistema") },
+                            onClick = {
+                                onThemeModeChange(ThemeMode.SYSTEM)
+                                showThemeMenu = false
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Default.Settings, contentDescription = null)
+                            }
+                        )
+                        
+                        HorizontalDivider()
+                        
+                        DropdownMenuItem(
+                            text = { Text("🗂️ Gestionar Pasillos") },
+                            onClick = {
+                                showManageAisles = true
+                                showThemeMenu = false
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Default.MoreVert, contentDescription = null)
+                            }
+                        )
                     }
                 }
             )
