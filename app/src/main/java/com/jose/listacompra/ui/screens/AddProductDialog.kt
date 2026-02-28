@@ -52,10 +52,20 @@ fun AddProductDialog(
                 Column {
                     OutlinedTextField(
                         value = name,
-                        onValueChange = {
-                            name = it
-                            if (it.length >= 2) {
-                                onSearchSuggestions(it)
+                        onValueChange = { newName ->
+                            name = newName
+                            if (newName.length >= 2) {
+                                onSearchSuggestions(newName)
+                                
+                                // AUTO-APLICAR: Si hay coincidencia exacta, aplicar sugerencia automáticamente
+                                val exactMatch = suggestions.find { 
+                                    it.name.equals(newName.trim(), ignoreCase = true) 
+                                }
+                                if (exactMatch != null) {
+                                    selectedAisle = aisles.find { it.id == exactMatch.aisleId }
+                                    quantity = exactMatch.suggestedQuantity.toInt().toString()
+                                    price = exactMatch.suggestedPrice?.toString() ?: ""
+                                }
                             }
                         },
                         label = { Text("Nombre del producto") },
@@ -63,8 +73,9 @@ fun AddProductDialog(
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    // Mostrar sugerencias si hay
-                    if (suggestions.isNotEmpty() && name.length >= 2) {
+                    // Mostrar sugerencias si hay (y no hay coincidencia exacta)
+                    val hasExactMatch = suggestions.any { it.name.equals(name.trim(), ignoreCase = true) }
+                    if (suggestions.isNotEmpty() && name.length >= 2 && !hasExactMatch) {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
