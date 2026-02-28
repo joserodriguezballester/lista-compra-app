@@ -301,6 +301,14 @@ fun AddProductDialog(
                                         style = MaterialTheme.typography.bodySmall,
                                         textDecoration = if (offerPreview.hasOffer) TextDecoration.LineThrough else null
                                     )
+                                    if (meetsMinimum && offerPreview.hasOffer) {
+                                        Text(
+                                            text = "%.2f€/ud".format(priceFloat),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                                            textDecoration = TextDecoration.LineThrough
+                                        )
+                                    }
                                 }
                                 
                                 Column(horizontalAlignment = androidx.compose.ui.Alignment.End) {
@@ -311,19 +319,56 @@ fun AddProductDialog(
                                     Text(
                                         text = "%.2f€".format(offerPreview.finalPrice),
                                         style = MaterialTheme.typography.bodyLarge,
-                                        color = MaterialTheme.colorScheme.primary,
+                                        color = if (meetsMinimum) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
                                         fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                                     )
+                                    if (meetsMinimum && offerPreview.hasOffer && quantityFloat > 0) {
+                                        val finalPricePerUnit = offerPreview.finalPrice / quantityFloat
+                                        Text(
+                                            text = "%.2f€/ud".format(finalPricePerUnit),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
                                 }
                             }
                             
-                            // Mostrar ahorro si aplica
-                            if (offerPreview.hasOffer && offerPreview.savings > 0) {
-                                Spacer(modifier = Modifier.height(4.dp))
+                            // Mostrar ahorro si aplica y cumple mínimo
+                            if (meetsMinimum && offerPreview.hasOffer && offerPreview.savings > 0) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "💰 Ahorro total:",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.tertiary
+                                    )
+                                    Text(
+                                        text = "-%.2f€ (%.0f%%)".format(
+                                            offerPreview.savings,
+                                            (offerPreview.savings / (quantityFloat * priceFloat)) * 100
+                                        ),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.tertiary,
+                                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                                    )
+                                }
+                                // Detalle del ahorro
                                 Text(
-                                    text = "¡Ahorras %.2f€! ✅".format(offerPreview.savings),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.tertiary
+                                    text = when (selectedOffer?.code) {
+                                        "3x2" -> "Llevas ${quantityFloat.toInt()}, pagas ${(quantityFloat.toInt() / 3 * 2 + quantityFloat.toInt() % 3)}"
+                                        "2x1" -> "Llevas ${quantityFloat.toInt()}, pagas ${(quantityFloat.toInt() / 2 + quantityFloat.toInt() % 2)}"
+                                        "2nd_50" -> "2ª unidad al 50%"
+                                        "2nd_70" -> "2ª unidad al 30%"
+                                        "4x3" -> "Llevas ${quantityFloat.toInt()}, pagas ${(quantityFloat.toInt() / 4 * 3 + quantityFloat.toInt() % 4)}"
+                                        else -> ""
+                                    },
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.8f),
+                                    modifier = Modifier.padding(top = 2.dp)
                                 )
                             }
                         }
