@@ -193,6 +193,16 @@ class ShoppingListViewModel(application: Application) : AndroidViewModel(applica
         }
     }
     
+    /**
+     * Reordena los pasillos y persiste el cambio en la base de datos
+     */
+    fun reorderAisles(reorderedAisles: List<Aisle>) {
+        viewModelScope.launch {
+            repository.reorderAisles(reorderedAisles)
+            loadData()
+        }
+    }
+    
     fun clearPurchased() {
         viewModelScope.launch {
             repository.deletePurchasedProducts()

@@ -252,6 +252,9 @@ fun MainScreen(viewModel: ShoppingListViewModel = viewModel()) {
                 },
                 onDeleteAisle = { aisle ->
                     viewModel.deleteAisle(aisle)
+                },
+                onReorderAisles = { reorderedAisles ->
+                    viewModel.reorderAisles(reorderedAisles)
                 }
             )
         }

@@ -168,6 +168,17 @@ class ShoppingListRepository(context: Context) {
         aisleDao.deleteAisle(aisle.toEntity())
     }
     
+    /**
+     * Reordena los pasillos actualizando sus orderIndex
+     */
+    suspend fun reorderAisles(reorderedAisles: List<Aisle>) {
+        // Actualizar el orderIndex de cada pasillo según su nueva posición
+        val updatedAisles = reorderedAisles.mapIndexed { index, aisle ->
+            aisle.copy(orderIndex = index).toEntity()
+        }
+        aisleDao.updateAisles(updatedAisles)
+    }
+    
     suspend fun initializeDefaultAisles() {
         val existing = aisleDao.getAllAisles()
         if (existing.isEmpty()) {

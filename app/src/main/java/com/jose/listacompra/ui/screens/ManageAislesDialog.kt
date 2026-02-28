@@ -1,15 +1,24 @@
 package com.jose.listacompra.ui.screens
 
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import com.jose.listacompra.domain.model.Aisle
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -18,11 +27,19 @@ fun ManageAislesDialog(
     aisles: List<Aisle>,
     onDismiss: () -> Unit,
     onAddAisle: (name: String, emoji: String) -> Unit,
-    onDeleteAisle: (Aisle) -> Unit
+    onDeleteAisle: (Aisle) -> Unit,
+    onReorderAisles: (List<Aisle>) -> Unit
 ) {
     var showAddForm by remember { mutableStateOf(false) }
     var newAisleName by remember { mutableStateOf("") }
     var newAisleEmoji by remember { mutableStateOf("") }
+    
+    // Estado local para la lista reordenable
+    var localAisles by remember(aisles) { mutableStateOf(aisles.sortedBy { it.orderIndex }) }
+    
+    // Estado para el item que se está arrastrando
+    var draggedItemId by remember { mutableStateOf<Long?>(null) }
+    var draggedItemIndex by remember { mutableStateOf(-1) }
     
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -85,39 +102,142 @@ fun ManageAislesDialog(
                     Divider(modifier = Modifier.padding(vertical = 16.dp))
                 }
                 
-                // Lista de pasillos
+                // Lista de pasillos con drag & drop
                 Text(
-                    text = "Pasillos actuales (${aisles.size}):",
+                    text = "Pasillos actuales (${localAisles.size}):",
                     style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                
+                Text(
+                    text = "Arrastra los items para reordenar",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
                 
                 LazyColumn(
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    items(aisles) { aisle ->
-                        Row(
+                    items(localAisles, key = { it.id }) { aisle ->
+                        val isDragging = draggedItemId == aisle.id
+                        val elevation by animateDpAsState(
+                            targetValue = if (isDragging) 8.dp else 0.dp,
+                            label = "elevation"
+                        )
+                        val animatedPadding by animateDpAsState(
+                            targetValue = if (isDragging) 8.dp else 0.dp,
+                            label = "padding"
+                        )
+                        
+                        Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 4.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = "${aisle.emoji} ${aisle.name}",
-                                style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.weight(1f)
-                            )
-                            
-                            // Solo mostrar eliminar si no es pasillo por defecto
-                            if (!aisle.isDefault) {
-                                IconButton(
-                                    onClick = { onDeleteAisle(aisle) }
-                                ) {
-                                    Icon(
-                                        Icons.Default.Delete,
-                                        contentDescription = "Eliminar",
-                                        tint = MaterialTheme.colorScheme.error
+                                .padding(vertical = 2.dp)
+                                .shadow(
+                                    elevation = elevation,
+                                    shape = MaterialTheme.shapes.small
+                                )
+                                .zIndex(if (isDragging) 100f else 1f)
+                                .pointerInput(aisle.id) {
+                                    detectDragGestures(
+                                        onDragStart = {
+                                            draggedItemId = aisle.id
+                                            draggedItemIndex = localAisles.indexOf(aisle)
+                                        },
+                                        onDragEnd = {
+                                            // Persistir el nuevo orden
+                                            if (draggedItemId != null) {
+                                                onReorderAisles(localAisles)
+                                            }
+                                            draggedItemId = null
+                                            draggedItemIndex = -1
+                                        },
+                                        onDragCancel = {
+                                            draggedItemId = null
+                                            draggedItemIndex = -1
+                                        },
+                                        onDrag = { change, dragAmount ->
+                                            change.consume()
+                                            
+                                            // Calcular la nueva posición basada en el arrastre vertical
+                                            val threshold = 60f // píxeles para cambiar de posición
+                                            val currentIndex = localAisles.indexOfFirst { it.id == aisle.id }
+                                            
+                                            if (currentIndex != -1) {
+                                                when {
+                                                    dragAmount.y < -threshold && currentIndex > 0 -> {
+                                                        // Mover arriba
+                                                        val newList = localAisles.toMutableList()
+                                                        val item = newList.removeAt(currentIndex)
+                                                        newList.add(currentIndex - 1, item)
+                                                        localAisles = newList
+                                                        draggedItemIndex = currentIndex - 1
+                                                    }
+                                                    dragAmount.y > threshold && currentIndex < localAisles.size - 1 -> {
+                                                        // Mover abajo
+                                                        val newList = localAisles.toMutableList()
+                                                        val item = newList.removeAt(currentIndex)
+                                                        newList.add(currentIndex + 1, item)
+                                                        localAisles = newList
+                                                        draggedItemIndex = currentIndex + 1
+                                                    }
+                                                }
+                                            }
+                                        }
                                     )
+                                },
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (isDragging) 
+                                    MaterialTheme.colorScheme.primaryContainer 
+                                else 
+                                    MaterialTheme.colorScheme.surface
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    // Icono de drag handle
+                                    Icon(
+                                        imageVector = Icons.Default.DragHandle,
+                                        contentDescription = "Arrastrar para reordenar",
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.padding(end = 8.dp)
+                                    )
+                                    
+                                    Text(
+                                        text = "${aisle.emoji} ${aisle.name}",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    
+                                    // Indicador de posición
+                                    Text(
+                                        text = "#${localAisles.indexOf(aisle) + 1}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                
+                                // Solo mostrar eliminar si no es pasillo por defecto
+                                if (!aisle.isDefault) {
+                                    IconButton(
+                                        onClick = { onDeleteAisle(aisle) }
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Delete,
+                                            contentDescription = "Eliminar",
+                                            tint = MaterialTheme.colorScheme.error
+                                        )
+                                    }
                                 }
                             }
                         }

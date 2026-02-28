@@ -64,6 +64,9 @@ interface AisleDao {
     
     @Query("SELECT MAX(orderIndex) FROM aisles")
     suspend fun getMaxOrderIndex(): Int?
+    
+    @Update
+    suspend fun updateAisles(aisles: List<AisleEntity>)
 }
 
 @Dao
