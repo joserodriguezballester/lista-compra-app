@@ -43,7 +43,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jose.listacompra.domain.model.Aisle
 import com.jose.listacompra.domain.model.Offer
 import com.jose.listacompra.domain.model.Product
-import com.jose.listacompra.ui.theme.ThemeMode
+// import com.jose.listacompra.ui.theme.ThemeMode
 import com.jose.listacompra.ui.viewmodel.ShoppingListViewModel
 
 /**
@@ -87,8 +87,6 @@ fun MainScreen(
     viewModel: ShoppingListViewModel = viewModel(),
     currentPrimaryColor: Int = 0xFF4CAF50.toInt(),
     onColorChanged: (Int) -> Unit = {},
-    themeMode: ThemeMode = ThemeMode.SYSTEM,
-    onThemeModeChange: (ThemeMode) -> Unit = {},
     onNavigateToLists: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -146,13 +144,10 @@ fun MainScreen(
                     }
                 },
                 actions = {
-                    // Botón de cambio de tema
+                    // Botón de cambio de tema (simplificado)
                     IconButton(onClick = { showThemeMenu = true }) {
                         Icon(
-                            imageVector = when (themeMode) {
-                                ThemeMode.DARK -> Icons.Default.DarkMode
-                                else -> Icons.Default.LightMode
-                            },
+                            imageVector = Icons.Default.LightMode,
                             contentDescription = "Cambiar tema"
                         )
                     }
@@ -170,39 +165,6 @@ fun MainScreen(
                             },
                             leadingIcon = {
                                 Icon(Icons.Default.List, contentDescription = null)
-                            }
-                        )
-                        
-                        Divider()
-                        
-                        DropdownMenuItem(
-                            text = { Text("🌙 Modo Oscuro") },
-                            onClick = {
-                                onThemeModeChange(ThemeMode.DARK)
-                                showThemeMenu = false
-                            },
-                            leadingIcon = {
-                                Icon(Icons.Default.DarkMode, contentDescription = null)
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("☀️ Modo Claro") },
-                            onClick = {
-                                onThemeModeChange(ThemeMode.LIGHT)
-                                showThemeMenu = false
-                            },
-                            leadingIcon = {
-                                Icon(Icons.Default.LightMode, contentDescription = null)
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("⚙️ Seguir Sistema") },
-                            onClick = {
-                                onThemeModeChange(ThemeMode.SYSTEM)
-                                showThemeMenu = false
-                            },
-                            leadingIcon = {
-                                Icon(Icons.Default.Settings, contentDescription = null)
                             }
                         )
                         

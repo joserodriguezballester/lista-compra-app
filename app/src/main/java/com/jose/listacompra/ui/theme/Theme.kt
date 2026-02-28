@@ -70,7 +70,7 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun ListaCompraTheme(
-    themeMode: ThemeMode = ThemeMode.SYSTEM,
+    themeMode: String = "system",
     dynamicColor: Boolean = false,
     primaryColorInt: Int? = null,
     content: @Composable () -> Unit
@@ -79,10 +79,11 @@ fun ListaCompraTheme(
     val systemInDarkTheme = isSystemInDarkTheme()
     
     // Determinar si usamos tema oscuro basado en la preferencia
-    val darkTheme = when (themeMode) {
-        ThemeMode.SYSTEM -> systemInDarkTheme
-        ThemeMode.DARK -> true
-        ThemeMode.LIGHT -> false
+    val darkTheme = when (themeMode.lowercase()) {
+        "system" -> systemInDarkTheme
+        "dark" -> true
+        "light" -> false
+        else -> systemInDarkTheme
     }
     
     // Construir el color scheme
