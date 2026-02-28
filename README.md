@@ -28,8 +28,9 @@
 - [x] ~~Reordenar pasillos (drag & drop)~~ ✅ **IMPLEMENTADO**
 - [ ] Histórico de compras con gráficos
 - [x] ~~Tema oscuro~~ ✅ **IMPLEMENTADO**
-- [x] ~~Colores personalizables~~ ✅ **IMPLEMENTADO"
-- [x] ~~Feedback táctil (vibración)~~ ✅ **IMPLEMENTADO"
+- [x] ~~Colores personalizables~~ ✅ **IMPLEMENTADO**
+- [x] ~~Feedback táctil (vibración)~~ ✅ **IMPLEMENTADO**
+- [x] ~~Listas múltiples~~ ✅ **IMPLEMENTADO**
 
 ---
 
@@ -120,6 +121,34 @@ Al abrir la app verás tu lista organizada por **pasillos del supermercado**:
 
 - Toca el **icono de papelera 🗑️** a la derecha del producto
 - ¡Desaparece de la lista!
+
+### 📋 Listas Múltiples (NUEVO)
+
+Ahora puedes tener **varias listas** diferentes (Carrefour, Mercadona, Lidl...)
+
+**Crear nueva lista:**
+1. Toca el **menú ⋮** (arriba derecha) → **"Mis Listas"**
+2. Pulsa el botón **+** (abajo derecha)
+3. Pon nombre: ej. "Mercadona"
+4. Elige: ¿Usar pasillos por defecto? → **Sí** o **No**
+5. Toca **"Crear"**
+
+**Cambiar de lista:**
+1. Menú ⋮ → **"Mis Listas"**
+2. Toca la lista que quieras abrir (ej. "Carrefour" o "Mercadona")
+3. La app cambia automáticamente a esa lista
+
+**Archivar una lista:**
+1. En "Mis Listas", toca el **menú ⋮** de la lista
+2. Selecciona **"Archivar"**
+3. La lista desaparece de activas pero se guarda en historial
+
+**Ver listas archivadas:**
+1. En "Mis Listas", activa el interruptor **"Ver archivadas"**
+2. Aparecen las listas archivadas en gris
+3. Puedes **"Restaurar"** o **"Eliminar"** definitivamente
+
+**La app recuerda** automáticamente la última lista que usaste.
 
 ### 🏪 Gestionar Pasillos
 
