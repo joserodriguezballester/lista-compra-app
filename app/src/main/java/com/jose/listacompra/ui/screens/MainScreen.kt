@@ -45,6 +45,9 @@ import com.jose.listacompra.domain.model.Offer
 import com.jose.listacompra.domain.model.Product
 // import com.jose.listacompra.ui.theme.ThemeMode
 import com.jose.listacompra.ui.viewmodel.ShoppingListViewModel
+import com.jose.listacompra.ui.components.VoiceInputButton
+import com.jose.listacompra.ui.components.VoiceCommand
+import com.jose.listacompra.ui.components.parseVoiceCommand
 
 /**
  * Función helper para realizar vibración de feedback táctil
@@ -146,7 +149,22 @@ fun MainScreen(
                     }
                 },
                 actions = {
-                    // Botón de cambio de tema
+                    // Botón de entrada por voz
+                    VoiceInputButton(
+                        onVoiceCommand = { command ->
+                            // Usar el primer pasillo como default, o 1L si no hay pasillos
+                            val defaultAisleId = uiState.aisles.firstOrNull()?.id ?: 1L
+                            // Crear producto desde comando de voz
+                            viewModel.addProduct(
+                                name = "${command.productName} (${command.quantity.toInt()} ${command.unit})",
+                                aisleId = defaultAisleId,
+                                quantity = command.quantity,
+                                price = null
+                            )
+                        }
+                    )
+                    
+                    // Botón de menú de opciones
                     IconButton(onClick = { showThemeMenu = true }) {
                         Icon(
                             imageVector = Icons.Default.Settings,
