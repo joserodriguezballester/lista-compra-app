@@ -4,10 +4,26 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+    <!-- Fondo circular verde Carrefour -->
     <path
-        android:fillColor="#388E3C"
-        android:pathData="M54,18 C32,18 14,36 14,58 C14,80 32,98 54,98 C76,98 94,80 94,58 C94,36 76,18 54,18 Z"/>
+        android:fillColor="#4CAF50"
+        android:pathData="M54,10 C29.7,10 10,29.7 10,54 C10,78.3 29.7,98 54,98 C78.3,98 98,78.3 98,54 C98,29.7 78.3,10 54,10 Z"/>
+    
+    <!-- Carrito de compras blanco -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M42,38 L42,78 L72,58 Z"/>
+        android:pathData="M30,38 L32,38 L35.5,62 L68,62 L72,44 L38,44 L37,38 L72,38 L74,34 L35,34 L34,30 L26,30 L28,36 L30,38 Z"/>
+    
+    <!-- Ruedas del carrito -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M40,66 C37.8,66 36,67.8 36,70 C36,72.2 37.8,74 40,74 C42.2,74 44,72.2 44,70 C44,67.8 42.2,66 40,66 Z"/>
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M62,66 C59.8,66 58,67.8 58,70 C58,72.2 59.8,74 62,74 C64.2,74 66,72.2 66,70 C66,67.8 64.2,66 62,66 Z"/>
+    
+    <!-- Checkmark verde claro en el carrito -->
+    <path
+        android:fillColor="#81C784"
+        android:pathData="M50,52 L54,56 L62,48 L64,50 L54,60 L48,54 Z"/>
 </vector>
