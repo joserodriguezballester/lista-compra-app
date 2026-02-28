@@ -25,9 +25,11 @@
 - [ ] Añadir productos por voz
 - [ ] **Lectura de código de barras** (escanear EAN para autocompletar producto)
 - [ ] **Añadir imágenes a los productos** (foto desde cámara o galería) ← NUEVO (27/02)
-- [ ] Reordenar pasillos (drag & drop)
+- [x] ~~Reordenar pasillos (drag & drop)~~ ✅ **IMPLEMENTADO**
 - [ ] Histórico de compras con gráficos
-- [ ] Fotos de productos
+- [x] ~~Tema oscuro~~ ✅ **IMPLEMENTADO**
+- [x] ~~Colores personalizables~~ ✅ **IMPLEMENTADO"
+- [x] ~~Feedback táctil (vibración)~~ ✅ **IMPLEMENTADO"
 
 ---
 
@@ -55,7 +57,21 @@
 
 ---
 
-## 🎮 Cómo Usar la App
+## 🎮 Cómo Usar la App - Guía Rápida
+
+### 🆕 NUEVO: Personalización
+
+| Función | Toca aquí | Qué hace |
+|---------|-----------|----------|
+| 🌙 **Cambiar tema** | Icono ☀️/🌙 en la barra superior | Cambia entre: Modo Claro / Modo Oscuro / Seguir Sistema |
+| 🎨 **Cambiar color** | Icono paleta 🎨 en la barra superior | Elige entre 5 colores: Verde, Azul, Rojo, Naranja, Morado |
+| 🔀 **Reordenar pasillos** | Menú ⋮ → "Gestionar pasillos" → Arrastra el icono ≡ | Cambia el orden de los pasillos a tu gusto |
+
+### 📳 Feedback Táctil (Vibración)
+- **Al marcar producto:** Vibración corta (60ms) para confirmar
+- **Al completar lista:** Doble vibración especial cuando compras todo
+
+---
 
 ### 📱 Pantalla Principal
 
