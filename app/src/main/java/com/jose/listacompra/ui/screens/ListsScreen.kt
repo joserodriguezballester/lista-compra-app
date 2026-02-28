@@ -166,6 +166,7 @@ fun ListsScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ListCard(
     list: ShoppingList,
@@ -257,6 +258,7 @@ private fun ListCard(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ArchivedListCard(
     list: ShoppingList,
