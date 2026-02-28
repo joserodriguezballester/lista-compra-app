@@ -21,9 +21,41 @@ import androidx.compose.ui.graphics.Color
 // ============================================
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    // Primarios
+    primary = DarkPrimaryGreen,
+    onPrimary = DarkOnPrimary,
+    primaryContainer = DarkPrimaryContainer,
+    onPrimaryContainer = DarkOnPrimaryContainer,
+    // Secundarios
+    secondary = DarkSecondary,
+    onSecondary = DarkOnSecondary,
+    secondaryContainer = DarkSecondaryContainer,
+    onSecondaryContainer = DarkOnSecondaryContainer,
+    // Terciarios
+    tertiary = DarkTertiary,
+    onTertiary = DarkOnTertiary,
+    tertiaryContainer = DarkTertiaryContainer,
+    onTertiaryContainer = DarkOnTertiaryContainer,
+    // Fondos
+    background = DarkBackground,
+    onBackground = DarkOnBackground,
+    // Superficies
+    surface = DarkSurface,
+    onSurface = DarkOnSurface,
+    surfaceVariant = DarkSurfaceVariant,
+    onSurfaceVariant = DarkOnSurfaceVariant,
+    // Error
+    error = DarkError,
+    onError = DarkOnError,
+    errorContainer = DarkErrorContainer,
+    onErrorContainer = DarkOnErrorContainer,
+    // Otros
+    outline = DarkOutline,
+    outlineVariant = DarkSurfaceVariant,
+    inverseSurface = DarkOnBackground,
+    inverseOnSurface = DarkBackground,
+    inversePrimary = DarkPrimaryContainer,
+    scrim = Color.Black.copy(alpha = 0.5f)
 )
 
 private val LightColorScheme = lightColorScheme(

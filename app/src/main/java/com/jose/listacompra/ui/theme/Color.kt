@@ -4,7 +4,48 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.ColorUtils
 
-// Colores por defecto del sistema
+// ============================================
+// COLORES PARA MODO OSCURO (Material3)
+// ============================================
+
+// Fondos
+val DarkBackground = Color(0xFF121212)      // Fondo principal
+val DarkSurface = Color(0xFF1E1E1E)         // Superficies (cards, dialogs)
+val DarkSurfaceVariant = Color(0xFF2C2C2C)  // Variante de superficie
+
+// Texto
+val DarkOnBackground = Color(0xFFFFFFFF)    // Texto primario (blanco)
+val DarkOnSurface = Color(0xFFFFFFFF)       // Texto sobre superficie
+val DarkOnSurfaceVariant = Color(0xFFB3B3B3)// Texto secundario (gris claro)
+val DarkOutline = Color(0xFF8B8B8B)         // Bordes y divisores
+
+// Colores primarios para modo oscuro
+val DarkPrimaryGreen = Color(0xFF81C784)    // Verde ajustado para modo oscuro
+val DarkOnPrimary = Color(0xFF121212)       // Texto sobre primario
+val DarkPrimaryContainer = Color(0xFF1B5E20)// Contenedor primario oscuro
+val DarkOnPrimaryContainer = Color(0xFF81C784)
+
+// Colores secundarios
+val DarkSecondary = Color(0xFFAAB7B8)       // Gris azulado
+val DarkOnSecondary = Color(0xFF121212)
+val DarkSecondaryContainer = Color(0xFF37474F)
+val DarkOnSecondaryContainer = Color(0xFFAAB7B8)
+
+// Colores terciarios
+val DarkTertiary = Color(0xFFCE93D8)        // Morado claro
+val DarkOnTertiary = Color(0xFF121212)
+val DarkTertiaryContainer = Color(0xFF4A148C)
+val DarkOnTertiaryContainer = Color(0xFFCE93D8)
+
+// Colores de error
+val DarkError = Color(0xFFFFB4AB)
+val DarkOnError = Color(0xFF690005)
+val DarkErrorContainer = Color(0xFF93000A)
+val DarkOnErrorContainer = Color(0xFFFFDAD6)
+
+// ============================================
+// COLORES PARA MODO CLARO (Legacy - mantenidos)
+// ============================================
 val Purple80 = Color(0xFFD0BCFF)
 val PurpleGrey80 = Color(0xFFCCC2DC)
 val Pink80 = Color(0xFFEFB8C8)

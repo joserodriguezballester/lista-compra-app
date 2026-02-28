@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -95,6 +96,7 @@ fun MainScreen(
     var showEditProduct by remember { mutableStateOf<Product?>(null) }
     var showSnackbar by remember { mutableStateOf<String?>(null) }
     var showThemeMenu by remember { mutableStateOf(false) }
+    var showColorSettings by remember { mutableStateOf(false) }
     
     // Estado previo para detectar cuando se completa toda la lista
     var wasListComplete by remember { mutableStateOf(false) }
@@ -179,7 +181,18 @@ fun MainScreen(
                         )
                         
                         HorizontalDivider()
-                        
+
+                        DropdownMenuItem(
+                            text = { Text("🎨 Cambiar Color") },
+                            onClick = {
+                                showColorSettings = true
+                                showThemeMenu = false
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Default.Palette, contentDescription = null)
+                            }
+                        )
+
                         DropdownMenuItem(
                             text = { Text("🗂️ Gestionar Pasillos") },
                             onClick = {
@@ -323,6 +336,17 @@ fun MainScreen(
                 },
                 onReorderAisles = { reorderedAisles ->
                     viewModel.reorderAisles(reorderedAisles)
+                }
+            )
+        }
+
+        // Diálogo para cambiar color del tema
+        if (showColorSettings) {
+            ColorSettingsDialog(
+                currentColor = currentPrimaryColor,
+                onDismiss = { showColorSettings = false },
+                onColorSelected = { color ->
+                    onColorChanged(color)
                 }
             )
         }
