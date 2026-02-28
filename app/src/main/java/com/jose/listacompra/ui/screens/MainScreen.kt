@@ -1,5 +1,10 @@
 package com.jose.listacompra.ui.screens
 
+import android.content.Context
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -14,6 +19,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
 
 // SwipeToDismiss imports
 import androidx.compose.material3.DismissDirection
@@ -34,16 +40,65 @@ import com.jose.listacompra.domain.model.Offer
 import com.jose.listacompra.domain.model.Product
 import com.jose.listacompra.ui.viewmodel.ShoppingListViewModel
 
+/**
+ * Función helper para realizar vibración de feedback táctil
+ * @param context Contexto de Android
+ * @param milliseconds Duración de la vibración (por defecto 60ms para feedback sutil)
+ * @param isCompletion true para vibración de éxito (más larga y con patrón)
+ */
+private fun vibrateFeedback(context: Context, milliseconds: Long = 60L, isCompletion: Boolean = false) {
+    val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        val vibratorManager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+        vibratorManager.defaultVibrator
+    } else {
+        @Suppress("DEPRECATION")
+        context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+    }
+    
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        // Vibración suave para feedback táctil
+        val effect = if (isCompletion) {
+            // Patrón de éxito: dos vibraciones cortas
+            VibrationEffect.createWaveform(longArrayOf(0, 50, 100, 80), -1)
+        } else {
+            // Vibración simple y sutil
+            VibrationEffect.createOneShot(milliseconds, VibrationEffect.DEFAULT_AMPLITUDE)
+        }
+        vibrator.vibrate(effect)
+    } else {
+        @Suppress("DEPRECATION")
+        if (isCompletion) {
+            vibrator.vibrate(longArrayOf(0, 50, 100, 80), -1)
+        } else {
+            vibrator.vibrate(milliseconds)
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(viewModel: ShoppingListViewModel = viewModel()) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
     var showAddProduct by remember { mutableStateOf(false) }
     var showManageAisles by remember { mutableStateOf(false) }
     var showEditProduct by remember { mutableStateOf<Product?>(null) }
     var showSnackbar by remember { mutableStateOf<String?>(null) }
     
+    // Estado previo para detectar cuando se completa toda la lista
+    var wasListComplete by remember { mutableStateOf(false) }
+    
     val snackbarHostState = remember { SnackbarHostState() }
+    
+    // Detectar cuando se completa toda la lista para vibración especial
+    LaunchedEffect(uiState.purchasedCount, uiState.totalCount) {
+        val isNowComplete = uiState.totalCount > 0 && uiState.purchasedCount == uiState.totalCount
+        if (isNowComplete && !wasListComplete) {
+            // Lista completada - vibración de éxito
+            vibrateFeedback(context, isCompletion = true)
+        }
+        wasListComplete = isNowComplete
+    }
     
     // Mostrar snackbar cuando hay mensaje
     LaunchedEffect(showSnackbar) {
@@ -118,8 +173,12 @@ fun MainScreen(viewModel: ShoppingListViewModel = viewModel()) {
                         SwipeableProductCard(
                             product = product,
                             offer = offer,
-                            onTogglePurchased = { viewModel.togglePurchased(product) },
-                            onDelete = { 
+                            onTogglePurchased = {
+                                // Feedback táctil al marcar/desmarcar producto
+                                vibrateFeedback(context, milliseconds = 60L)
+                                viewModel.togglePurchased(product)
+                            },
+                            onDelete = {
                                 viewModel.deleteProduct(product)
                                 showSnackbar = "${product.name} eliminado"
                             },

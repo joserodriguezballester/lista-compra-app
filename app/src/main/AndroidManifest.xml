@@ -5,6 +5,8 @@
     <!-- Permiso para reconocimiento de voz (para futuras versiones) -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Permiso para feedback táctil (vibración) -->
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
         android:name=".ListaCompraApplication"
