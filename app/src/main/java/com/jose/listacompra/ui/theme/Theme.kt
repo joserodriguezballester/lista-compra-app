@@ -91,31 +91,36 @@ fun ListaCompraTheme(
         primaryColorInt != null -> {
             val customColors = generateColorScheme(primaryColorInt)
             if (darkTheme) {
-                // Para modo oscuro, adaptar los colores personalizados
+                // Para modo oscuro, adaptar los colores personalizados con fondos oscuros definidos
+                val adjustedPrimary = if (customColors.primary == GreenPrimary) DarkPrimaryGreen else customColors.primary
                 darkColorScheme(
-                    primary = customColors.primary,
-                    onPrimary = customColors.onPrimary,
-                    primaryContainer = customColors.primary.copy(alpha = 0.3f),
-                    onPrimaryContainer = customColors.primary,
+                    primary = adjustedPrimary,
+                    onPrimary = DarkOnPrimary,
+                    primaryContainer = customColors.primary.copy(alpha = 0.25f),
+                    onPrimaryContainer = adjustedPrimary,
                     secondary = customColors.secondary,
-                    onSecondary = customColors.onSecondary,
-                    secondaryContainer = customColors.secondary.copy(alpha = 0.3f),
+                    onSecondary = DarkOnSecondary,
+                    secondaryContainer = customColors.secondary.copy(alpha = 0.25f),
                     onSecondaryContainer = customColors.secondary,
                     tertiary = customColors.tertiary,
-                    onTertiary = customColors.onTertiary,
-                    tertiaryContainer = customColors.tertiary.copy(alpha = 0.3f),
+                    onTertiary = DarkOnTertiary,
+                    tertiaryContainer = customColors.tertiary.copy(alpha = 0.25f),
                     onTertiaryContainer = customColors.tertiary,
-                    background = Color(0xFF191C1A),
-                    onBackground = Color(0xFFE1E3DF),
-                    surface = Color(0xFF191C1A),
-                    onSurface = Color(0xFFE1E3DF),
-                    surfaceVariant = Color(0xFF404943),
-                    onSurfaceVariant = Color(0xFFBFC9C2),
-                    error = Color(0xFFFFB4AB),
-                    onError = Color(0xFF690005),
-                    errorContainer = Color(0xFF93000A),
-                    onErrorContainer = Color(0xFFFFDAD6),
-                    outline = Color(0xFF89938D)
+                    // Fondos y superficies oscuros según especificación
+                    background = DarkBackground,
+                    onBackground = DarkOnBackground,
+                    surface = DarkSurface,
+                    onSurface = DarkOnSurface,
+                    surfaceVariant = DarkSurfaceVariant,
+                    onSurfaceVariant = DarkOnSurfaceVariant,
+                    // Errores
+                    error = DarkError,
+                    onError = DarkOnError,
+                    errorContainer = DarkErrorContainer,
+                    onErrorContainer = DarkOnErrorContainer,
+                    // Otros
+                    outline = DarkOutline,
+                    outlineVariant = DarkSurfaceVariant
                 )
             } else {
                 lightColorScheme(
