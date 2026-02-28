@@ -53,7 +53,8 @@ class MainActivity : ComponentActivity() {
             
             // Cargar el color guardado al iniciar
             LaunchedEffect(Unit) {
-                primaryColor = themePreferences.primaryColor.first()
+                val color = themePreferences.primaryColor.first()
+                primaryColor = color
                 isLoading = false
             }
             
