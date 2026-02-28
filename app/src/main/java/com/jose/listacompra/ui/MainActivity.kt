@@ -47,6 +47,7 @@ class MainActivity : ComponentActivity() {
             
             // Observar el modo de tema desde el ViewModel
             val themeMode by themeViewModel.themeMode.collectAsState()
+            val followSystem by themeViewModel.followSystem.collectAsState()
             
             // Estado de navegación
             var currentScreen by remember { mutableStateOf<Screen>(Screen.Splash) }
@@ -103,8 +104,10 @@ class MainActivity : ComponentActivity() {
                                     viewModel = shoppingListViewModel,
                                     currentPrimaryColor = primaryColor ?: ThemePreferences.DEFAULT_COLOR,
                                     onColorChanged = onColorChanged,
-                                    themeMode = themeMode,
-                                    onThemeModeChange = { themeViewModel.setThemeMode(it) },
+                                    themeModeString = themeMode,
+                                    onThemeToggle = { themeViewModel.toggleTheme() },
+                                    followSystem = followSystem,
+                                    onFollowSystemChange = { themeViewModel.setFollowSystem(it) },
                                     onNavigateToLists = {
                                         currentScreen = Screen.Lists
                                     }
