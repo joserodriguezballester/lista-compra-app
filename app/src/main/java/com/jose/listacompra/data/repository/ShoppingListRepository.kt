@@ -294,6 +294,10 @@ class ShoppingListRepository(context: Context) {
         productDao.deletePurchasedProducts(listId)
     }
     
+    suspend fun deleteAllProductsFromList(listId: Long) {
+        productDao.deleteAllProducts(listId)
+    }
+    
     // ========== TOTALES ==========
     
     /**
