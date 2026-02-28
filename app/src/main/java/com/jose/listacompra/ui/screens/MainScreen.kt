@@ -87,7 +87,9 @@ fun MainScreen(
     viewModel: ShoppingListViewModel = viewModel(),
     currentPrimaryColor: Int = 0xFF4CAF50.toInt(),
     onColorChanged: (Int) -> Unit = {},
-    onNavigateToLists: () -> Unit = {}
+    onNavigateToLists: () -> Unit = {},
+    onToggleTheme: () -> Unit = {},
+    onClearList: (Boolean) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
@@ -144,11 +146,11 @@ fun MainScreen(
                     }
                 },
                 actions = {
-                    // Botón de cambio de tema (simplificado)
+                    // Botón de cambio de tema
                     IconButton(onClick = { showThemeMenu = true }) {
                         Icon(
-                            imageVector = Icons.Default.LightMode,
-                            contentDescription = "Cambiar tema"
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Menú opciones"
                         )
                     }
                     
@@ -169,6 +171,18 @@ fun MainScreen(
                         )
                         
                         Divider()
+                        
+                        // Botón para alternar tema oscuro/claro
+                        DropdownMenuItem(
+                            text = { Text("🌙☀️ Cambiar Modo Oscuro/Claro") },
+                            onClick = {
+                                onToggleTheme()
+                                showThemeMenu = false
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Default.Settings, contentDescription = null)
+                            }
+                        )
 
                         DropdownMenuItem(
                             text = { Text("🎨 Cambiar Color") },
@@ -189,6 +203,31 @@ fun MainScreen(
                             },
                             leadingIcon = {
                                 Icon(Icons.Default.MoreVert, contentDescription = null)
+                            }
+                        )
+                        
+                        Divider()
+                        
+                        // Opciones para limpiar lista
+                        DropdownMenuItem(
+                            text = { Text("🧹 Quitar Comprados") },
+                            onClick = {
+                                onClearList(false) // false = solo comprados
+                                showThemeMenu = false
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Default.Delete, contentDescription = null)
+                            }
+                        )
+                        
+                        DropdownMenuItem(
+                            text = { Text("🗑️ Vaciar Lista") },
+                            onClick = {
+                                onClearList(true) // true = todo
+                                showThemeMenu = false
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Default.Delete, contentDescription = null)
                             }
                         )
                     }

@@ -106,6 +106,14 @@ class MainActivity : ComponentActivity() {
                                     onColorChanged = onColorChanged,
                                     onNavigateToLists = {
                                         currentScreen = Screen.Lists
+                                    },
+                                    onToggleTheme = { themeViewModel.toggleTheme() },
+                                    onClearList = { clearAll ->
+                                        if (clearAll) {
+                                            shoppingListViewModel.clearAllProducts()
+                                        } else {
+                                            shoppingListViewModel.clearPurchased()
+                                        }
                                     }
                                 )
                             }

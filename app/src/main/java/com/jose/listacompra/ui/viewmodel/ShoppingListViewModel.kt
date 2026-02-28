@@ -257,6 +257,14 @@ class ShoppingListViewModel(application: Application) : AndroidViewModel(applica
             loadData()
         }
     }
+    
+    fun clearAllProducts() {
+        viewModelScope.launch {
+            val listId = _currentListId.value ?: return@launch
+            repository.deleteAllProductsFromList(listId)
+            loadData()
+        }
+    }
 
     // ========== AUTOCOMPLETADO DE PRODUCTOS ==========
 
