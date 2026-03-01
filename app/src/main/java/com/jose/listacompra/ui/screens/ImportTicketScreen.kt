@@ -33,7 +33,7 @@ data class TicketProduct(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ImportTicketScreen(
-    onProductsImported: (List<TicketProduct>) -> Unit,
+    onProductsImported: (List<TicketProduct>, Float, String, Float) -> Unit,
     onNavigateBack: () -> Unit
 ) {
     val context = LocalContext.current
@@ -83,7 +83,9 @@ fun ImportTicketScreen(
                         if (selectedCount > 0) {
                             TextButton(
                                 onClick = {
-                                    onProductsImported(detectedProducts.filter { it.isSelected })
+                                    val selected = detectedProducts.filter { it.isSelected }
+                                    val total = selected.sumOf { (it.price * it.quantity).toDouble() }.toFloat()
+                                    onProductsImported(selected, total, "Carrefour", 0f)
                                 }
                             ) {
                                 Text("Añadir ($selectedCount)")

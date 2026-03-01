@@ -506,8 +506,8 @@ fun MainScreen(
         // Pantalla de importar ticket PDF
         if (showImportTicket) {
             ImportTicketScreen(
-                onProductsImported = { products ->
-                    // Añadir productos del ticket
+                onProductsImported = { products, total, tienda, ahorro ->
+                    // Añadir productos del ticket a la lista
                     val defaultAisleId = uiState.aisles.firstOrNull()?.id ?: 1L
                     products.forEach { product ->
                         viewModel.addProduct(
@@ -517,8 +517,21 @@ fun MainScreen(
                             price = product.price
                         )
                     }
+                    
+                    // Guardar en historial de compras para análisis
+                    val productData = products.map { 
+                        Triple(it.name, it.price, null as String?) 
+                    }
+                    viewModel.savePurchaseFromTicket(
+                        total = total,
+                        numProductos = products.size,
+                        tienda = tienda,
+                        ahorro = ahorro,
+                        products = productData
+                    )
+                    
                     showImportTicket = false
-                    showSnackbar = "Añadidos ${products.size} productos del ticket"
+                    showSnackbar = "Añadidos ${products.size} productos y guardado en historial"
                 },
                 onNavigateBack = { showImportTicket = false }
             )

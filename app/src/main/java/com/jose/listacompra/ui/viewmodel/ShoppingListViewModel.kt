@@ -297,4 +297,46 @@ class ShoppingListViewModel(application: Application) : AndroidViewModel(applica
             addProduct(name, aisleId, quantity, price, offerId)
         }
     }
+    
+    // ========== HISTORIAL DE COMPRAS (TICKETS) ==========
+    
+    /**
+     * Guarda una compra completa desde un ticket PDF
+     */
+    fun savePurchaseFromTicket(
+        total: Float,
+        numProductos: Int,
+        tienda: String,
+        ahorro: Float,
+        products: List<Triple<String, Float, String?>>
+    ) {
+        viewModelScope.launch {
+            try {
+                repository.savePurchase(total, numProductos, tienda, ahorro, products)
+                // No necesitamos recargar nada, solo guardar en BD
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+    
+    /**
+     * Obtiene productos sugeridos basados en frecuencia de compra
+     */
+    fun getSuggestedProductsByFrequency(callback: (List<com.jose.listacompra.data.local.ProductFrequencyEntity>) -> Unit) {
+        viewModelScope.launch {
+            val products = repository.getSuggestedProductsByFrequency()
+            callback(products)
+        }
+    }
+    
+    /**
+     * Obtiene el precio promedio de un producto
+     */
+    fun getAveragePriceForProduct(name: String, callback: (Float?) -> Unit) {
+        viewModelScope.launch {
+            val avg = repository.getAveragePriceForProduct(name)
+            callback(avg)
+        }
+    }
 }
