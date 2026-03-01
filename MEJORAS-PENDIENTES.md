@@ -112,6 +112,72 @@ ScannedProduct(
 
 ---
 
+## 🆕 NUEVA MEJORA: Modos de visualización
+
+**Feature request:** Separar Categoría y Pasillo, con dos modos de ver la lista:
+
+### Descripción
+- **Categoría** = taxonomía lógica del producto (Lácteos, Bebidas, Galletas...)
+- **Pasillo** = ubicación física en un supermercado específico (varía por tienda)
+
+### Modos de visualización
+| Modo | Agrupación | Cuándo usar |
+|------|------------|-------------|
+| **Por Categoría** (default) | Productos del mismo tipo juntos | Compras rápidas, knows what you want |
+| **Por Pasillo** | Según ruta del supermercado | Planificación eficiente, recorrer menos |
+
+### Ejemplo práctico
+**Producto:** Leche Hacendado
+
+| Modo | Dónde aparece |
+|------|---------------|
+| Por Categoría | Sección "🥛 Lácteos" |
+| Por Pasillo (Carrefour) | "Pasillo 3 - Lácteos" |
+| Por Pasillo (Mercadona) | "Pasillo 2 - Frescos" |
+| Por Pasillo (Lidl) | "Pasillo 7 - Refrigerados" |
+
+### Cambios necesarios en el modelo
+```kotlin
+// Producto se guarda con CATEGORÍA (fijo)
+data class Product(
+    val id: Long,
+    val name: String,
+    val categoryId: Long,  // ← NUEVO: categoría del producto
+    val defaultAisleId: Long? // Opcional: pasillo preferido (último usado)
+)
+
+// PASILLO depende del supermercado
+data class Aisle(
+    val id: Long,
+    val name: String,          // "Pasillo 3 - Lácteos"
+    val categoryId: Long,      // ← qué categoría contiene
+    val supermarket: String?,  // "Carrefour", null=genérico
+    val order: Int           // orden para mostrar
+)
+
+// La lista sabe en qué super se está comprando
+data class ShoppingList(
+    val id: Long,
+    val name: String,
+    val supermarket: String?, // "Carrefour" - para buscar pasillos específicos
+    // ...
+)
+```
+
+### UI propuesta
+- **Toggle en toolbar** de MainScreen: `[🗂️ Categoría | 🛒 Pasillos]`
+- Si elige "Pasillos" y no hay supermercado asignado → diálogo ¿En qué super estás?
+- Mostrar pasillos ordenados por `order`
+
+### Casos edge
+- Producto sin pasillo asignado para ese super → agrupar en "Sin asignar" al final
+- Cambiar de super en mitad de la compra → recalcular agrupación
+- Supermercado nuevo → usar pasillos genéricos o crear mapeo manual
+
+**Prioridad:** Media-Alta (mejora UX significativa)
+
+---
+
 ## 📁 ARCHIVOS CLAVE
 
 | Archivo | Propósito |
