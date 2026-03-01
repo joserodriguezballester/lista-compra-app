@@ -19,7 +19,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Mic
@@ -108,6 +108,7 @@ fun MainScreen(
     var showColorSettings by remember { mutableStateOf(false) }
     var showProductHistory by remember { mutableStateOf(false) } // Pantalla de historial
     var showImportTicket by remember { mutableStateOf(false) } // Pantalla importar ticket
+    var showBarcodeScanner by remember { mutableStateOf(false) } // Pantalla escáner código de barras
     
     // Estado previo para detectar cuando se completa toda la lista
     var wasListComplete by remember { mutableStateOf(false) }
@@ -329,6 +330,18 @@ fun MainScreen(
                             Icon(Icons.Default.List, contentDescription = null)
                         }
                     )
+                    
+                    // Opción 4: Escanear Código de Barras
+                    DropdownMenuItem(
+                        text = { Text("📷 Escanear Código") },
+                        onClick = {
+                            showAddMenu = false
+                            showBarcodeScanner = true // Abrir pantalla de escáner
+                        },
+                        leadingIcon = {
+                            Icon(Icons.Default.QrCodeScanner, contentDescription = null)
+                        }
+                    )
                 }
             }
         },
@@ -508,6 +521,25 @@ fun MainScreen(
                     showSnackbar = "Añadidos ${products.size} productos del ticket"
                 },
                 onNavigateBack = { showImportTicket = false }
+            )
+        }
+        
+        // Pantalla de escáner de código de barras
+        if (showBarcodeScanner) {
+            BarcodeScannerScreen(
+                onProductScanned = { scannedProduct ->
+                    // Añadir producto escaneado
+                    val defaultAisleId = uiState.aisles.firstOrNull()?.id ?: 1L
+                    viewModel.addProduct(
+                        name = scannedProduct.name ?: "Producto ${scannedProduct.barcode.takeLast(4)}",
+                        aisleId = defaultAisleId,
+                        quantity = 1f,
+                        price = null
+                    )
+                    showBarcodeScanner = false
+                    showSnackbar = "Añadido: ${scannedProduct.name ?: "Producto escaneado"}"
+                },
+                onNavigateBack = { showBarcodeScanner = false }
             )
         }
     }

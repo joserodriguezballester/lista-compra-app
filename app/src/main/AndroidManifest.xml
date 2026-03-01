@@ -2,8 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Permiso para reconocimiento de voz (para futuras versiones) -->
+    <!-- Permiso para reconocimiento de voz -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- Permiso para cámara (escáner de códigos de barras) -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Permiso para feedback táctil (vibración) -->
     <uses-permission android:name="android.permission.VIBRATE" />
