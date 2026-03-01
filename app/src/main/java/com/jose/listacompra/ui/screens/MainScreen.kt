@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.List
@@ -105,7 +106,8 @@ fun MainScreen(
     var showSnackbar by remember { mutableStateOf<String?>(null) }
     var showThemeMenu by remember { mutableStateOf(false) }
     var showColorSettings by remember { mutableStateOf(false) }
-    var showProductHistory by remember { mutableStateOf(false) } // NUEVO: Pantalla de historial
+    var showProductHistory by remember { mutableStateOf(false) } // Pantalla de historial
+    var showImportTicket by remember { mutableStateOf(false) } // Pantalla importar ticket
     
     // Estado previo para detectar cuando se completa toda la lista
     var wasListComplete by remember { mutableStateOf(false) }
@@ -225,6 +227,20 @@ fun MainScreen(
                             },
                             leadingIcon = {
                                 Icon(Icons.Default.MoreVert, contentDescription = null)
+                            }
+                        )
+                        
+                        Divider()
+                        
+                        // Importar ticket PDF
+                        DropdownMenuItem(
+                            text = { Text("📄 Importar Ticket PDF") },
+                            onClick = {
+                                showImportTicket = true
+                                showThemeMenu = false
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Default.Description, contentDescription = null)
                             }
                         )
                         
@@ -471,6 +487,27 @@ fun MainScreen(
                     showSnackbar = "Añadido: ${historicalProduct.name}"
                 },
                 onNavigateBack = { showProductHistory = false }
+            )
+        }
+        
+        // Pantalla de importar ticket PDF
+        if (showImportTicket) {
+            ImportTicketScreen(
+                onProductsImported = { products ->
+                    // Añadir productos del ticket
+                    val defaultAisleId = uiState.aisles.firstOrNull()?.id ?: 1L
+                    products.forEach { product ->
+                        viewModel.addProduct(
+                            name = product.name,
+                            aisleId = defaultAisleId,
+                            quantity = product.quantity.toFloat(),
+                            price = product.price
+                        )
+                    }
+                    showImportTicket = false
+                    showSnackbar = "Añadidos ${products.size} productos del ticket"
+                },
+                onNavigateBack = { showImportTicket = false }
             )
         }
     }
