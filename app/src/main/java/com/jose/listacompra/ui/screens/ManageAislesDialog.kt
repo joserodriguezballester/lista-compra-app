@@ -2,7 +2,7 @@ package com.jose.listacompra.ui.screens
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -20,6 +20,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.jose.listacompra.domain.model.Aisle
+import androidx.compose.foundation.lazy.rememberLazyListState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,12 +35,17 @@ fun ManageAislesDialog(
     var newAisleName by remember { mutableStateOf("") }
     var newAisleEmoji by remember { mutableStateOf("") }
     
-    // Estado local para la lista reordenable
-    var localAisles by remember(aisles) { mutableStateOf(aisles.sortedBy { it.orderIndex }) }
+    // Estado local para la lista reordenable - ordenado por orderIndex
+    var localAisles by remember(aisles) { 
+        mutableStateOf(aisles.sortedBy { it.orderIndex }.mapIndexed { index, aisle ->
+            // Actualizar orderIndex para que sea consecutivo
+            aisle.copy(orderIndex = index)
+        })
+    }
     
     // Estado para el item que se está arrastrando
-    var draggedItemId by remember { mutableStateOf<Long?>(null) }
-    var draggedItemIndex by remember { mutableStateOf(-1) }
+    var draggedItemIndex by remember { mutableStateOf<Int?>(null) }
+    var currentDragIndex by remember { mutableStateOf<Int?>(null) }
     
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -110,7 +116,7 @@ fun ManageAislesDialog(
                 )
                 
                 Text(
-                    text = "Arrastra los items para reordenar",
+                    text = "Mantén pulsado y arrastra para reordenar",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 8.dp)
@@ -120,15 +126,20 @@ fun ManageAislesDialog(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     items(localAisles, key = { it.id }) { aisle ->
-                        val isDragging = draggedItemId == aisle.id
+                        val index = localAisles.indexOf(aisle)
+                        val isDragging = draggedItemIndex == index
+                        val isTarget = currentDragIndex == index && draggedItemIndex != index
+                        
                         val elevation by animateDpAsState(
-                            targetValue = if (isDragging) 8.dp else 0.dp,
+                            targetValue = if (isDragging) 8.dp else if (isTarget) 4.dp else 0.dp,
                             label = "elevation"
                         )
-                        val animatedPadding by animateDpAsState(
-                            targetValue = if (isDragging) 8.dp else 0.dp,
-                            label = "padding"
-                        )
+                        
+                        val backgroundColor = when {
+                            isDragging -> MaterialTheme.colorScheme.primaryContainer
+                            isTarget -> MaterialTheme.colorScheme.secondaryContainer
+                            else -> MaterialTheme.colorScheme.surface
+                        }
                         
                         Card(
                             modifier = Modifier
@@ -139,59 +150,63 @@ fun ManageAislesDialog(
                                     shape = MaterialTheme.shapes.small
                                 )
                                 .zIndex(if (isDragging) 100f else 1f)
-                                .pointerInput(aisle.id) {
-                                    detectDragGestures(
+                                .pointerInput(Unit) {
+                                    detectDragGesturesAfterLongPress(
                                         onDragStart = {
-                                            draggedItemId = aisle.id
-                                            draggedItemIndex = localAisles.indexOf(aisle)
+                                            draggedItemIndex = index
+                                            currentDragIndex = index
                                         },
                                         onDragEnd = {
                                             // Persistir el nuevo orden
-                                            if (draggedItemId != null) {
-                                                onReorderAisles(localAisles)
+                                            draggedItemIndex?.let { from ->
+                                                currentDragIndex?.let { to ->
+                                                    if (from != to) {
+                                                        val newList = localAisles.toMutableList()
+                                                        val item = newList.removeAt(from)
+                                                        newList.add(to, item)
+                                                        localAisles = newList.mapIndexed { i, a -> 
+                                                            a.copy(orderIndex = i) 
+                                                        }
+                                                    }
+                                                    // Siempre guardar el orden actual
+                                                    onReorderAisles(localAisles)
+                                                }
                                             }
-                                            draggedItemId = null
-                                            draggedItemIndex = -1
+                                            draggedItemIndex = null
+                                            currentDragIndex = null
                                         },
                                         onDragCancel = {
-                                            draggedItemId = null
-                                            draggedItemIndex = -1
+                                            draggedItemIndex = null
+                                            currentDragIndex = null
                                         },
                                         onDrag = { change, dragAmount ->
                                             change.consume()
                                             
-                                            // Calcular la nueva posición basada en el arrastre vertical
-                                            val threshold = 60f // píxeles para cambiar de posición
-                                            val currentIndex = localAisles.indexOfFirst { it.id == aisle.id }
+                                            // Calcular nueva posición basada en el arrastre
+                                            val itemHeight = 60f // aproximado
+                                            val dragOffset = dragAmount.y
+                                            val currentIndex = draggedItemIndex ?: return@detectDragGesturesAfterLongPress
                                             
-                                            if (currentIndex != -1) {
-                                                when {
-                                                    dragAmount.y < -threshold && currentIndex > 0 -> {
-                                                        // Mover arriba
-                                                        val newList = localAisles.toMutableList()
-                                                        val item = newList.removeAt(currentIndex)
-                                                        newList.add(currentIndex - 1, item)
-                                                        localAisles = newList
-                                                        draggedItemIndex = currentIndex - 1
-                                                    }
-                                                    dragAmount.y > threshold && currentIndex < localAisles.size - 1 -> {
-                                                        // Mover abajo
-                                                        val newList = localAisles.toMutableList()
-                                                        val item = newList.removeAt(currentIndex)
-                                                        newList.add(currentIndex + 1, item)
-                                                        localAisles = newList
-                                                        draggedItemIndex = currentIndex + 1
-                                                    }
-                                                }
+                                            val newIndex = when {
+                                                dragOffset < -itemHeight && currentIndex > 0 -> currentIndex - 1
+                                                dragOffset > itemHeight && currentIndex < localAisles.size - 1 -> currentIndex + 1
+                                                else -> currentIndex
+                                            }
+                                            
+                                            if (newIndex != currentDragIndex) {
+                                                // Reordenar visualmente
+                                                val newList = localAisles.toMutableList()
+                                                val item = newList.removeAt(currentIndex)
+                                                newList.add(newIndex, item)
+                                                localAisles = newList
+                                                draggedItemIndex = newIndex
+                                                currentDragIndex = newIndex
                                             }
                                         }
                                     )
                                 },
                             colors = CardDefaults.cardColors(
-                                containerColor = if (isDragging) 
-                                    MaterialTheme.colorScheme.primaryContainer 
-                                else 
-                                    MaterialTheme.colorScheme.surface
+                                containerColor = backgroundColor
                             )
                         ) {
                             Row(
@@ -221,7 +236,7 @@ fun ManageAislesDialog(
                                     
                                     // Indicador de posición
                                     Text(
-                                        text = "#${localAisles.indexOf(aisle) + 1}",
+                                        text = "#${index + 1}",
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
