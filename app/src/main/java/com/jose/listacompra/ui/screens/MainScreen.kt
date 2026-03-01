@@ -15,10 +15,13 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Settings
@@ -253,8 +256,64 @@ fun MainScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { showAddProduct = true }) {
-                Icon(Icons.Default.Add, contentDescription = "Añadir producto")
+            // Menú desplegable de opciones para añadir producto
+            var showAddMenu by remember { mutableStateOf(false) }
+            
+            Box {
+                // Botón principal FAB
+                FloatingActionButton(
+                    onClick = { showAddMenu = !showAddMenu }
+                ) {
+                    Icon(
+                        imageVector = if (showAddMenu) Icons.Default.Close else Icons.Default.Add,
+                        contentDescription = if (showAddMenu) "Cerrar menú" else "Añadir producto"
+                    )
+                }
+                
+                // Menú desplegable con 3 opciones
+                DropdownMenu(
+                    expanded = showAddMenu,
+                    onDismissRequest = { showAddMenu = false },
+                    modifier = Modifier.padding(bottom = 8.dp)
+                ) {
+                    // Opción 1: Por Voz
+                    DropdownMenuItem(
+                        text = { Text("🎙️ Por Voz") },
+                        onClick = {
+                            showAddMenu = false
+                            // TODO: Abrir diálogo de voz
+                            showAddProduct = true // Por ahora, usamos el diálogo actual
+                        },
+                        leadingIcon = {
+                            Icon(Icons.Default.Mic, contentDescription = null)
+                        }
+                    )
+                    
+                    // Opción 2: Escribir Nombre
+                    DropdownMenuItem(
+                        text = { Text("⌨️ Escribir Nombre") },
+                        onClick = {
+                            showAddMenu = false
+                            showAddProduct = true
+                        },
+                        leadingIcon = {
+                            Icon(Icons.Default.Edit, contentDescription = null)
+                        }
+                    )
+                    
+                    // Opción 3: Desde Historial
+                    DropdownMenuItem(
+                        text = { Text("📋 Desde Historial") },
+                        onClick = {
+                            showAddMenu = false
+                            // TODO: Abrir pantalla de historial
+                            showAddProduct = true // Por ahora, placeholder
+                        },
+                        leadingIcon = {
+                            Icon(Icons.Default.List, contentDescription = null)
+                        }
+                    )
+                }
             }
         },
         bottomBar = {
