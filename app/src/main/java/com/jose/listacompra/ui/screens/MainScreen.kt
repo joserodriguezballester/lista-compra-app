@@ -18,7 +18,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.List
@@ -240,7 +240,7 @@ fun MainScreen(
                                 showThemeMenu = false
                             },
                             leadingIcon = {
-                                Icon(Icons.Default.Description, contentDescription = null)
+                                Icon(Icons.Default.List, contentDescription = null)
                             }
                         )
                         
