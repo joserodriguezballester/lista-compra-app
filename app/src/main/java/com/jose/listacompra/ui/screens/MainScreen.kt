@@ -105,6 +105,7 @@ fun MainScreen(
     var showSnackbar by remember { mutableStateOf<String?>(null) }
     var showThemeMenu by remember { mutableStateOf(false) }
     var showColorSettings by remember { mutableStateOf(false) }
+    var showProductHistory by remember { mutableStateOf(false) } // NUEVO: Pantalla de historial
     
     // Estado previo para detectar cuando se completa toda la lista
     var wasListComplete by remember { mutableStateOf(false) }
@@ -306,8 +307,7 @@ fun MainScreen(
                         text = { Text("📋 Desde Historial") },
                         onClick = {
                             showAddMenu = false
-                            // TODO: Abrir pantalla de historial
-                            showAddProduct = true // Por ahora, placeholder
+                            showProductHistory = true // Abrir pantalla de historial
                         },
                         leadingIcon = {
                             Icon(Icons.Default.List, contentDescription = null)
@@ -452,6 +452,25 @@ fun MainScreen(
                 onColorSelected = { color ->
                     onColorChanged(color)
                 }
+            )
+        }
+        
+        // Pantalla de historial de productos
+        if (showProductHistory) {
+            ProductHistoryScreen(
+                onProductSelected = { historicalProduct ->
+                    // Añadir producto desde historial
+                    val defaultAisleId = uiState.aisles.firstOrNull()?.id ?: 1L
+                    viewModel.addProduct(
+                        name = historicalProduct.name,
+                        aisleId = defaultAisleId,
+                        quantity = 1f,
+                        price = historicalProduct.price
+                    )
+                    showProductHistory = false
+                    showSnackbar = "Añadido: ${historicalProduct.name}"
+                },
+                onNavigateBack = { showProductHistory = false }
             )
         }
     }
