@@ -27,6 +27,9 @@ class ShoppingListRepository(context: Context) {
     private val offerDao = db.offerDao()
     private val productDao = db.productDao()
     private val historyDao = db.productHistoryDao()
+    private val purchaseHistoryDao = db.purchaseHistoryDao()
+    private val productPriceHistoryDao = db.productPriceHistoryDao()
+    private val productFrequencyDao = db.productFrequencyDao()
     private val gson = Gson()
     
     // ========== LISTAS DE COMPRAS ==========
@@ -435,5 +438,136 @@ class ShoppingListRepository(context: Context) {
             suggestedPrice = this.lastPrice,
             usageCount = this.usageCount
         )
+    }
+    
+    // ========== HISTORIAL DE COMPRAS (TICKETS) ==========
+    
+    /**
+     * Guarda una compra completa con todos sus productos
+     */
+    suspend fun savePurchase(
+        total: Float,
+        numProductos: Int,
+        tienda: String = "Carrefour",
+        ahorro: Float = 0f,
+        products: List<Triple<String, Float, String?>> // nombre, precio, pasillo
+    ): Long {
+        // 1. Guardar la compra
+        val purchase = PurchaseHistoryEntity(
+            fecha = System.currentTimeMillis(),
+            total = total,
+            tienda = tienda,
+            numProductos = numProductos,
+            ahorroTotal = ahorro
+        )
+        val purchaseId = purchaseHistoryDao.insertPurchase(purchase)
+        
+        // 2. Guardar cada producto con su precio
+        val priceRecords = products.map { (name, price, aisle) ->
+            ProductPriceHistoryEntity(
+                purchaseId = purchaseId,
+                productName = name.uppercase().trim(),
+                price = price,
+                aisle = aisle,
+                fecha = System.currentTimeMillis()
+            )
+        }
+        productPriceHistoryDao.insertAllPriceRecords(priceRecords)
+        
+        // 3. Actualizar frecuencias
+        products.forEach { (name, _, _) ->
+            updateProductFrequency(name.uppercase().trim())
+        }
+        
+        return purchaseId
+    }
+    
+    /**
+     * Actualiza o crea la frecuencia de un producto
+     */
+    private suspend fun updateProductFrequency(productName: String) {
+        val existing = productFrequencyDao.getFrequencyForProduct(productName)
+        val now = System.currentTimeMillis()
+        
+        if (existing != null) {
+            // Calcular días desde última compra
+            val daysSinceLast = (now - existing.lastPurchaseDate) / (1000 * 60 * 60 * 24)
+            val newCount = existing.timesPurchased + 1
+            
+            // Calcular promedio de días entre compras
+            val newAverage = if (existing.averageDaysBetween != null) {
+                ((existing.averageDaysBetween * (newCount - 1)) + daysSinceLast) / newCount
+            } else {
+                daysSinceLast.toFloat()
+            }
+            
+            // Estimar próxima compra
+            val nextPurchase = now + (newAverage * 24 * 60 * 60 * 1000).toLong()
+            
+            productFrequencyDao.insertOrUpdateFrequency(
+                existing.copy(
+                    timesPurchased = newCount,
+                    averageDaysBetween = newAverage,
+                    lastPurchaseDate = now,
+                    estimatedNextDate = nextPurchase
+                )
+            )
+        } else {
+            // Producto nuevo
+            productFrequencyDao.insertOrUpdateFrequency(
+                ProductFrequencyEntity(
+                    productName = productName,
+                    timesPurchased = 1,
+                    lastPurchaseDate = now
+                )
+            )
+        }
+    }
+    
+    /**
+     * Obtiene productos que probablemente necesites comprar
+     */
+    suspend fun getSuggestedProductsByFrequency(): List<ProductFrequencyEntity> {
+        val now = System.currentTimeMillis()
+        return productFrequencyDao.getProductsDueForPurchase(now)
+            .sortedByDescending { it.timesPurchased }
+    }
+    
+    /**
+     * Obtiene el precio promedio de un producto
+     */
+    suspend fun getAveragePriceForProduct(name: String): Float? {
+        return productPriceHistoryDao.getAveragePriceForProduct(name.uppercase().trim())
+    }
+    
+    /**
+     * Obtiene historial de precios de un producto
+     */
+    suspend fun getPriceHistoryForProduct(name: String): List<ProductPriceHistoryEntity> {
+        return productPriceHistoryDao.getPriceHistoryForProduct(name.uppercase().trim())
+    }
+    
+    /**
+     * Obtiene los productos más comprados
+     */
+    suspend fun getMostFrequentProducts(): List<ProductFrequencyEntity> {
+        return productFrequencyDao.getMostFrequentProducts()
+    }
+    
+    /**
+     * Obtiene todas las compras
+     */
+    suspend fun getAllPurchases(): List<PurchaseHistoryEntity> {
+        return purchaseHistoryDao.getAllPurchases()
+    }
+    
+    /**
+     * Obtiene estadísticas de gasto
+     */
+    suspend fun getSpendingStats(): Triple<Float?, Float, Int> {
+        val average = purchaseHistoryDao.getAveragePurchaseAmount() ?: 0f
+        val totalSpent = purchaseHistoryDao.getTotalSpentSince(0) ?: 0f
+        val totalPurchases = purchaseHistoryDao.getAllPurchases().size
+        return Triple(average, totalSpent, totalPurchases)
     }
 }
