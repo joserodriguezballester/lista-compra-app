@@ -11,4 +11,19 @@ data class Category(
     val emoji: String,          // Emoji representativo: "🥛", "🥤"
     val description: String = "", // Descripción opcional
     val orderIndex: Int = 0     // Para ordenar las categorías
-)
+) {
+    companion object {
+        fun getDefaultCategories(): List<Category> = listOf(
+            Category(name = "Lácteos", emoji = "🥛"),
+            Category(name = "Bebidas", emoji = "🥤"),
+            Category(name = "Galletas", emoji = "🍪"),
+            Category(name = "Carnes", emoji = "🥩"),
+            Category(name = "Pescados", emoji = "🐟"),
+            Category(name = "Frutas y Verduras", emoji = "🍎"),
+            Category(name = "Panadería", emoji = "🥖"),
+            Category(name = "Congelados", emoji = "❄️"),
+            Category(name = "Limpieza", emoji = "🧼"),
+            Category(name = "Despensa", emoji = "🥫")
+        )
+    }
+}

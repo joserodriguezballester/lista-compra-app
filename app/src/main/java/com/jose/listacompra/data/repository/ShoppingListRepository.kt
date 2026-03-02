@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.jose.listacompra.data.local.*
 import com.jose.listacompra.domain.model.Aisle
+import com.jose.listacompra.domain.model.Category
 import com.jose.listacompra.domain.model.Offer
 import com.jose.listacompra.domain.model.Product
 import com.jose.listacompra.domain.model.ProductSuggestion
@@ -27,6 +28,7 @@ class ShoppingListRepository(context: Context) {
     private val offerDao = db.offerDao()
     private val productDao = db.productDao()
     private val historyDao = db.productHistoryDao()
+    private val categoryDao = db.categoryDao()
     private val purchaseHistoryDao = db.purchaseHistoryDao()
     private val productPriceHistoryDao = db.productPriceHistoryDao()
     private val productFrequencyDao = db.productFrequencyDao()
@@ -569,5 +571,40 @@ class ShoppingListRepository(context: Context) {
         val totalSpent = purchaseHistoryDao.getTotalSpentSince(0) ?: 0f
         val totalPurchases = purchaseHistoryDao.getAllPurchases().size
         return Triple(average, totalSpent, totalPurchases)
+    }
+
+    // ========== CATEGORÍAS ==========
+    suspend fun getAllCategories(): List<Category> {
+        return categoryDao.getAllCategories().map { it.toDomain() }
+    }
+
+    suspend fun addCategory(category: Category): Long {
+        return categoryDao.insertCategory(category.toEntity())
+    }
+
+    suspend fun updateCategory(category: Category) {
+        categoryDao.updateCategory(category.toEntity())
+    }
+
+    suspend fun deleteCategory(category: Category) {
+        categoryDao.deleteCategory(category.toEntity())
+    }
+
+    suspend fun reorderCategories(reorderedCategories: List<Category>) {
+        val updatedCategories = reorderedCategories.mapIndexed { index, category ->
+            category.copy(orderIndex = index).toEntity()
+        }
+        categoryDao.updateCategories(updatedCategories)
+    }
+
+    suspend fun initializeDefaultCategories() {
+        val existing = categoryDao.getAllCategories()
+        if (existing.isEmpty()) {
+            Category.getDefaultCategories().forEach { categoryDao.insertCategory(it.toEntity()) }
+        }
+    }
+
+    suspend fun getAllProductsByCategory(listId: Long): List<Product> {
+        return productDao.getAllProductsByCategory(listId).map { it.toDomain() }
     }
 }
