@@ -27,7 +27,7 @@ class ShoppingListRepository(context: Context) {
     private val aisleDao = db.aisleDao()
     private val offerDao = db.offerDao()
     private val productDao = db.productDao()
-    private val historyDao = db.productHistoryDao()
+    private val historyDao = db.purchaseHistoryDao()
     private val categoryDao = db.categoryDao()
     private val purchaseHistoryDao = db.purchaseHistoryDao()
     private val productPriceHistoryDao = db.productPriceHistoryDao()
