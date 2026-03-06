@@ -17,8 +17,34 @@ data class Product(
     val isPurchased: Boolean = false,
     val notes: String = "",
     val orderIndex: Int = 0,
-    val aisleMap: Map<String, String>? = null  // ← NUEVO
+    val aisleMap: Map<String, String>? = null , // ← NUEVO
+    val photoUri: String? = null,
+    val photoTimestamp: Long? = null,
+    val isPhotoUserSelected: Boolean = false
 ) {
+    /**
+     * Indica si el producto tiene foto personalizada
+     */
+    fun hasPhoto(): Boolean = photoUri != null
+
+    /**
+     * Genera un emoji por defecto según la categoría
+     * (uso si no hay foto)
+     */
+    fun getDefaultEmoji(): String {
+        return when (categoryId) {
+            1L -> "🥛"  // Lácteos
+            2L -> "🥤"  // Bebidas
+            3L -> "🍪"  // Galletas
+            4L -> "🥩"  // Carnes
+            else -> "🛒"
+        }
+    }
+    companion object {
+        fun generatePhotoFileName(name: String): String {
+            return "product_${System.currentTimeMillis()}_${name.replace(" ", "_")}.jpg"
+        }
+    }
     /**
      * Calcula el precio total sin ofertas (precio unitario * cantidad)
      */

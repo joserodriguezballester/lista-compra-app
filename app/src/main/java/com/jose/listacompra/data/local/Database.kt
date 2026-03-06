@@ -15,28 +15,7 @@ import com.jose.listacompra.domain.model.Product
  * - Nuevas queries para agrupar por categoría
  */
 
-companion object {
-    val MIGRATION_6_7 = object : Migration(6, 7) {
-        override fun migrate(database: SupportSQLiteDatabase) {
-            // 1. Añadir columna aisleMap
-            database.execSQL(
-                "ALTER TABLE products ADD COLUMN aisleMap TEXT DEFAULT NULL"
-            )
 
-            // 2. Hacer aisleId nullable (SQLite ya lo permite si hay datos)
-            // No hace falta ALTER TABLE, Room lo maneja
-
-            // 3. Añadir columna supermarket a shopping_lists
-            database.execSQL(
-                "ALTER TABLE shopping_lists ADD COLUMN supermarket TEXT DEFAULT NULL"
-            )
-
-            // 4. Opcional: Migrar datos antiguos
-            // Si tiene aisleId, mover a aisleMap vacío para compatibilidad
-            // (mejor hacerlo manualmente en la UI de edición de pasillo)
-        }
-    }
-}
 
 
 
@@ -168,7 +147,14 @@ data class ProductEntity(
     val isPurchased: Boolean,
     val notes: String,
     val orderIndex: Int,
-    val aisleMap: String? = null  // ← NUEVO: JSON {"carrefour":"Pasillo 3","mercadona":"Pasillo 2"}
+    val aisleMap: String? = null , // ← NUEVO: JSON {"carrefour":"Pasillo 3","mercadona":"Pasillo 2"}
+    // NUEVOS CAMPOS PARA FOTO
+    val photoUri: String? = null,      // URI de la imagen seleccionada
+    val photoTimestamp: Long? = null,  // Para ordenar por recientes
+    val isPhotoUserSelected: Boolean = false  // true = elegida por usuario, false = default
+
+
+
 )
 // ==================== DAOs ====================
 
@@ -408,9 +394,36 @@ interface ProductFrequencyDao {
         ProductPriceHistoryEntity::class,
         ProductFrequencyEntity::class
     ],
-    version = 7,  // ← Incrementado para migración
+    version = 8,  // ← Incrementado para migración
     exportSchema = false
 )
+// Migración combinada
+companion object {
+    val MIGRATION_6_8 = object : Migration(6, 8) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            // Migración de Categorías + AisleMap
+            ""
+            // 1. Añadir columnas aisleMap
+            database.execSQL(
+                "ALTER TABLE products ADD COLUMN aisleMap TEXT DEFAULT NULL"
+            )
+            database.execSQL(
+                "ALTER TABLE shopping_lists ADD COLUMN supermarket TEXT DEFAULT NULL"
+            )
+
+            // 2. Añadir columnas de FOTO
+            database.execSQL(
+                "ALTER TABLE products ADD COLUMN photoUri TEXT DEFAULT NULL"
+            )
+            database.execSQL(
+                "ALTER TABLE products ADD COLUMN photoTimestamp INTEGER DEFAULT NULL"
+            )
+            database.execSQL(
+                "ALTER TABLE products ADD COLUMN isPhotoUserSelected INTEGER DEFAULT 0"
+            )
+        }
+    }
+}
 abstract class ShoppingListDatabase : RoomDatabase() {
     abstract fun shoppingListDao(): ShoppingListDao
     abstract fun categoryDao(): CategoryDao    // ← NUEVO

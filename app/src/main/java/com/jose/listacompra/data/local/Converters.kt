@@ -95,7 +95,10 @@ fun ProductEntity.toDomain(): Product = Product(
     isPurchased = this.isPurchased,
     notes = this.notes,
     orderIndex = this.orderIndex,
-    aisleMap = this.aisleMap.toAisleMap()  // ← AÑADIR
+    aisleMap = this.aisleMap.toAisleMap() ,
+    photoUri = this.photoUri,
+    photoTimestamp = this.photoTimestamp,
+    isPhotoUserSelected = this.isPhotoUserSelected
 )
 
 fun Product.toEntity(): ProductEntity = ProductEntity(
@@ -111,7 +114,11 @@ fun Product.toEntity(): ProductEntity = ProductEntity(
     isPurchased = this.isPurchased,
     notes = this.notes,
     orderIndex = this.orderIndex,
-    aisleMap = this.aisleMap.toJsonString()  // ← AÑADIR
+    aisleMap = this.aisleMap.toJsonString() ,
+    photoUri = this.photoUri,
+    photoTimestamp = this.photoTimestamp,
+    isPhotoUserSelected = this.isPhotoUserSelected
+// ← AÑADIR
 )
 // Conversor de Map<String, String> ↔ JSON String
 private val gson = Gson()

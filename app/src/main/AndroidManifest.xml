@@ -10,6 +10,12 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Permiso para feedback táctil (vibración) -->
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Android 13+ -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <!-- Android 9-12 -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <!-- Para cámara -->
+    <uses-permission android:name="android.permission.CAMERA" />
 
     <application
         android:name=".ListaCompraApplication"
