@@ -24,7 +24,8 @@ data class ShoppingListUiState(
     val purchasedCount: Int = 0,
     val totalCount: Int = 0,
     val isLoading: Boolean = false,
-    val productSuggestions: List<com.jose.listacompra.domain.model.ProductSuggestion> = emptyList()
+    val productSuggestions: List<com.jose.listacompra.domain.model.ProductSuggestion> = emptyList(),
+    val showEmptyListConfirmDialog: Boolean = false
 )
 
 class ShoppingListViewModel(application: Application) : AndroidViewModel(application) {
@@ -262,6 +263,24 @@ class ShoppingListViewModel(application: Application) : AndroidViewModel(applica
         viewModelScope.launch {
             val listId = _currentListId.value ?: return@launch
             repository.deleteAllProductsFromList(listId)
+            loadData()
+        }
+    }
+
+    // ========== VACIAR LISTA CON CONFIRMACIÓN ==========
+    fun showEmptyListConfirmDialog() {
+        _uiState.update { it.copy(showEmptyListConfirmDialog = true) }
+    }
+
+    fun dismissEmptyListConfirmDialog() {
+        _uiState.update { it.copy(showEmptyListConfirmDialog = false) }
+    }
+
+    fun emptyCurrentList() {
+        viewModelScope.launch {
+            val listId = _currentListId.value ?: return@launch
+            repository.deleteAllProductsFromList(listId)
+            dismissEmptyListConfirmDialog()
             loadData()
         }
     }
