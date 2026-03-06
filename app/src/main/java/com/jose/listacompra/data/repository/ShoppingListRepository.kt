@@ -10,7 +10,6 @@ import com.jose.listacompra.domain.model.Offer
 import com.jose.listacompra.domain.model.Product
 import com.jose.listacompra.domain.model.ProductSuggestion
 import com.jose.listacompra.domain.model.ShoppingList
-import com.jose.listacompra.domain.model.Supermarket
 import com.jose.listacompra.domain.model.toExport
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -42,8 +41,8 @@ class ShoppingListRepository(context: Context) {
 
     // ==================== CRUD SUPERMERCADOS ====================
 
-    suspend fun getAllSupermarkets(): List<Supermarket> =
-        supermarketDao.getAll().map { it.toDomain() }
+//    suspend fun getAllSupermarkets(): List<Supermarket> =
+//        supermarketDao.getAll().map { it.toDomain() }
 
     suspend fun addSupermarket(name: String, displayName: String): Long {
         val maxOrder = supermarketDao.getAll().maxOfOrNull { it.orderIndex } ?: -1
@@ -82,7 +81,7 @@ class ShoppingListRepository(context: Context) {
         val shoppingList = shoppingListDao.getListById(listId)?.toDomain()
             ?: throw IllegalStateException("Lista no encontrada")
 
-        val supermarket = shoppingList.supermarket  // "carrefour", "mercadona", o null
+        val supermarket = shoppingList.supermarketId // "carrefour", "mercadona", o null
 
         // 2. Normalizar nombre del producto (para búsquedas)
         val normalizedName = productName.trim().uppercase()

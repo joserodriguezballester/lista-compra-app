@@ -13,6 +13,7 @@ import com.jose.listacompra.domain.model.ShoppingList
 fun ShoppingListEntity.toDomain(): ShoppingList = ShoppingList(
     id = this.id,
     name = this.name,
+    supermarketId = this.supermarketId,
     fechaCreacion = this.fechaCreacion,
     estado = this.estado
 )
@@ -20,6 +21,7 @@ fun ShoppingListEntity.toDomain(): ShoppingList = ShoppingList(
 fun ShoppingList.toEntity(): ShoppingListEntity = ShoppingListEntity(
     id = this.id,
     name = this.name,
+    supermarketId = this.supermarketId,
     fechaCreacion = this.fechaCreacion,
     estado = this.estado
 )
