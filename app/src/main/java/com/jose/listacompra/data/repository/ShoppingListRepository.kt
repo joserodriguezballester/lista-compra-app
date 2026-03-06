@@ -2,6 +2,7 @@ package com.jose.listacompra.data.repository
 
 import android.content.Context
 import androidx.room.Room
+import com.google.gson.Gson
 import com.jose.listacompra.data.local.*
 import com.jose.listacompra.domain.model.Aisle
 import com.jose.listacompra.domain.model.Category
@@ -9,8 +10,8 @@ import com.jose.listacompra.domain.model.Offer
 import com.jose.listacompra.domain.model.Product
 import com.jose.listacompra.domain.model.ProductSuggestion
 import com.jose.listacompra.domain.model.ShoppingList
+import com.jose.listacompra.domain.model.Supermarket
 import com.jose.listacompra.domain.model.toExport
-import com.google.gson.Gson
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
@@ -33,10 +34,195 @@ class ShoppingListRepository(context: Context) {
     private val productPriceHistoryDao = db.productPriceHistoryDao()
     private val productFrequencyDao = db.productFrequencyDao()
     private val gson = Gson()
-    
-    // ========== LISTAS DE COMPRAS ==========
-    
-    suspend fun getActiveLists(): List<ShoppingList> {
+    private val supermarketDao = db.supermarketDao()
+    private val supermarketAisleDao = db.supermarketAisleDao()
+    private val productAisleMappingDao = db.productAisleMappingDao()
+
+    private val productSupermarketDao = db.productSupermarketAisleDao()
+
+    // ==================== CRUD SUPERMERCADOS ====================
+
+    suspend fun getAllSupermarkets(): List<Supermarket> =
+        supermarketDao.getAll().map { it.toDomain() }
+
+    suspend fun addSupermarket(name: String, displayName: String): Long {
+        val maxOrder = supermarketDao.getAll().maxOfOrNull { it.orderIndex } ?: -1
+        return supermarketDao.insert(
+            SupermarketEntity(
+                name = name.lowercase(),
+                displayName = displayName,
+                orderIndex = maxOrder + 1
+            )
+        )
+    }
+
+    // Se corta pasos a seguir 6
+//
+//    suspend fun deleteSupermarket(id: Long): Boolean {
+//        val supermarket = supermarketDao.getById(id) ?: return false
+//        if (supermarket.isDefault) return false  // No borrar defaults
+//        supermarketDao.delete(supermarket)
+//        return true
+
+        // ========== LISTAS DE COMPRAS ==========
+    /**
+     * Añade producto asignando AUTOMÁTICAMENTE el pasillo correcto
+     */
+    suspend fun addProductWithAutoAisle(
+        productName: String,
+        quantity: Float = 1f,
+        listId: Long,
+        categoryId: Long? = null,
+        estimatedPrice: Float? = null
+    ): Long {
+
+        // 1. Obtener información de la lista
+        val shoppingList = shoppingListDao.getListById(listId)?.toDomain()
+            ?: throw IllegalStateException("Lista no encontrada")
+
+        val supermarket = shoppingList.supermarket  // "carrefour", "mercadona", o null
+
+        // 2. Normalizar nombre del producto (para búsquedas)
+        val normalizedName = productName.trim().uppercase()
+
+        // 3. Buscar pasillo automático
+        val aisleAssignment = findBestAisle(
+            productName = normalizedName,
+            supermarket = supermarket,
+            categoryId = categoryId
+        )
+
+        // 4. Construir el aisleMap
+        val aisleMap = buildAisleMap(
+            supermarket = supermarket,
+            aisleName = aisleAssignment?.aisleName,
+            existingMap = null
+        )
+
+        // 5. Crear producto
+        val product = ProductEntity(
+            id = 0,
+            name = productName.trim(),
+            categoryId = categoryId,
+            aisleId = null,  // Deprecated
+            shoppingListId = listId,
+            quantity = quantity,
+            estimatedPrice = estimatedPrice,
+            offerId = null,
+            finalPrice = null,
+            isPurchased = false,
+            notes = "",
+            orderIndex = getNextOrderIndex(listId),
+            aisleMap = aisleMap
+        )
+
+        val productId = productDao.insertProduct(product)
+
+        // 6. Guardar asignación para futuro (si tenemos supermercado)
+        if (supermarket != null && aisleAssignment != null) {
+            productSupermarketDao.saveAisle(
+                ProductSupermarketAisleEntity(
+                    productName = normalizedName,
+                    supermarket = supermarket,
+                    aisleName = aisleAssignment.aisleName,
+                    aisleId = aisleAssignment.aisleId
+                )
+            )
+        }
+
+        return productId
+    }
+
+    /**
+     * Lógica principal de búsqueda de pasillo
+     */
+    private suspend fun findBestAisle(
+        productName: String,
+        supermarket: String?,
+        categoryId: Long?
+    ): AisleAssignment? {
+
+        // Si no hay supermercado asignado a la lista → usar solo categoría
+        if (supermarket == null) {
+            return categoryId?.let { getDefaultAisleForCategory(it) }
+        }
+
+        // PRIORIDAD 1: Producto exacto ya usado en este super → mismo pasillo
+        val exactMatch = productSupermarketDao.getAisleForProduct(productName, supermarket)
+        if (exactMatch != null) {
+            return AisleAssignment(
+                aisleName = exactMatch.aisleName,
+                aisleId = exactMatch.aisleId,
+                source = "history_exact"
+            )
+        }
+
+        // PRIORIDAD 2: Producto similar (búsqueda parcial)
+        // Ej: busca "Leche" y encuentra "Leche Hacendado" → mismo pasillo
+        val productWords = productName.split(" ")
+        for (word in productWords) {
+            if (word.length >= 3) {  // Palabras de 3+ letras
+                val similar = productSupermarketDao.findSimilarProductAisle(word, supermarket)
+                if (similar != null) {
+                    return AisleAssignment(
+                        aisleName = similar,
+                        aisleId = null,
+                        source = "history_similar"
+                    )
+                }
+            }
+        }
+
+        // PRIORIDAD 3: Usar categoría → pasillo por defecto de ese super
+        return categoryId?.let {
+            getAisleForCategoryInSupermarket(it, supermarket)
+        }
+    }
+
+    /**
+     * Construye el JSON del aisleMap
+     */
+    private fun buildAisleMap(
+        supermarket: String?,
+        aisleName: String?,
+        existingMap: String?
+    ): String {
+        val map = existingMap?.let {
+            gson.fromJson(it, Map::class.java) as MutableMap<String, String>
+        } ?: mutableMapOf()
+
+        // Añadir o actualizar el pasillo para este supermercado
+        if (supermarket != null && aisleName != null) {
+            map[supermarket] = aisleName
+        }
+
+        return gson.toJson(map)
+    }
+
+    data class AisleAssignment(
+        val aisleName: String,
+        val aisleId: Long?,
+        val source: String  // "history_exact", "history_similar", "category_default"
+    )
+
+    private suspend fun getDefaultAisleForCategory(categoryId: Long): AisleAssignment? {
+        // Ej: Lácteos → "Pasillo de Lácteos"
+        val category = categoryDao.getCategoryById(categoryId)
+        return category?.let {
+            AisleAssignment(
+                aisleName = "Sección ${it.name}",
+                aisleId = null,
+                source = "category_default"
+            )
+        }
+    }
+// pasos a seguir 4 cortado
+//    private suspend fun getAisleForCategoryInSupermarket(
+//        categoryId: Long,
+//        supermarket: String
+//    ): AisleAssignment? {
+
+        suspend fun getActiveLists(): List<ShoppingList> {
         return shoppingListDao.getActiveLists().map { it.toDomain() }
     }
     
@@ -621,4 +807,40 @@ class ShoppingListRepository(context: Context) {
     suspend fun getAllProductsByCategory(listId: Long): List<Product> {
         return productDao.getAllProductsByCategory(listId).map { it.toDomain() }
     }
+    /**
+     * Actualiza la foto de un producto
+     * @param productId ID del producto
+     * @param photoUri URI de la imagen (null para eliminar)
+     */
+    suspend fun updateProductPhoto(productId: Long, photoUri: String?) {
+        val product = productDao.getProductById(productId) ?: return
+
+        val updatedEntity = product.copy(
+            photoUri = photoUri,
+            photoTimestamp = if (photoUri != null) System.currentTimeMillis() else null,
+            isPhotoUserSelected = photoUri != null
+        )
+
+        productDao.updateProduct(updatedEntity)
+    }
+
+    /**
+     * Elimina la foto de un producto
+     */
+    suspend fun deleteProductPhoto(productId: Long) {
+        updateProductPhoto(productId, null)
+    }
+
+    /**
+     * Guarda una foto para un producto nuevo
+     * Usar despues de insertar el producto
+     */
+    suspend fun saveProductWithPhoto(
+        productId: Long,
+        photoUri: String
+    ) {
+        updateProductPhoto(productId, photoUri)
+    }
 }
+
+

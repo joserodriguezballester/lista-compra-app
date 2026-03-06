@@ -276,11 +276,25 @@ class ShoppingListViewModel(application: Application) : AndroidViewModel(applica
         _uiState.update { it.copy(showEmptyListConfirmDialog = false) }
     }
 
-    fun emptyCurrentList() {
+    fun emptyCurrentList(deleteFromHistory: Boolean = false) {
         viewModelScope.launch {
             val listId = _currentListId.value ?: return@launch
-            repository.deleteAllProductsFromList(listId)
-            dismissEmptyListConfirmDialog()
+
+            // Opción 1: Eliminar todos los productos
+            repository.deleteAllProductsInList(listId)
+
+            // Opción 2 (alternativa): Marcar como comprados y mover a historial
+            // repository.markAllAsPurchased(listId)
+
+            if (deleteFromHistory) {
+                // Opcional: borrar también del historial de precios
+                repository.deletePriceHistoryForList(listId)
+            }
+
+            // Haptic feedback
+            // _hapticFeedback.trySend(HapticFeedbackType.Heavy)
+
+            // Recargar datos
             loadData()
         }
     }

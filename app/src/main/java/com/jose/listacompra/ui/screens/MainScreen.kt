@@ -1,5 +1,6 @@
 package com.jose.listacompra.ui.screens
 
+import android.R.attr.padding
 import android.content.Context
 import android.os.Build
 import android.os.VibrationEffect
@@ -116,7 +117,11 @@ fun MainScreen(
     var wasListComplete by remember { mutableStateOf(false) }
     
     val snackbarHostState = remember { SnackbarHostState() }
-    
+
+    val scope = rememberCoroutineScope()
+    var showEmptyConfirmDialog by remember { mutableStateOf(false) }
+    var showEmptySuccessSnackbar by remember { mutableStateOf(false) }
+
     // Detectar cuando se completa toda la lista para vibración especial
     LaunchedEffect(uiState.purchasedCount, uiState.totalCount) {
         val isNowComplete = uiState.totalCount > 0 && uiState.purchasedCount == uiState.totalCount
@@ -158,132 +163,65 @@ fun MainScreen(
                     }
                 },
                 actions = {
-                    // Botón de entrada por voz
-                    VoiceInputButton(
-                        onVoiceCommand = { command ->
-                            // Usar el primer pasillo como default, o 1L si no hay pasillos
-                            val defaultAisleId = uiState.aisles.firstOrNull()?.id ?: 1L
-                            // Crear producto desde comando de voz
-                            viewModel.addProduct(
-                                name = "${command.productName} (${command.quantity.toInt()} ${command.unit})",
-                                aisleId = defaultAisleId,
-                                quantity = command.quantity,
-                                price = null
-                            )
-                        }
-                    )
-                    // Botón VACIAR LISTA (visible si hay productos)
-                    if (uiState.totalCount > 0) {
+                    // Botón vaciar lista (solo si hay productos)
+                    if (uiState.products.isNotEmpty()) {
                         IconButton(
-                            onClick = { viewModel.showEmptyListConfirmDialog() },
+                            onClick = { showEmptyConfirmDialog = true },
                             colors = IconButtonDefaults.iconButtonColors(
                                 contentColor = MaterialTheme.colorScheme.error
                             )
                         ) {
                             Icon(
-                                imageVector = Icons.Outlined.DeleteSweep,
+                                imageVector = Icons.Default.DeleteSweep,
                                 contentDescription = "Vaciar lista"
                             )
                         }
                     }
 
-                    // Botón de menú de opciones
-                    IconButton(onClick = { showThemeMenu = true }) {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = "Menú opciones"
-                        )
+                    // Menú de tres puntos (otras opciones)
+                    var menuExpanded by remember { mutableStateOf(false) }
+                    IconButton(onClick = { menuExpanded = true }) {
+                        Icon(Icons.Default.MoreVert, "Más opciones")
                     }
-                    
-                    // Menú de tema
+
                     DropdownMenu(
-                        expanded = showThemeMenu,
-                        onDismissRequest = { showThemeMenu = false }
+                        expanded = menuExpanded,
+                        onDismissRequest = { menuExpanded = false }
                     ) {
+                        // Mover "Vaciar" también aquí como alternativa
                         DropdownMenuItem(
-                            text = { Text("📋 Mis Listas") },
-                            onClick = {
-                                showThemeMenu = false
-                                onNavigateToLists()
+                            text = {
+                                Text(
+                                    "Vaciar lista",
+                                    color = MaterialTheme.colorScheme.error
+                                )
                             },
                             leadingIcon = {
-                                Icon(Icons.Default.List, contentDescription = null)
-                            }
-                        )
-                        
-                        Divider()
-                        
-                        // Botón para alternar tema oscuro/claro
-                        DropdownMenuItem(
-                            text = { Text("🌙☀️ Cambiar Modo Oscuro/Claro") },
-                            onClick = {
-                                onToggleTheme()
-                                showThemeMenu = false
+                                Icon(
+                                    Icons.Default.DeleteSweep,
+                                    null,
+                                    tint = MaterialTheme.colorScheme.error
+                                )
                             },
-                            leadingIcon = {
-                                Icon(Icons.Default.Settings, contentDescription = null)
+                            onClick = {
+                                menuExpanded = false
+                                showEmptyConfirmDialog = true
                             }
                         )
 
                         DropdownMenuItem(
-                            text = { Text("🎨 Cambiar Color") },
-                            onClick = {
-                                showColorSettings = true
-                                showThemeMenu = false
-                            },
-                            leadingIcon = {
-                                Icon(Icons.Default.Palette, contentDescription = null)
-                            }
+                            text = { Text("Gestionar pasillos") },
+                            onClick = { /* ... */ }
                         )
 
                         DropdownMenuItem(
-                            text = { Text("🗂️ Gestionar Pasillos") },
-                            onClick = {
-                                showManageAisles = true
-                                showThemeMenu = false
-                            },
-                            leadingIcon = {
-                                Icon(Icons.Default.MoreVert, contentDescription = null)
-                            }
+                            text = { Text("Gestionar categorías") },
+                            onClick = { /* ... */ }
                         )
-                        
-                        Divider()
-                        
-                        // Importar ticket PDF
+
                         DropdownMenuItem(
-                            text = { Text("📄 Importar Ticket PDF") },
-                            onClick = {
-                                showImportTicket = true
-                                showThemeMenu = false
-                            },
-                            leadingIcon = {
-                                Icon(Icons.Default.List, contentDescription = null)
-                            }
-                        )
-                        
-                        Divider()
-                        
-                        // Opciones para limpiar lista
-                        DropdownMenuItem(
-                            text = { Text("🧹 Quitar Comprados") },
-                            onClick = {
-                                onClearList(false) // false = solo comprados
-                                showThemeMenu = false
-                            },
-                            leadingIcon = {
-                                Icon(Icons.Default.Delete, contentDescription = null)
-                            }
-                        )
-                        
-                        DropdownMenuItem(
-                            text = { Text("🗑️ Vaciar Lista") },
-                            onClick = {
-                                onClearList(true) // true = todo
-                                showThemeMenu = false
-                            },
-                            leadingIcon = {
-                                Icon(Icons.Default.Delete, contentDescription = null)
-                            }
+                            text = { Text("Archivar lista") },
+                            onClick = { /* ... */ }
                         )
                     }
                 }
@@ -587,6 +525,28 @@ fun MainScreen(
                 onNavigateBack = { showBarcodeScanner = false }
             )
         }
+
+
+        // Diálogo de confirmación
+        if (showEmptyConfirmDialog) {
+            EmptyListConfirmDialog(
+                productCount = uiState.products.size,
+                onConfirm = {
+                    viewModel.emptyCurrentList()
+                    showEmptyConfirmDialog = false
+                    showEmptySuccessSnackbar = true
+                },
+                onDismiss = { showEmptyConfirmDialog = false }
+            )
+        }
+
+        // Snackbar de éxito
+        if (showEmptySuccessSnackbar) {
+            LaunchedEffect(Unit) {
+                kotlinx.coroutines.delay(2000)
+                showEmptySuccessSnackbar = false
+            }
+        }
     }
 
     // Diálogo de confirmación para vaciar lista
@@ -627,6 +587,71 @@ fun MainScreen(
             }
         )
     }
+}
+
+@Composable
+fun EmptyListConfirmDialog( productCount: Int,
+                            onConfirm: () -> Unit,
+                            onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                Icons.Default.DeleteSweep,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.error,
+                modifier = Modifier.size(32.dp)
+            )
+        },
+        title = {
+            Text("¿Vaciar lista?")
+        },
+        text = {
+            Column {
+                Text(
+                    "Se eliminarán $productCount productos de la lista actual."
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    "Esta acción no se puede deshacer.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.outline
+                )
+
+                // Opciones adicionales
+                var deleteFromHistory by remember { mutableStateOf(false) }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(top = 16.dp)
+                ) {
+                    Checkbox(
+                        checked = deleteFromHistory,
+                        onCheckedChange = { deleteFromHistory = it }
+                    )
+                    Text(
+                        "También borrar del historial de precios",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error
+                )
+            ) {
+                Text("Vaciar")
+            }
+        },
+        dismissButton = {
+            OutlinedButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)

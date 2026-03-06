@@ -77,10 +77,11 @@ data class ShoppingListEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val name: String,
+    val supermarketId: Long?,       // ← FK a supermarket (nullable)
     val fechaCreacion: Long = System.currentTimeMillis(),
-    val estado: String = "ACTIVA",
-    val supermarket: String? = null  // ← NUEVO: "carrefour", "mercadona", etc.
+    val estado: String = "ACTIVA"
 )
+
 
 /* NUEVO: Tabla de categorías */
 @Entity(tableName = "categories")
@@ -155,6 +156,108 @@ data class ProductEntity(
 
 
 
+)
+
+/**
+ * Guarda qué pasillo se usó para cada producto en cada supermercado
+ * Ej: "Leche" + "Carrefour" = "Pasillo 3"
+ */
+@Entity(
+    tableName = "product_supermarket_aisle",
+    primaryKeys = ["productName", "supermarket"],
+    indices = [Index("supermarket")]
+)
+data class ProductSupermarketAisleEntity(
+    val productName: String,     // "Leche Hacendado" (normalized)
+    val supermarket: String,     // "carrefour", "mercadona"
+    val aisleName: String,       // "Pasillo 3 - Lácteos"
+    val aisleId: Long?,          // Si tienes IDs de pasillos
+    val lastUsed: Long = System.currentTimeMillis()  // Para ordenar por frecuencia
+)
+
+@Dao
+interface ProductSupermarketAisleDao {
+
+    @Query("""
+        SELECT * FROM product_supermarket_aisle 
+        WHERE productName = :name AND supermarket = :supermarket
+    """)
+    suspend fun getAisleForProduct(
+        name: String,
+        supermarket: String
+    ): ProductSupermarketAisleEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun saveAisle(mapping: ProductSupermarketAisleEntity)
+
+    @Query("""
+        SELECT aisleName FROM product_supermarket_aisle 
+        WHERE productName LIKE '%' || :search || '%' 
+        AND supermarket = :supermarket
+        ORDER BY lastUsed DESC 
+        LIMIT 1
+    """)
+    suspend fun findSimilarProductAisle(
+        search: String,
+        supermarket: String
+    ): String?
+}
+
+@Entity(tableName = "supermarkets")
+data class SupermarketEntity(
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
+    val name: String,              // "Carrefour"
+    val displayName: String,       // "Carrefour La Alberca"
+    val emoji: String = "🏪",
+    val isDefault: Boolean = false, // Uno por defecto
+    val orderIndex: Int = 0
+)
+
+// ==================== PASILLO (AHORA CON SUPER) ====================
+
+@Entity(
+    tableName = "supermarket_aisles",
+    foreignKeys = [
+        ForeignKey(
+            entity = SupermarketEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["supermarketId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index("supermarketId")]
+)
+
+data class SupermarketAisleEntity(
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
+    val supermarketId: Long,       // FK a supermarket
+    val name: String,               // "Pasillo 3 - Lácteos y yogures"
+    val emoji: String = "🥛",
+    val orderIndex: Int = 0,        // Orden dentro de ese super
+    val categoryIds: String?,        // JSON [1, 2, 3] - categorías que contiene
+    val isDefault: Boolean = true    // ¿Es pasillo del sistema o creado por user?
+)
+
+
+// ==================== MAPEO PRODUCTO-PASILLO-POR-SUPER ====================
+
+/**
+ * Guarda dónde se encuentra cada producto en cada supermercado
+ * Ej: "Leche" en "Carrefour" = Pasillo 3 (id: 15)
+ */
+@Entity(
+    tableName = "product_aisle_mappings",
+    primaryKeys = ["productNameNormalized", "supermarketId"],
+    indices = [Index("supermarketId"), Index("productNameNormalized")]
+)
+data class ProductAisleMappingEntity(
+    val productNameNormalized: String,  // "LECHE ENTERA" (uppercase para búsqueda)
+    val supermarketId: Long,
+    val aisleId: Long,                   // FK a supermarket_aisles
+    val lastUsed: Long = System.currentTimeMillis(),
+    val useCount: Int = 1                // Para ordenar por frecuencia
 )
 // ==================== DAOs ====================
 
@@ -330,7 +433,81 @@ interface PurchaseHistoryDao {
     @Query("SELECT SUM(total) FROM purchase_history WHERE fecha >= :since")
     suspend fun getTotalSpentSince(since: Long): Float?
 }
+@Dao
+interface SupermarketDao {
+    @Query("SELECT * FROM supermarkets ORDER BY orderIndex ASC")
+    suspend fun getAll(): List<SupermarketEntity>
 
+    @Query("SELECT * FROM supermarkets WHERE isDefault = 1 LIMIT 1")
+    suspend fun getDefault(): SupermarketEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(supermarket: SupermarketEntity): Long
+
+    @Update
+    suspend fun update(supermarket: SupermarketEntity)
+
+    @Delete
+    suspend fun delete(supermarket: SupermarketEntity)
+}
+
+@Dao
+interface SupermarketAisleDao {
+    @Query("SELECT * FROM supermarket_aisles WHERE supermarketId = :superId ORDER BY orderIndex ASC")
+    suspend fun getBySupermarket(superId: Long): List<SupermarketAisleEntity>
+
+    @Query("SELECT * FROM supermarket_aisles WHERE id = :id")
+    suspend fun getById(id: Long): SupermarketAisleEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(aisle: SupermarketAisleEntity): Long
+
+    @Update
+    suspend fun update(aisle: SupermarketAisleEntity)
+
+    @Delete
+    suspend fun delete(aisle: SupermarketAisleEntity)
+
+    @Update
+    suspend fun updateOrder(aisles: List<SupermarketAisleEntity>)
+
+    // Buscar pasillo que contenga una categoría específica
+    @Query("""
+        SELECT * FROM supermarket_aisles 
+        WHERE supermarketId = :superId 
+        AND categoryIds LIKE '%' || :categoryId || '%'
+        LIMIT 1
+    """)
+    suspend fun findByCategory(superId: Long, categoryId: String): SupermarketAisleEntity?
+}
+
+@Dao
+interface ProductAisleMappingDao {
+    @Query("""
+        SELECT * FROM product_aisle_mappings 
+        WHERE productNameNormalized = :name AND supermarketId = :superId
+    """)
+    suspend fun getMapping(name: String, superId: Long): ProductAisleMappingEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(mapping: ProductAisleMappingEntity)
+
+    @Query("""
+        UPDATE product_aisle_mappings 
+        SET useCount = useCount + 1, lastUsed = :now 
+        WHERE productNameNormalized = :name AND supermarketId = :superId
+    """)
+    suspend fun incrementUseCount(name: String, superId: Long, now: Long = System.currentTimeMillis())
+
+    // Buscar similares
+    @Query("""
+        SELECT * FROM product_aisle_mappings 
+        WHERE productNameNormalized LIKE '%' || :search || '%' 
+        AND supermarketId = :superId
+        ORDER BY useCount DESC LIMIT 1
+    """)
+    suspend fun findSimilar(search: String, superId: Long): ProductAisleMappingEntity?
+}
 @Dao
 interface ProductPriceHistoryDao {
     @Query("SELECT * FROM product_price_history WHERE productName = :name ORDER BY fecha DESC")
@@ -398,32 +575,7 @@ interface ProductFrequencyDao {
     exportSchema = false
 )
 // Migración combinada
-companion object {
-    val MIGRATION_6_8 = object : Migration(6, 8) {
-        override fun migrate(database: SupportSQLiteDatabase) {
-            // Migración de Categorías + AisleMap
-            ""
-            // 1. Añadir columnas aisleMap
-            database.execSQL(
-                "ALTER TABLE products ADD COLUMN aisleMap TEXT DEFAULT NULL"
-            )
-            database.execSQL(
-                "ALTER TABLE shopping_lists ADD COLUMN supermarket TEXT DEFAULT NULL"
-            )
 
-            // 2. Añadir columnas de FOTO
-            database.execSQL(
-                "ALTER TABLE products ADD COLUMN photoUri TEXT DEFAULT NULL"
-            )
-            database.execSQL(
-                "ALTER TABLE products ADD COLUMN photoTimestamp INTEGER DEFAULT NULL"
-            )
-            database.execSQL(
-                "ALTER TABLE products ADD COLUMN isPhotoUserSelected INTEGER DEFAULT 0"
-            )
-        }
-    }
-}
 abstract class ShoppingListDatabase : RoomDatabase() {
     abstract fun shoppingListDao(): ShoppingListDao
     abstract fun categoryDao(): CategoryDao    // ← NUEVO
@@ -436,5 +588,31 @@ abstract class ShoppingListDatabase : RoomDatabase() {
 
     companion object {
         const val DATABASE_NAME = "shopping_list_db"
+  //  }
+   // companion object {
+        val MIGRATION_6_8 = object : Migration(6, 8) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Migración de Categorías + AisleMap
+                ""
+                // 1. Añadir columnas aisleMap
+                database.execSQL(
+                    "ALTER TABLE products ADD COLUMN aisleMap TEXT DEFAULT NULL"
+                )
+                database.execSQL(
+                    "ALTER TABLE shopping_lists ADD COLUMN supermarket TEXT DEFAULT NULL"
+                )
+
+                // 2. Añadir columnas de FOTO
+                database.execSQL(
+                    "ALTER TABLE products ADD COLUMN photoUri TEXT DEFAULT NULL"
+                )
+                database.execSQL(
+                    "ALTER TABLE products ADD COLUMN photoTimestamp INTEGER DEFAULT NULL"
+                )
+                database.execSQL(
+                    "ALTER TABLE products ADD COLUMN isPhotoUserSelected INTEGER DEFAULT 0"
+                )
+            }
+        }
     }
 }
