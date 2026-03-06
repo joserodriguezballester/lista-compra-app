@@ -64,6 +64,8 @@ class ShoppingListRepository(context: Context) {
 //        supermarketDao.delete(supermarket)
 //        return true
 
+
+
         // ========== LISTAS DE COMPRAS ==========
     /**
      * Añade producto asignando AUTOMÁTICAMENTE el pasillo correcto

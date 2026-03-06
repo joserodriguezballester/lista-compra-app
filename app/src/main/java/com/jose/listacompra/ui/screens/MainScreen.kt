@@ -2,10 +2,14 @@ package com.jose.listacompra.ui.screens
 
 import android.R.attr.padding
 import android.content.Context
+import android.net.Uri
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -121,6 +125,32 @@ fun MainScreen(
     val scope = rememberCoroutineScope()
     var showEmptyConfirmDialog by remember { mutableStateOf(false) }
     var showEmptySuccessSnackbar by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+// Estados para PhotoPicker
+    var showPhotoPicker by remember { mutableStateOf(false) }
+    var productIdForPhoto by remember { mutableLongStateOf(0L) }
+
+// Launcher para seleccionar imagen de la galería
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri: Uri? ->
+        uri?.let {
+            viewModel.onPhotoSelected(productIdForPhoto, it.toString())
+            showPhotoPicker = false
+        }
+    }
+
+// Lanzar PhotoPicker cuando showPhotoPicker sea true
+    LaunchedEffect(showPhotoPicker) {
+        if (showPhotoPicker) {
+            photoPickerLauncher.launch(
+                PickVisualMediaRequest(
+                    ActivityResultContracts.PickVisualMedia.ImageOnly
+                )
+            )
+        }
+    }
 
     // Detectar cuando se completa toda la lista para vibración especial
     LaunchedEffect(uiState.purchasedCount, uiState.totalCount) {
@@ -370,8 +400,9 @@ fun MainScreen(
                         )
                     }
                 }
+
             }
-            
+
             // Espacio al final
             item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(2) }) { 
                 Spacer(modifier = Modifier.height(80.dp)) 

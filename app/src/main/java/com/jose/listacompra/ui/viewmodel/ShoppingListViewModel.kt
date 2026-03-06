@@ -275,7 +275,26 @@ class ShoppingListViewModel(application: Application) : AndroidViewModel(applica
     fun dismissEmptyListConfirmDialog() {
         _uiState.update { it.copy(showEmptyListConfirmDialog = false) }
     }
-
+    /**
+     * Guarda la foto seleccionada para un producto
+     * @param productId ID del producto
+     * @param photoUri URI de la imagen seleccionada
+     */
+    fun onPhotoSelected(productId: Long, photoUri: String) {
+        viewModelScope.launch {
+            repository.updateProductPhoto(productId, photoUri)
+            loadData()  // Recargar para mostrar la foto
+        }
+    }
+    /**
+     * Elimina la foto de un producto
+     */
+    fun deleteProductPhoto(productId: Long) {
+        viewModelScope.launch {
+            repository.updateProductPhoto(productId, null)
+            loadData()
+        }
+    }
     fun emptyCurrentList(deleteFromHistory: Boolean = false) {
         viewModelScope.launch {
             val listId = _currentListId.value ?: return@launch
