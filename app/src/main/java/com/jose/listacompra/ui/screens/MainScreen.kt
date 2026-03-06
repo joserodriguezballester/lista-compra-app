@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.LightMode
@@ -26,6 +27,7 @@ import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.DeleteSweep
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
@@ -170,7 +172,21 @@ fun MainScreen(
                             )
                         }
                     )
-                    
+                    // Botón VACIAR LISTA (visible si hay productos)
+                    if (uiState.totalCount > 0) {
+                        IconButton(
+                            onClick = { viewModel.showEmptyListConfirmDialog() },
+                            colors = IconButtonDefaults.iconButtonColors(
+                                contentColor = MaterialTheme.colorScheme.error
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.DeleteSweep,
+                                contentDescription = "Vaciar lista"
+                            )
+                        }
+                    }
+
                     // Botón de menú de opciones
                     IconButton(onClick = { showThemeMenu = true }) {
                         Icon(
@@ -276,7 +292,23 @@ fun MainScreen(
         floatingActionButton = {
             // Menú desplegable de opciones para añadir producto
             var showAddMenu by remember { mutableStateOf(false) }
-            
+            DropdownMenu(
+                expanded = menuExpanded,
+                onDismissRequest = { menuExpanded = false }
+            ) {
+                DropdownMenuItem(
+                    text = { Text("🗂️ Por Categoría") },
+                    onClick = { viewModel.setSortMode(SortMode.CATEGORY) }
+                )
+                DropdownMenuItem(
+                    text = { Text("🛒 Por Pasillo") },
+                    onClick = {
+                        // Si hay supermercado asignado → ordenar por pasillo
+                        // Si no → mostrar diálogo de selección de super
+                        viewModel.onSortByAisleClicked()
+                    }
+                )
+            }
             Box {
                 // Botón principal FAB
                 FloatingActionButton(
@@ -555,6 +587,45 @@ fun MainScreen(
                 onNavigateBack = { showBarcodeScanner = false }
             )
         }
+    }
+
+    // Diálogo de confirmación para vaciar lista
+    if (uiState.showEmptyListConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                viewModel.dismissEmptyListConfirmDialog()
+            },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.DeleteSweep,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error
+                )
+            },
+            title = { Text("¿Vaciar lista?") },
+            text = {
+                Text(
+                    "Se eliminarán ${uiState.totalCount} productos de la lista actual."
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = { viewModel.emptyCurrentList() },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Vaciar")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = { viewModel.dismissEmptyListConfirmDialog() }
+                ) {
+                    Text("Cancelar")
+                }
+            }
+        )
     }
 }
 

@@ -1,5 +1,7 @@
 package com.jose.listacompra.data.local
 
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import com.jose.listacompra.domain.model.Aisle
 import com.jose.listacompra.domain.model.Category
 import com.jose.listacompra.domain.model.Offer
@@ -83,7 +85,7 @@ fun Offer.toEntity(): OfferEntity = OfferEntity(
 fun ProductEntity.toDomain(): Product = Product(
     id = this.id,
     name = this.name,
-    categoryId = this.categoryId,    // ← NUEVO
+    categoryId = this.categoryId,
     aisleId = this.aisleId,
     shoppingListId = this.shoppingListId,
     quantity = this.quantity,
@@ -92,13 +94,14 @@ fun ProductEntity.toDomain(): Product = Product(
     finalPrice = this.finalPrice,
     isPurchased = this.isPurchased,
     notes = this.notes,
-    orderIndex = this.orderIndex
+    orderIndex = this.orderIndex,
+    aisleMap = this.aisleMap.toAisleMap()  // ← AÑADIR
 )
 
 fun Product.toEntity(): ProductEntity = ProductEntity(
     id = this.id,
     name = this.name,
-    categoryId = this.categoryId,    // ← NUEVO
+    categoryId = this.categoryId,
     aisleId = this.aisleId,
     shoppingListId = this.shoppingListId,
     quantity = this.quantity,
@@ -107,5 +110,19 @@ fun Product.toEntity(): ProductEntity = ProductEntity(
     finalPrice = this.finalPrice,
     isPurchased = this.isPurchased,
     notes = this.notes,
-    orderIndex = this.orderIndex
+    orderIndex = this.orderIndex,
+    aisleMap = this.aisleMap.toJsonString()  // ← AÑADIR
 )
+// Conversor de Map<String, String> ↔ JSON String
+private val gson = Gson()
+
+fun Map<String, String>?.toJsonString(): String? {
+    return this?.let { gson.toJson(it) }
+}
+
+fun String?.toAisleMap(): Map<String, String>? {
+    return this?.let {
+        val type = object : TypeToken<Map<String, String>>() {}.type
+        gson.fromJson(it, type)
+    }
+}

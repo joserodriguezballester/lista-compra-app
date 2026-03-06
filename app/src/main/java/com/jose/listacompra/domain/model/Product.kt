@@ -7,8 +7,8 @@ package com.jose.listacompra.domain.model
 data class Product(
     val id: Long = 0,
     val name: String,
-    val categoryId: Long?,        // ← NUEVO: FK a categoría (nullable)
-    val aisleId: Long,              // FK a pasillo
+    val categoryId: Long?,
+    val aisleId: Long? = null,  // Deprecated
     val shoppingListId: Long = 1,
     val quantity: Float = 1f,
     val estimatedPrice: Float? = null,
@@ -16,7 +16,8 @@ data class Product(
     val finalPrice: Float? = null,
     val isPurchased: Boolean = false,
     val notes: String = "",
-    val orderIndex: Int = 0
+    val orderIndex: Int = 0,
+    val aisleMap: Map<String, String>? = null  // ← NUEVO
 ) {
     /**
      * Calcula el precio total sin ofertas (precio unitario * cantidad)

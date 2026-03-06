@@ -259,10 +259,24 @@ class ShoppingListRepository(context: Context) {
     }
     
     // ========== PRODUCTOS ==========
-    
-    suspend fun getAllProducts(listId: Long): List<Product> {
-        return productDao.getAllProducts(listId).map { it.toDomain() }
+
+    suspend fun getAllProducts(listId: Long, sortMode: SortMode = SortMode.CATEGORY): List<Product> {
+        val list = shoppingListDao.getListById(listId)?.toDomain()
+
+        return when (sortMode) {
+            SortMode.CATEGORY -> {
+                productDao.getAllProductsByCategory(listId).map { it.toDomain() }
+            }
+            SortMode.AISLE -> {
+                val superName = list?.supermarket ?: return getAllProducts(listId, SortMode.CATEGORY)
+                // Si no hay supermercado asignado, fallback a categoría
+                productDao.getAllProductsByAisle(listId, "$.${superName}")
+                    .map { it.toDomain() }
+            }
+        }
     }
+
+    enum class SortMode { CATEGORY, AISLE }
     
     suspend fun getProductsByAisle(listId: Long, aisleId: Long): List<Product> {
         return productDao.getProductsByAisle(listId, aisleId).map { it.toDomain() }

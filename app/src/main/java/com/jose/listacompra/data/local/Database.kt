@@ -1,6 +1,8 @@
 package com.jose.listacompra.data.local
 
 import androidx.room.*
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.jose.listacompra.domain.model.Aisle
 import com.jose.listacompra.domain.model.Category
 import com.jose.listacompra.domain.model.Offer
@@ -12,6 +14,32 @@ import com.jose.listacompra.domain.model.Product
  * - ProductEntity ahora tiene categoryId (nullable)
  * - Nuevas queries para agrupar por categoría
  */
+
+companion object {
+    val MIGRATION_6_7 = object : Migration(6, 7) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            // 1. Añadir columna aisleMap
+            database.execSQL(
+                "ALTER TABLE products ADD COLUMN aisleMap TEXT DEFAULT NULL"
+            )
+
+            // 2. Hacer aisleId nullable (SQLite ya lo permite si hay datos)
+            // No hace falta ALTER TABLE, Room lo maneja
+
+            // 3. Añadir columna supermarket a shopping_lists
+            database.execSQL(
+                "ALTER TABLE shopping_lists ADD COLUMN supermarket TEXT DEFAULT NULL"
+            )
+
+            // 4. Opcional: Migrar datos antiguos
+            // Si tiene aisleId, mover a aisleMap vacío para compatibilidad
+            // (mejor hacerlo manualmente en la UI de edición de pasillo)
+        }
+    }
+}
+
+
+
 
 // ==================== ENTIDADES ====================
 
@@ -71,7 +99,8 @@ data class ShoppingListEntity(
     val id: Long = 0,
     val name: String,
     val fechaCreacion: Long = System.currentTimeMillis(),
-    val estado: String = "ACTIVA"
+    val estado: String = "ACTIVA",
+    val supermarket: String? = null  // ← NUEVO: "carrefour", "mercadona", etc.
 )
 
 /* NUEVO: Tabla de categorías */
@@ -129,8 +158,8 @@ data class ProductEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val name: String,
-    val categoryId: Long?,      // ← NUEVO: FK a categories (nullable)
-    val aisleId: Long,           // FK a aisles (sigue siendo obligatorio)
+    val categoryId: Long?,  // FK a categories (nullable)
+    val aisleId: Long?,     // ← HACER NULLABLE (mantener para compatibilidad)
     val shoppingListId: Long,
     val quantity: Float,
     val estimatedPrice: Float?,
@@ -138,7 +167,8 @@ data class ProductEntity(
     val finalPrice: Float?,
     val isPurchased: Boolean,
     val notes: String,
-    val orderIndex: Int
+    val orderIndex: Int,
+    val aisleMap: String? = null  // ← NUEVO: JSON {"carrefour":"Pasillo 3","mercadona":"Pasillo 2"}
 )
 // ==================== DAOs ====================
 
@@ -378,7 +408,8 @@ interface ProductFrequencyDao {
         ProductPriceHistoryEntity::class,
         ProductFrequencyEntity::class
     ],
-    version = 6  // ← Incrementado para migración
+    version = 7,  // ← Incrementado para migración
+    exportSchema = false
 )
 abstract class ShoppingListDatabase : RoomDatabase() {
     abstract fun shoppingListDao(): ShoppingListDao
