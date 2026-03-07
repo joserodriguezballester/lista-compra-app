@@ -5,12 +5,14 @@ import com.google.gson.reflect.TypeToken
 import com.jose.listacompra.data.local.entities.AisleEntity
 import com.jose.listacompra.data.local.entities.CategoryEntity
 import com.jose.listacompra.data.local.entities.OfferEntity
+import com.jose.listacompra.data.local.entities.ProductAisleMappingEntity
 import com.jose.listacompra.data.local.entities.ProductEntity
 import com.jose.listacompra.data.local.entities.ShoppingListEntity
 import com.jose.listacompra.domain.model.Aisle
 import com.jose.listacompra.domain.model.Category
 import com.jose.listacompra.domain.model.Offer
 import com.jose.listacompra.domain.model.Product
+import com.jose.listacompra.domain.model.ProductAisleMapping
 import com.jose.listacompra.domain.model.ShoppingList
 
 // ==================== CONVERTIDORES DE SHOPPING LIST ====================
@@ -140,3 +142,4 @@ fun String?.toAisleMap(): Map<String, String>? {
         gson.fromJson(it, type)
     }
 }
+

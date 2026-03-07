@@ -31,15 +31,7 @@ data class Product(
      * Genera un emoji por defecto según la categoría
      * (uso si no hay foto)
      */
-    fun getDefaultEmoji(): String {
-        return when (categoryId) {
-            1L -> "🥛"  // Lácteos
-            2L -> "🥤"  // Bebidas
-            3L -> "🍪"  // Galletas
-            4L -> "🥩"  // Carnes
-            else -> "🛒"
-        }
-    }
+
     companion object {
         fun generatePhotoFileName(name: String): String {
             return "product_${System.currentTimeMillis()}_${name.replace(" ", "_")}.jpg"
@@ -70,5 +62,20 @@ data class Product(
      */
     fun effectiveUnitPrice(): Float {
         return if (quantity > 0) finalPriceToPay() / quantity else 0f
+    }
+    fun getDefaultEmoji(): String {
+        return when (categoryId?.toInt()) {
+            1 -> "🥛"  // Lácteos
+            2 -> "🥤"  // Bebidas
+            3 -> "🍪"  // Galletas
+            4 -> "🥩"  // Carnes
+            5 -> "🐟"  // Pescados
+            6 -> "🍎"  // Frutas/Verduras
+            7 -> "🥖"  // Panadería
+            8 -> "❄️"  // Congelados
+            9 -> "🧼"  // Limpieza
+            10 -> "🥫" // Despensa
+            else -> "🛒"
+        }
     }
 }

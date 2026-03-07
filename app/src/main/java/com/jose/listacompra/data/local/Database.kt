@@ -66,6 +66,8 @@ abstract class ShoppingListDatabase : RoomDatabase() {
     abstract fun productAisleMappingDao(): ProductAisleMappingDao
     abstract fun productSupermarketAisleDao(): ProductSupermarketAisleDao
 
+  //  abstract fun productHistoryDao(): ProductHistoryDao
+
     companion object {
         const val DATABASE_NAME = "shopping_list_db"
 

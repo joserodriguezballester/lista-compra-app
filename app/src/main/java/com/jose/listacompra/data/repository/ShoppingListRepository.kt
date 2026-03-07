@@ -6,10 +6,12 @@ import com.google.gson.Gson
 import com.jose.listacompra.data.local.*
 import com.jose.listacompra.data.local.entities.AisleEntity
 import com.jose.listacompra.data.local.entities.OfferEntity
+import com.jose.listacompra.data.local.entities.ProductAisleMappingEntity
 import com.jose.listacompra.data.local.entities.ProductEntity
 import com.jose.listacompra.data.local.entities.ProductFrequencyEntity
 import com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity
 import com.jose.listacompra.data.local.entities.ProductSupermarketAisleEntity
+import com.jose.listacompra.data.local.entities.PurchaseHistoryEntity
 import com.jose.listacompra.data.local.entities.ShoppingListEntity
 import com.jose.listacompra.data.local.entities.SupermarketEntity
 import com.jose.listacompra.domain.model.Aisle
@@ -19,6 +21,7 @@ import com.jose.listacompra.domain.model.Product
 import com.jose.listacompra.domain.model.ProductSuggestion
 import com.jose.listacompra.domain.model.ShoppingList
 import com.jose.listacompra.domain.model.toExport
+import com.jose.listacompra.domain.util.PriceCalculator.calculateFinalPrice
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
@@ -89,7 +92,7 @@ class ShoppingListRepository(context: Context) {
         val shoppingList = shoppingListDao.getListById(listId)?.toDomain()
             ?: throw IllegalStateException("Lista no encontrada")
 
-        val supermarket = shoppingList.supermarketId // "carrefour", "mercadona", o null
+        val supermarketId = shoppingList.supermarketId // "carrefour", "mercadona", o null
 
         // 2. Normalizar nombre del producto (para búsquedas)
         val normalizedName = productName.trim().uppercase()
@@ -97,13 +100,13 @@ class ShoppingListRepository(context: Context) {
         // 3. Buscar pasillo automático
         val aisleAssignment = findBestAisle(
             productName = normalizedName,
-            supermarket = supermarket,
+            supermarketId = supermarketId,
             categoryId = categoryId
         )
 
         // 4. Construir el aisleMap
         val aisleMap = buildAisleMap(
-            supermarket = supermarket,
+            supermarketId = supermarketId,
             aisleName = aisleAssignment?.aisleName,
             existingMap = null
         )
@@ -121,20 +124,25 @@ class ShoppingListRepository(context: Context) {
             finalPrice = null,
             isPurchased = false,
             notes = "",
-            orderIndex = getNextOrderIndex(listId),
-            aisleMap = aisleMap
+            orderIndex =productDao.getNextOrderIndex(listId),
+            aisleMap = aisleMap,
+                    // Campos de foto (si existen en tu entity)
+            photoUri = null,
+            photoTimestamp = null,
+            isPhotoUserSelected = false
         )
 
         val productId = productDao.insertProduct(product)
 
-        // 6. Guardar asignación para futuro (si tenemos supermercado)
-        if (supermarket != null && aisleAssignment != null) {
-            productSupermarketDao.saveAisle(
-                ProductSupermarketAisleEntity(
-                    productName = normalizedName,
-                    supermarket = supermarket,
-                    aisleName = aisleAssignment.aisleName,
-                    aisleId = aisleAssignment.aisleId
+        if (supermarketId != null && aisleAssignment != null) {
+            productAisleMappingDao.insert(
+                ProductAisleMappingEntity(
+                    productNameNormalized = normalizedName,
+                    supermarketId = supermarketId,
+                    aisleId = aisleAssignment.aisleId,
+                    aisleName = aisleAssignment.aisleName, // ← AHORA SE PUEDE GUARDAR
+                    lastUsed = System.currentTimeMillis(),
+                    useCount = 1
                 )
             )
         }
@@ -147,41 +155,56 @@ class ShoppingListRepository(context: Context) {
      */
     private suspend fun findBestAisle(
         productName: String,
-        supermarket: String?,
+        supermarketId: Long?,
         categoryId: Long?
     ): AisleAssignment? {
 
         // Si no hay supermercado asignado a la lista → usar solo categoría
-        if (supermarket == null) {
+        if (supermarketId == null) {
             return categoryId?.let { getDefaultAisleForCategory(it) }
         }
 
         // PRIORIDAD 1: Producto exacto ya usado en este super → mismo pasillo
-        val exactMatch = productSupermarketDao.getAisleForProduct(productName, supermarket)
+        // Buscar por ID de supermercado
+        val exactMatch = productAisleMappingDao.getMapping(productName, supermarketId)
         if (exactMatch != null) {
             return AisleAssignment(
                 aisleName = exactMatch.aisleName,
-                aisleId = exactMatch.aisleId,
-                source = "history_exact"
-            )
+               aisleId = exactMatch.aisleId,
+               source = "history_exact"
+                        )
         }
 
         // PRIORIDAD 2: Producto similar (búsqueda parcial)
         // Ej: busca "Leche" y encuentra "Leche Hacendado" → mismo pasillo
+//        val productWords = productName.split(" ")
+//        for (word in productWords) {
+//            if (word.length >= 3) {  // Palabras de 3+ letras
+//                val similar = productSupermarketDao.findSimilarProductAisle(word, supermarketId)
+//                if (similar != null) {
+//                    return AisleAssignment(
+//                        aisleName = similar,
+//                        aisleId = null,
+//                        source = "history_similar"
+//                    )
+//                }
+//            }
+//        }
+// PRIORIDAD 2: Producto similar
         val productWords = productName.split(" ")
         for (word in productWords) {
-            if (word.length >= 3) {  // Palabras de 3+ letras
-                val similar = productSupermarketDao.findSimilarProductAisle(word, supermarket)
+            if (word.length >= 3) {
+                val similar = productAisleMappingDao.findSimilar(word, supermarketId)
                 if (similar != null) {
+                    // ← AHORA FUNCIONA: aisleName está disponible
                     return AisleAssignment(
-                        aisleName = similar,
-                        aisleId = null,
+                        aisleName = similar.aisleName,
+                        aisleId = similar.aisleId,
                         source = "history_similar"
                     )
                 }
             }
         }
-
         // PRIORIDAD 3: Usar categoría → pasillo por defecto de ese super
         return categoryId?.let {
             getAisleForCategoryInSupermarket(it, supermarket)
@@ -192,17 +215,18 @@ class ShoppingListRepository(context: Context) {
      * Construye el JSON del aisleMap
      */
     private fun buildAisleMap(
-        supermarket: String?,
+        supermarketId: Long?,  // ← CORREGIDO: de String? a Long?
         aisleName: String?,
         existingMap: String?
     ): String {
+        val gson = Gson()
+
         val map = existingMap?.let {
-            gson.fromJson(it, Map::class.java) as MutableMap<String, String>
+            gson.fromJson(it, MutableMap::class.java) as MutableMap<String, String>
         } ?: mutableMapOf()
 
-        // Añadir o actualizar el pasillo para este supermercado
-        if (supermarket != null && aisleName != null) {
-            map[supermarket] = aisleName
+        if (supermarketId != null && aisleName != null) {
+            map[supermarketId.toString()] = aisleName
         }
 
         return gson.toJson(map)
@@ -210,7 +234,7 @@ class ShoppingListRepository(context: Context) {
 
     data class AisleAssignment(
         val aisleName: String,
-        val aisleId: Long?,
+        val aisleId: Long,
         val source: String  // "history_exact", "history_similar", "category_default"
     )
 
@@ -220,17 +244,25 @@ class ShoppingListRepository(context: Context) {
         return category?.let {
             AisleAssignment(
                 aisleName = "Sección ${it.name}",
-                aisleId = null,
+                aisleId = -1,
                 source = "category_default"
             )
         }
     }
-// pasos a seguir 4 cortado
-//    private suspend fun getAisleForCategoryInSupermarket(
-//        categoryId: Long,
-//        supermarket: String
-//    ): AisleAssignment? {
-
+    private suspend fun getAisleForCategoryInSupermarket(
+        categoryId: Long,
+        supermarketId: Long
+    ): AisleAssignment? {
+        // Buscar pasillo que contenga esta categoría
+        val aisle = supermarketAisleDao.findByCategory(supermarketId, categoryId.toString())
+        return aisle?.let {
+            AisleAssignment(
+                aisleName = it.name,
+                aisleId = it.id,
+                source = "category_default"
+            )
+        }
+    }
         suspend fun getActiveLists(): List<ShoppingList> {
         return shoppingListDao.getActiveLists().map { it.toDomain() }
     }
@@ -329,82 +361,7 @@ class ShoppingListRepository(context: Context) {
             offerDao.insertAll(defaultOffers)
         }
     }
-    
-    /**
-     * Calcula el precio final aplicando una oferta
-     */
-    fun calculateFinalPrice(quantity: Float, unitPrice: Float, offerCode: String?): Float? {
-        if (unitPrice <= 0 || quantity <= 0) return null
-        
-        return when (offerCode) {
-            "3x2" -> {
-                val groups = (quantity / 3).toInt()
-                val remainder = quantity % 3
-                (groups * 2 + remainder) * unitPrice
-            }
-            "2x1" -> {
-                val groups = (quantity / 2).toInt()
-                val remainder = quantity % 2
-                (groups * 1 + remainder) * unitPrice
-            }
-            "2nd_50" -> {
-                val pairs = (quantity / 2).toInt()
-                val remainder = quantity % 2
-                (pairs * 1.5f + remainder) * unitPrice
-            }
-            "2nd_70" -> {
-                val pairs = (quantity / 2).toInt()
-                val remainder = quantity % 2
-                (pairs * 1.3f + remainder) * unitPrice  // 100% + 30%
-            }
-            "4x3" -> {
-                val groups = (quantity / 4).toInt()
-                val remainder = quantity % 4
-                (groups * 3 + remainder) * unitPrice
-            }
-            else -> quantity * unitPrice  // Sin oferta o custom manual
-        }
-    }
 
-    /**
-     * Calcula el precio final aplicando una oferta (versión suspend con OfferEntity)
-     */
-    suspend fun calculateFinalPrice(quantity: Float, unitPrice: Float, offer: OfferEntity?): Float {
-        return when (offer?.code) {
-            "3x2" -> {
-                // Lleva 3 paga 2
-                val groups = (quantity / 3).toInt()
-                val remainder = quantity % 3
-                (groups * 2 + remainder) * unitPrice
-            }
-            "2x1" -> {
-                // Lleva 2 paga 1
-                val groups = (quantity / 2).toInt()
-                val remainder = quantity % 2
-                (groups * 1 + remainder) * unitPrice
-            }
-            "2nd_50" -> {
-                // 2ª unidad -50%
-                val pairs = (quantity / 2).toInt()
-                val remainder = quantity % 2
-                (pairs * 1.5f + remainder) * unitPrice
-            }
-            "2nd_70" -> {
-                // 2ª unidad -70%
-                val pairs = (quantity / 2).toInt()
-                val remainder = quantity % 2
-                (pairs * 1.3f + remainder) * unitPrice
-            }
-            "4x3" -> {
-                // Lleva 4 paga 3
-                val groups = (quantity / 4).toInt()
-                val remainder = quantity % 4
-                (groups * 3 + remainder) * unitPrice
-            }
-            else -> quantity * unitPrice
-        }
-    }
-    
     /**
      * Calcula el precio final para un producto con su oferta asignada
      */

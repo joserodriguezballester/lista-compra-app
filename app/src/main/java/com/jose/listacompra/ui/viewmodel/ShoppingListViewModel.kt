@@ -11,6 +11,7 @@ import com.jose.listacompra.domain.model.Aisle
 import com.jose.listacompra.domain.model.Offer
 import com.jose.listacompra.domain.model.Product
 import com.jose.listacompra.domain.model.ShoppingList
+import com.jose.listacompra.domain.util.PriceCalculator.calculateFinalPrice
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -188,7 +189,7 @@ class ShoppingListViewModel(application: Application) : AndroidViewModel(applica
         if (unitPrice == null || unitPrice <= 0) return null
         
         val offer = uiState.value.offers.find { it.id == offerId }
-        val finalPrice = repository.calculateFinalPrice(quantity, unitPrice, offer?.code)
+        val finalPrice = calculateFinalPrice(quantity, unitPrice, offer?.code)
         val totalWithoutOffer = quantity * unitPrice
         
         return OfferPreviewResult(

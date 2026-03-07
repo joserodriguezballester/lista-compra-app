@@ -47,4 +47,20 @@ interface ProductDao {
 
     @Query("SELECT MAX(orderIndex) FROM products WHERE shoppingListId = :listId AND categoryId = :categoryId")
     suspend fun getMaxOrderIndexInCategory(listId: Long, categoryId: Long?): Int?
+
+    /* NUEVO: Obtener siguiente orderIndex para una lista */
+    @Query("SELECT IFNULL(MAX(orderIndex), -1) + 1 FROM products WHERE shoppingListId = :listId")
+    suspend fun getNextOrderIndex(listId: Long): Int
+
+    /* NUEVO: Buscar productos por nombre (para autocompletado) */
+    @Query("""
+        SELECT * FROM products 
+        WHERE name LIKE '%' || :query || '%' 
+        AND shoppingListId = :listId
+        ORDER BY name ASC
+        LIMIT 10
+    """)
+    suspend fun searchByName(listId: Long, query: String): List<ProductEntity>
+
+
 }
