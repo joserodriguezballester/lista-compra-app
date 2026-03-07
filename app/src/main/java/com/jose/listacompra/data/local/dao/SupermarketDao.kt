@@ -6,7 +6,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
-import com.jose.listacompra.data.local.SupermarketEntity
+import com.jose.listacompra.data.local.entities.SupermarketEntity
 
 @Dao
 interface SupermarketDao {

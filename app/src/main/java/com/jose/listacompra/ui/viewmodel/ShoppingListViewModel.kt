@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.jose.listacompra.data.local.InitialDataSeeder
+import com.jose.listacompra.data.local.entities.ProductFrequencyEntity
 import com.jose.listacompra.data.preferences.ListPreferences
 import com.jose.listacompra.data.repository.ShoppingListRepository
 import com.jose.listacompra.domain.model.Aisle
@@ -375,7 +376,7 @@ class ShoppingListViewModel(application: Application) : AndroidViewModel(applica
     /**
      * Obtiene productos sugeridos basados en frecuencia de compra
      */
-    fun getSuggestedProductsByFrequency(callback: (List<com.jose.listacompra.data.local.ProductFrequencyEntity>) -> Unit) {
+    fun getSuggestedProductsByFrequency(callback: (List<ProductFrequencyEntity>) -> Unit) {
         viewModelScope.launch {
             val products = repository.getSuggestedProductsByFrequency()
             callback(products)

@@ -1,7 +1,9 @@
 package com.jose.listacompra.data.local
 
-import android.icu.text.ListFormatter
-import androidx.room.*
+import androidx.room.Database
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.jose.listacompra.data.local.dao.AisleDao
@@ -16,224 +18,18 @@ import com.jose.listacompra.data.local.dao.PurchaseHistoryDao
 import com.jose.listacompra.data.local.dao.ShoppingListDao
 import com.jose.listacompra.data.local.dao.SupermarketAisleDao
 import com.jose.listacompra.data.local.dao.SupermarketDao
-import com.jose.listacompra.domain.model.Aisle
-import com.jose.listacompra.domain.model.Category
-import com.jose.listacompra.domain.model.Offer
-import com.jose.listacompra.domain.model.Product
-
-// ==================== ENTIDADES ====================
-
-@Entity(tableName = "purchase_history")
-data class PurchaseHistoryEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    val fecha: Long = System.currentTimeMillis(),
-    val total: Float,
-    val tienda: String = "Carrefour",
-    val numProductos: Int,
-    val ahorroTotal: Float = 0f,
-    val ticketUrl: String? = null
-)
-
-@Entity(
-    tableName = "product_price_history",
-    foreignKeys = [
-        ForeignKey(
-            entity = PurchaseHistoryEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["purchaseId"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ],
-    indices = [Index("purchaseId"), Index("productName")]
-)
-data class ProductPriceHistoryEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    val purchaseId: Long,
-    val productName: String,
-    val price: Float,
-    val quantity: Int = 1,
-    val aisle: String? = null,
-    val fecha: Long = System.currentTimeMillis()
-)
-
-@Entity(
-    tableName = "product_frequency",
-    indices = [Index("productName")]
-)
-data class ProductFrequencyEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    val productName: String,
-    val timesPurchased: Int = 1,
-    val averageDaysBetween: Float? = null,
-    val lastPurchaseDate: Long,
-    val estimatedNextDate: Long? = null,
-    val category: String? = null
-)
-
-@Entity(tableName = "shopping_lists")
-data class ShoppingListEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    val name: String,
-    val supermarketId: Long? = null,       // ← FK a supermarket (nullable)
-    val fechaCreacion: Long = System.currentTimeMillis(),
-    val estado: String = "ACTIVA"
-)
-
-
-/* NUEVO: Tabla de categorías */
-@Entity(tableName = "categories")
-data class CategoryEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    val name: String,          // "Lácteos", "Bebidas", "Galletas"
-    val emoji: String,         // "🥛", "🥤", "🍪"
-    val description: String = "",
-    val orderIndex: Int = 0    // Para ordenarlas
-)
-
-@Entity(tableName = "aisles")
-data class AisleEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    val name: String,
-    val emoji: String,
-    val orderIndex: Int,
-    val isDefault: Boolean
-)
-
-@Entity(tableName = "offers")
-data class OfferEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    val code: String,
-    val name: String,
-    val description: String,
-    val isDefault: Boolean,
-    val formula: String
-)
-
-/* MODIFICADO: ProductEntity ahora tiene categoryId */
-@Entity(
-    tableName = "products",
-    foreignKeys = [
-        ForeignKey(
-            entity = ShoppingListEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["shoppingListId"],
-            onDelete = ForeignKey.CASCADE
-        ),
-        ForeignKey(
-            entity = CategoryEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["categoryId"],
-            onDelete = ForeignKey.SET_NULL
-        )
-    ],
-    indices = [Index("shoppingListId"), Index("categoryId")]
-)
-data class ProductEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    val name: String,
-    val categoryId: Long?,  // FK a categories (nullable)
-    val aisleId: Long?,     // ← HACER NULLABLE (mantener para compatibilidad)
-    val shoppingListId: Long,
-    val quantity: Float,
-    val estimatedPrice: Float?,
-    val offerId: Long?,
-    val finalPrice: Float?,
-    val isPurchased: Boolean,
-    val notes: String,
-    val orderIndex: Int,
-    val aisleMap: String? = null , // ← NUEVO: JSON {"carrefour":"Pasillo 3","mercadona":"Pasillo 2"}
-    // NUEVOS CAMPOS PARA FOTO
-    val photoUri: String? = null,      // URI de la imagen seleccionada
-    val photoTimestamp: Long? = null,  // Para ordenar por recientes
-    val isPhotoUserSelected: Boolean = false  // true = elegida por usuario, false = default
-
-
-
-)
-
-/**
- * Guarda qué pasillo se usó para cada producto en cada supermercado
- * Ej: "Leche" + "Carrefour" = "Pasillo 3"
- */
-@Entity(
-    tableName = "product_supermarket_aisle",
-    primaryKeys = ["productName", "supermarket"],
-    indices = [Index("supermarket")]
-)
-data class ProductSupermarketAisleEntity(
-    val productName: String,     // "Leche Hacendado" (normalized)
-    val supermarket: String,     // "carrefour", "mercadona"
-    val aisleName: String,       // "Pasillo 3 - Lácteos"
-    val aisleId: Long?,          // Si tienes IDs de pasillos
-    val lastUsed: Long = System.currentTimeMillis()  // Para ordenar por frecuencia
-)
-
-@Entity(tableName = "supermarkets")
-data class SupermarketEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    val name: String,              // "Carrefour"
-    val displayName: String,       // "Carrefour La Alberca"
-    val emoji: String = "🏪",
-    val isDefault: Boolean = false, // Uno por defecto
-    val orderIndex: Int = 0
-)
-
-// ==================== PASILLO (AHORA CON SUPER) ====================
-
-@Entity(
-    tableName = "supermarket_aisles",
-    foreignKeys = [
-        ForeignKey(
-            entity = SupermarketEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["supermarketId"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ],
-    indices = [Index("supermarketId")]
-)
-
-data class SupermarketAisleEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    val supermarketId: Long,       // FK a supermarket
-    val name: String,               // "Pasillo 3 - Lácteos y yogures"
-    val emoji: String = "🥛",
-    val orderIndex: Int = 0,        // Orden dentro de ese super
-    val categoryIds: String?,        // JSON [1, 2, 3] - categorías que contiene
-    val isDefault: Boolean = true    // ¿Es pasillo del sistema o creado por user?
-)
-
-
-// ==================== MAPEO PRODUCTO-PASILLO-POR-SUPER ====================
-
-/**
- * Guarda dónde se encuentra cada producto en cada supermercado
- * Ej: "Leche" en "Carrefour" = Pasillo 3 (id: 15)
- */
-@Entity(
-    tableName = "product_aisle_mappings",
-    primaryKeys = ["productNameNormalized", "supermarketId"],
-    indices = [Index("supermarketId"), Index("productNameNormalized")]
-)
-data class ProductAisleMappingEntity(
-    val productNameNormalized: String,  // "LECHE ENTERA" (uppercase para búsqueda)
-    val supermarketId: Long,
-    val aisleId: Long,                   // FK a supermarket_aisles
-    val lastUsed: Long = System.currentTimeMillis(),
-    val useCount: Int = 1                // Para ordenar por frecuencia
-)
-// ==================== DAOs ====================
-
+import com.jose.listacompra.data.local.entities.AisleEntity
+import com.jose.listacompra.data.local.entities.CategoryEntity
+import com.jose.listacompra.data.local.entities.OfferEntity
+import com.jose.listacompra.data.local.entities.ProductAisleMappingEntity
+import com.jose.listacompra.data.local.entities.ProductEntity
+import com.jose.listacompra.data.local.entities.ProductFrequencyEntity
+import com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity
+import com.jose.listacompra.data.local.entities.ProductSupermarketAisleEntity
+import com.jose.listacompra.data.local.entities.PurchaseHistoryEntity
+import com.jose.listacompra.data.local.entities.ShoppingListEntity
+import com.jose.listacompra.data.local.entities.SupermarketAisleEntity
+import com.jose.listacompra.data.local.entities.SupermarketEntity
 
 
 /* Database actualizada con versión 6 (para migración) */

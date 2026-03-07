@@ -6,7 +6,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
-import com.jose.listacompra.data.local.OfferEntity
+import com.jose.listacompra.data.local.entities.OfferEntity
 
 @Dao
 interface OfferDao {

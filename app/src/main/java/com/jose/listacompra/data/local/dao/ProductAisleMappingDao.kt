@@ -4,7 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.jose.listacompra.data.local.ProductAisleMappingEntity
+import com.jose.listacompra.data.local.entities.ProductAisleMappingEntity
 
 @Dao
 interface ProductAisleMappingDao {

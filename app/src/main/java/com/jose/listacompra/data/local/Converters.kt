@@ -2,6 +2,11 @@ package com.jose.listacompra.data.local
 
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.jose.listacompra.data.local.entities.AisleEntity
+import com.jose.listacompra.data.local.entities.CategoryEntity
+import com.jose.listacompra.data.local.entities.OfferEntity
+import com.jose.listacompra.data.local.entities.ProductEntity
+import com.jose.listacompra.data.local.entities.ShoppingListEntity
 import com.jose.listacompra.domain.model.Aisle
 import com.jose.listacompra.domain.model.Category
 import com.jose.listacompra.domain.model.Offer
@@ -116,7 +121,7 @@ fun Product.toEntity(): ProductEntity = ProductEntity(
     isPurchased = this.isPurchased,
     notes = this.notes,
     orderIndex = this.orderIndex,
-    aisleMap = this.aisleMap.toJsonString() ,
+    aisleMap = this.aisleMap.toJsonString(),
     photoUri = this.photoUri,
     photoTimestamp = this.photoTimestamp,
     isPhotoUserSelected = this.isPhotoUserSelected

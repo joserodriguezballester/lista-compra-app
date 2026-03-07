@@ -4,7 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.jose.listacompra.data.local.ProductPriceHistoryEntity
+import com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity
 
 @Dao
 interface ProductPriceHistoryDao {

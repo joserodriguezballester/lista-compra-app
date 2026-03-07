@@ -4,6 +4,14 @@ import android.content.Context
 import androidx.room.Room
 import com.google.gson.Gson
 import com.jose.listacompra.data.local.*
+import com.jose.listacompra.data.local.entities.AisleEntity
+import com.jose.listacompra.data.local.entities.OfferEntity
+import com.jose.listacompra.data.local.entities.ProductEntity
+import com.jose.listacompra.data.local.entities.ProductFrequencyEntity
+import com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity
+import com.jose.listacompra.data.local.entities.ProductSupermarketAisleEntity
+import com.jose.listacompra.data.local.entities.ShoppingListEntity
+import com.jose.listacompra.data.local.entities.SupermarketEntity
 import com.jose.listacompra.domain.model.Aisle
 import com.jose.listacompra.domain.model.Category
 import com.jose.listacompra.domain.model.Offer
