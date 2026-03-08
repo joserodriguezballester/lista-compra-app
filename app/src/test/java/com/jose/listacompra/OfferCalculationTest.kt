@@ -1,6 +1,6 @@
 package com.jose.listacompra
 
-import com.jose.listacompra.data.local.OfferEntity
+import com.jose.listacompra.data.local.entities.OfferEntity
 import org.junit.Test
 import org.junit.Assert.*
 

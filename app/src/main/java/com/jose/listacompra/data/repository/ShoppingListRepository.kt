@@ -1,37 +1,49 @@
 package com.jose.listacompra.data.repository
 
-import android.content.Context
-import androidx.room.Room
-import com.jose.listacompra.data.local.*
+import com.google.gson.Gson
+import com.jose.listacompra.data.local.converters.toDomain
+import com.jose.listacompra.data.local.converters.toEntity
+import com.jose.listacompra.data.local.dao.AisleDao
+import com.jose.listacompra.data.local.dao.OfferDao
+import com.jose.listacompra.data.local.dao.ProductDao
+import com.jose.listacompra.data.local.dao.ProductFrequencyDao
+import com.jose.listacompra.data.local.dao.ProductHistoryDao
+import com.jose.listacompra.data.local.dao.ProductPriceHistoryDao
+import com.jose.listacompra.data.local.dao.PurchaseHistoryDao
+import com.jose.listacompra.data.local.dao.ShoppingListDao
+import com.jose.listacompra.data.local.entities.AisleEntity
+import com.jose.listacompra.data.local.entities.OfferEntity
+import com.jose.listacompra.data.local.entities.ProductEntity
+import com.jose.listacompra.data.local.entities.ProductFrequencyEntity
+import com.jose.listacompra.data.local.entities.ProductHistoryEntity
+import com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity
+import com.jose.listacompra.data.local.entities.PurchaseHistoryEntity
+import com.jose.listacompra.data.local.entities.ShoppingListEntity
 import com.jose.listacompra.domain.model.Aisle
 import com.jose.listacompra.domain.model.Offer
 import com.jose.listacompra.domain.model.Product
 import com.jose.listacompra.domain.model.ProductSuggestion
 import com.jose.listacompra.domain.model.ShoppingList
 import com.jose.listacompra.domain.model.toExport
-import com.google.gson.Gson
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class ShoppingListRepository(context: Context) {
-    
-    private val db = Room.databaseBuilder(
-        context.applicationContext,
-        ShoppingListDatabase::class.java,
-        ShoppingListDatabase.DATABASE_NAME
-    ).fallbackToDestructiveMigration()  // Para actualizar versión de BD
-     .build()
-    
-    private val shoppingListDao = db.shoppingListDao()
-    private val aisleDao = db.aisleDao()
-    private val offerDao = db.offerDao()
-    private val productDao = db.productDao()
-    private val historyDao = db.productHistoryDao()
-    private val purchaseHistoryDao = db.purchaseHistoryDao()
-    private val productPriceHistoryDao = db.productPriceHistoryDao()
-    private val productFrequencyDao = db.productFrequencyDao()
+@Singleton
+class ShoppingListRepository @Inject constructor(
+    private val productDao: ProductDao,
+    private val shoppingListDao: ShoppingListDao,
+    private val aisleDao: AisleDao,
+    private val offerDao: OfferDao,
+    private val historyDao: ProductHistoryDao,
+    private val purchaseHistoryDao: PurchaseHistoryDao,
+    private val productPriceHistoryDao: ProductPriceHistoryDao,
+    private val productFrequencyDao: ProductFrequencyDao,
+    private val productHistoryDao: ProductHistoryDao
+
+) {
     private val gson = Gson()
-    
     // ========== LISTAS DE COMPRAS ==========
     
     suspend fun getActiveLists(): List<ShoppingList> {

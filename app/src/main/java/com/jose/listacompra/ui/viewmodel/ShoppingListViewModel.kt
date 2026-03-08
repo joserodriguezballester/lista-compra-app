@@ -1,17 +1,20 @@
 package com.jose.listacompra.ui.viewmodel
 
 import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jose.listacompra.data.local.InitialDataSeeder
+import com.jose.listacompra.data.local.entities.ProductFrequencyEntity
 import com.jose.listacompra.data.preferences.ListPreferences
 import com.jose.listacompra.data.repository.ShoppingListRepository
 import com.jose.listacompra.domain.model.Aisle
 import com.jose.listacompra.domain.model.Offer
 import com.jose.listacompra.domain.model.Product
 import com.jose.listacompra.domain.model.ShoppingList
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 data class ShoppingListUiState(
     val currentList: ShoppingList? = null,
@@ -26,11 +29,14 @@ data class ShoppingListUiState(
     val isLoading: Boolean = false,
     val productSuggestions: List<com.jose.listacompra.domain.model.ProductSuggestion> = emptyList()
 )
-
-class ShoppingListViewModel(application: Application) : AndroidViewModel(application) {
-    
-    private val repository = ShoppingListRepository(application)
-    private val listPreferences = ListPreferences(application)
+@HiltViewModel
+class ShoppingListViewModel @Inject constructor(
+    private val repository: ShoppingListRepository,
+    private val listPreferences: ListPreferences,
+    application: Application
+) : ViewModel() {
+  //  private val repository = ShoppingListRepository(application)
+  //  private val listPreferences = ListPreferences(application)
     
     private val _uiState = MutableStateFlow(ShoppingListUiState())
     val uiState: StateFlow<ShoppingListUiState> = _uiState.asStateFlow()
@@ -323,7 +329,7 @@ class ShoppingListViewModel(application: Application) : AndroidViewModel(applica
     /**
      * Obtiene productos sugeridos basados en frecuencia de compra
      */
-    fun getSuggestedProductsByFrequency(callback: (List<com.jose.listacompra.data.local.ProductFrequencyEntity>) -> Unit) {
+    fun getSuggestedProductsByFrequency(callback: (List<ProductFrequencyEntity>) -> Unit) {
         viewModelScope.launch {
             val products = repository.getSuggestedProductsByFrequency()
             callback(products)

@@ -20,6 +20,7 @@ import com.jose.listacompra.ui.viewmodel.ShoppingListViewModel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import androidx.lifecycle.ViewModelProvider
+import dagger.hilt.android.AndroidEntryPoint
 
 sealed class Screen {
     object Splash : Screen()
@@ -27,6 +28,7 @@ sealed class Screen {
     object Lists : Screen()
 }
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     
     private val themeViewModel: ThemeViewModel by viewModels()
