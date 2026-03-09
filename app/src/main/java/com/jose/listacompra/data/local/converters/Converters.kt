@@ -50,7 +50,7 @@ fun Aisle.toEntity(): AisleEntity = AisleEntity(
 fun ShoppingListEntity.toDomain(): ShoppingList = ShoppingList(
     id = this.id,
     name = this.name,
-  //  supermarketId = this.supermarketId,
+    supermarketId = this.supermarketId,
     fechaCreacion = this.fechaCreacion,
     estado = this.estado
 )
@@ -58,7 +58,7 @@ fun ShoppingListEntity.toDomain(): ShoppingList = ShoppingList(
 fun ShoppingList.toEntity(): ShoppingListEntity = ShoppingListEntity(
     id = this.id,
     name = this.name,
- //   supermarketId = this.supermarketId,
+    supermarketId = this.supermarketId,
     fechaCreacion = this.fechaCreacion,
     estado = this.estado
 )

@@ -6,6 +6,7 @@ package com.jose.listacompra.domain.model
 data class ShoppingList(
     val id: Long = 0,
     val name: String,
+    val supermarketId: Long? = null,
     val fechaCreacion: Long = System.currentTimeMillis(),
     val estado: String = "ACTIVA"  // "ACTIVA" o "ARCHIVADA"
 ) {

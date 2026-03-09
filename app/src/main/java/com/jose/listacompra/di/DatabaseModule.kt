@@ -8,6 +8,7 @@ import com.jose.listacompra.data.local.dao.ProductDao
 import com.jose.listacompra.data.local.dao.ProductHistoryDao
 import com.jose.listacompra.data.local.dao.ShoppingListDao
 import com.jose.listacompra.data.local.ShoppingListDatabase
+import com.jose.listacompra.data.local.ShoppingListDatabase.Companion.MIGRATION_6_7
 import com.jose.listacompra.data.local.dao.ProductFrequencyDao
 import com.jose.listacompra.data.local.dao.ProductPriceHistoryDao
 import com.jose.listacompra.data.local.dao.PurchaseHistoryDao
@@ -30,6 +31,7 @@ object DatabaseModule {
             ShoppingListDatabase::class.java,
             "shopping_list_db"
         ).fallbackToDestructiveMigration()
+            .addMigrations(MIGRATION_6_7)
             .build()
     }
 

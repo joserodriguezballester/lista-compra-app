@@ -20,7 +20,7 @@
 - ✅ Pasillos por defecto (19 pasillos del super de Mislata)
 - ✅ **Autocompletado inteligente** (sugiere pasillo y precio basado en historial)
 - ✅ **Precarga inicial** (tus productos habituales de Carrefour ya están en la app)
-
+ 
 ### 🔄 Futuras mejoras (v2)
 - [ ] Añadir productos por voz
 - [ ] **Lectura de código de barras** (escanear EAN para autocompletar producto)
@@ -34,30 +34,45 @@
 - [x] ~~Limpiar lista (eliminar comprados/vaciar)~~ ✅ **IMPLEMENTADO**
 
 ---
+## 🐛 Bugs Activos
 
-## 🗺️ Pasillos por Defecto
+### 1. ProductHistoryScreen - Pasillo no asignado
+**Problema:** Al añadir desde historial, no se asigna el pasillo correcto.
 
-1. 🧴 Higiene y Belleza
-2. 🍎 Fruta y Verdura
-3. 🥓 Charcutería
-4. 🥩 Carnicería
-5. 🥫 Despensa - Pasillo 1: Galletas
-6. 🥫 Despensa - Pasillo 2: Chocolates
-7. 🥫 Despensa - Pasillo 3: Azúcar y Café
-8. 🥫 Despensa - Pasillo 4: Tomate Frito y Legumbres
-9. 🥫 Despensa - Pasillo 5: Aceite y Pastas
-10. 🧻 Papel
-11. 🧼 Droguería y Limpieza
-12. 🥤 Bebidas
-13. 🥜 Papas y Snacks
-14. 🥐 Bollería
-15. 🥛 Lácteos
-16. 🥪 Preparados
-17. 🧀 Quesos
-18. 🎁 Regalo (fidelización)
-19. 🧊 Congelados
+**Causa:** Los datos están mockeados (hardcodeados) en lugar de conectarse a la BD real. El callback pasa `aisle` como String (nombre) pero sin `aisleId`.
+
+**Solución:** Conectar `ProductHistoryScreen` a `ProductHistoryDao` real, incluir `aisleId` en el modelo.
 
 ---
+
+### 2. BarcodeScanner - Sin pasillo asignado
+**Problema:** Al escanear código de barras, el producto se añade sin pasillo.
+
+**Causa:** Open Food Facts devuelve categorías genéricas (ej: "en:dairy") que no se mapean a pasillos del supermercado.
+
+**Solución:**
+- Crear tabla de mapeo `category_aisle_mapping`
+- Diálogo post-escaneo: "¿En qué pasillo está?"
+- Guardar preferencia para futuras compras
+## 🎤 Mejoras Entrada por Voz
+
+### Estado Actual
+Al hablar: "queso en lonchas", el parser corta mal el nombre.
+
+### Mejora Propuesta
+**Orden fijo para voz:**
+- `[Cantidad]` + `[Nombre producto]` + `[Precio opcional]`
+---
+## UI/UX Pendientes
+
+### Botón "Borrar lista"
+- **Ubicación actual:** Menú ⋮ → "Limpiar lista"
+- **Mejora:** Quizás más visible o accesible
+- **Alternativa:** Swipe en toolbar o FAB secundario
+
+### Drag & Drop de Pasillos
+- ✅ **Implementado** en "Gestionar pasillos"
+- **Futuro:** ¿Drag & drop de productos entre pasillos?
 
 ## 🎮 Cómo Usar la App - Guía Rápida
 

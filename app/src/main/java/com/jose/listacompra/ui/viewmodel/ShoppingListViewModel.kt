@@ -8,50 +8,37 @@ import com.jose.listacompra.data.local.entities.ProductFrequencyEntity
 import com.jose.listacompra.data.preferences.ListPreferences
 import com.jose.listacompra.data.repository.ShoppingListRepository
 import com.jose.listacompra.domain.model.Aisle
-import com.jose.listacompra.domain.model.Offer
 import com.jose.listacompra.domain.model.Product
-import com.jose.listacompra.domain.model.ShoppingList
+import com.jose.listacompra.domain.usecase.AddProductUseCase
+import com.jose.listacompra.ui.state.ShoppingListUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-data class ShoppingListUiState(
-    val currentList: ShoppingList? = null,
-    val aisles: List<Aisle> = emptyList(),
-    val products: List<Product> = emptyList(),
-    val offers: List<Offer> = emptyList(),
-    val totalEstimate: Float = 0f,           // Total con ofertas aplicadas
-    val totalWithoutOffers: Float = 0f,      // Total sin ofertas
-    val savings: Float = 0f,                 // Ahorro total
-    val purchasedCount: Int = 0,
-    val totalCount: Int = 0,
-    val isLoading: Boolean = false,
-    val productSuggestions: List<com.jose.listacompra.domain.model.ProductSuggestion> = emptyList()
-)
 @HiltViewModel
 class ShoppingListViewModel @Inject constructor(
     private val repository: ShoppingListRepository,
     private val listPreferences: ListPreferences,
+    private val addProductUseCase: AddProductUseCase, // ← AÑADIR
+    //  private val calculatePriceUseCase: CalculateProductPriceUseCase // ← Si lo tienes
     application: Application
 ) : ViewModel() {
-  //  private val repository = ShoppingListRepository(application)
-  //  private val listPreferences = ListPreferences(application)
-    
+
     private val _uiState = MutableStateFlow(ShoppingListUiState())
     val uiState: StateFlow<ShoppingListUiState> = _uiState.asStateFlow()
-    
+
     private val _currentListId = MutableStateFlow<Long?>(null)
     val currentListId: StateFlow<Long?> = _currentListId.asStateFlow()
-    
+
     init {
         viewModelScope.launch {
             // 1. Crear pasillos por defecto
             repository.initializeDefaultAisles()
-            
+
             // 2. Crear ofertas por defecto
             repository.initializeDefaultOffers()
-            
+
             // 3. Cargar lista guardada o crear una por defecto
             val savedListId = listPreferences.selectedListId.first()
             val listId = if (savedListId != -1L && repository.getListById(savedListId) != null) {
@@ -60,18 +47,18 @@ class ShoppingListViewModel @Inject constructor(
                 // Crear lista por defecto si no hay ninguna
                 repository.createDefaultListIfNeeded()
             }
-            
+
             _currentListId.value = listId
             listPreferences.setSelectedListId(listId)
-            
+
             // 4. Cargar datos iniciales de Carrefour (solo primera vez)
             InitialDataSeeder.seedIfNeeded(repository)
-            
+
             // 5. Cargar datos en UI
             loadData()
         }
     }
-    
+
     /**
      * Cambia a otra lista de compras
      */
@@ -82,24 +69,24 @@ class ShoppingListViewModel @Inject constructor(
             loadData()
         }
     }
-    
+
     private suspend fun loadData() {
         _uiState.update { it.copy(isLoading = true) }
-        
+
         val listId = _currentListId.value ?: return
-        
+
         val currentList = repository.getListById(listId)
         val aisles = repository.getAllAisles()
         val products = repository.getAllProducts(listId)
         val offers = repository.getAllOffers()
-        
+
         // Calcular totales
         val totalWithoutOffers = products.sumOf { it.totalPriceWithoutOffer().toDouble() }.toFloat()
         val totalWithOffers = products.sumOf { it.finalPriceToPay().toDouble() }.toFloat()
         val savings = totalWithoutOffers - totalWithOffers
-        
+
         val purchased = products.count { it.isPurchased }
-        
+
         _uiState.update {
             it.copy(
                 currentList = currentList,
@@ -115,42 +102,40 @@ class ShoppingListViewModel @Inject constructor(
             )
         }
     }
-    
+
     /**
      * Recarga los datos de la lista actual
      */
     fun refreshData() {
         viewModelScope.launch {
+          //  val listId = _uiState.value.currentList?.id ?: return@launch
             loadData()
         }
     }
-    
+
     /**
      * Añade un producto con posible oferta aplicada
      */
     fun addProduct(
-        name: String, 
-        aisleId: Long, 
-        quantity: Float, 
-        price: Float?,
-        offerId: Long? = null
+        name: String,
+        quantity: Float = 1f,
+        price: Float? = null
     ) {
         viewModelScope.launch {
-            val listId = _currentListId.value ?: return@launch
-            val product = Product(
+            val listId = _uiState.value.currentList?.id ?: return@launch
+
+            // Usa el UseCase - asigna pasillo genérico automáticamente
+            addProductUseCase(
                 name = name,
-                aisleId = aisleId,
-                shoppingListId = listId,
                 quantity = quantity,
-                estimatedPrice = price,
-                offerId = offerId,
-                isPurchased = false
+                listId = listId,
+                estimatedPrice = price
             )
-            repository.addProduct(product)
-            loadData()
+
+            refreshData()
         }
     }
-    
+
     /**
      * Actualiza un producto existente con nuevos datos
      */
@@ -180,48 +165,48 @@ class ShoppingListViewModel @Inject constructor(
             loadData()
         }
     }
-    
+
     /**
      * Calcula el precio final y ahorro para mostrar en tiempo real
      */
     fun calculateOfferPreview(
-        quantity: Float, 
-        unitPrice: Float?, 
+        quantity: Float,
+        unitPrice: Float?,
         offerId: Long?
     ): OfferPreviewResult? {
         if (unitPrice == null || unitPrice <= 0) return null
-        
+
         val offer = uiState.value.offers.find { it.id == offerId }
         val finalPrice = repository.calculateFinalPrice(quantity, unitPrice, offer?.code)
         val totalWithoutOffer = quantity * unitPrice
-        
+
         return OfferPreviewResult(
             finalPrice = finalPrice ?: totalWithoutOffer,
             savings = totalWithoutOffer - (finalPrice ?: totalWithoutOffer),
             hasOffer = offer != null
         )
     }
-    
+
     data class OfferPreviewResult(
         val finalPrice: Float,
         val savings: Float,
         val hasOffer: Boolean
     )
-    
+
     fun togglePurchased(product: Product) {
         viewModelScope.launch {
             repository.toggleProductPurchased(product)
             loadData()
         }
     }
-    
+
     fun deleteProduct(product: Product) {
         viewModelScope.launch {
             repository.deleteProduct(product)
             loadData()
         }
     }
-    
+
     fun addAisle(name: String, emoji: String) {
         viewModelScope.launch {
             val maxOrder = repository.getAllAisles().maxOfOrNull { it.orderIndex } ?: 0
@@ -235,7 +220,7 @@ class ShoppingListViewModel @Inject constructor(
             loadData()
         }
     }
-    
+
     fun deleteAisle(aisle: Aisle) {
         viewModelScope.launch {
             // No eliminar pasillos por defecto
@@ -245,7 +230,7 @@ class ShoppingListViewModel @Inject constructor(
             }
         }
     }
-    
+
     /**
      * Reordena los pasillos y persiste el cambio en la base de datos
      */
@@ -255,7 +240,7 @@ class ShoppingListViewModel @Inject constructor(
             loadData()
         }
     }
-    
+
     fun clearPurchased() {
         viewModelScope.launch {
             val listId = _currentListId.value ?: return@launch
@@ -263,7 +248,7 @@ class ShoppingListViewModel @Inject constructor(
             loadData()
         }
     }
-    
+
     fun clearAllProducts() {
         viewModelScope.launch {
             val listId = _currentListId.value ?: return@launch
@@ -289,9 +274,9 @@ class ShoppingListViewModel @Inject constructor(
      * Añade producto y lo guarda en historial para futuras sugerencias
      */
     fun addProductWithHistory(
-        name: String, 
-        aisleId: Long, 
-        quantity: Float, 
+        name: String,
+        aisleId: Long,
+        quantity: Float,
         price: Float?,
         offerId: Long? = null
     ) {
@@ -300,12 +285,21 @@ class ShoppingListViewModel @Inject constructor(
             repository.saveToHistory(name, aisleId, quantity, price)
 
             // Añadir producto normal
-            addProduct(name, aisleId, quantity, price, offerId)
+            addProduct(name, quantity, price)
         }
     }
-    
+    // Para historial
+    fun addProductFromHistory(
+        name: String,
+        lastQuantity: Float
+    ) {
+        addProduct(
+            name = name,
+            quantity = lastQuantity
+        )
+    }
     // ========== HISTORIAL DE COMPRAS (TICKETS) ==========
-    
+
     /**
      * Guarda una compra completa desde un ticket PDF
      */
@@ -325,7 +319,7 @@ class ShoppingListViewModel @Inject constructor(
             }
         }
     }
-    
+
     /**
      * Obtiene productos sugeridos basados en frecuencia de compra
      */
@@ -335,7 +329,7 @@ class ShoppingListViewModel @Inject constructor(
             callback(products)
         }
     }
-    
+
     /**
      * Obtiene el precio promedio de un producto
      */
@@ -343,6 +337,23 @@ class ShoppingListViewModel @Inject constructor(
         viewModelScope.launch {
             val avg = repository.getAveragePriceForProduct(name)
             callback(avg)
+        }
+    }
+
+    fun showEmptyListConfirmDialog() {
+        _uiState.update { it.copy(showEmptyListConfirmDialog = true) }
+    }
+
+    fun dismissEmptyListConfirmDialog() {
+        _uiState.update { it.copy(showEmptyListConfirmDialog = false) }
+    }
+
+    fun emptyCurrentList() {
+        viewModelScope.launch {
+            val listId = _uiState.value.currentList?.id ?: return@launch
+            repository.deleteAllProductsFromList(listId)
+            dismissEmptyListConfirmDialog()
+            refreshData()
         }
     }
 }

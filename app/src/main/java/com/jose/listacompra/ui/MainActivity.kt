@@ -12,7 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import com.jose.listacompra.data.preferences.ThemePreferences
 import com.jose.listacompra.ui.screens.ListsScreen
-import com.jose.listacompra.ui.screens.MainScreen
+import com.jose.listacompra.ui.screens.main.MainScreen
 import com.jose.listacompra.ui.screens.SplashScreen
 import com.jose.listacompra.ui.theme.ListaCompraTheme
 import com.jose.listacompra.ui.theme.ThemeViewModel

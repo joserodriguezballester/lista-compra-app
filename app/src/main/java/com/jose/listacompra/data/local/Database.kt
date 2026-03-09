@@ -3,6 +3,8 @@ package com.jose.listacompra.data.local
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.jose.listacompra.data.local.converters.Converters
 import com.jose.listacompra.data.local.dao.AisleDao
 import com.jose.listacompra.data.local.dao.OfferDao
@@ -31,9 +33,11 @@ import com.jose.listacompra.data.local.entities.ShoppingListEntity
         PurchaseHistoryEntity::class,
         ProductPriceHistoryEntity::class,
         ProductFrequencyEntity::class
-    ], 
-    version = 5
+    ],
+    version = 7
 )
+
+
 @TypeConverters(Converters::class)
 abstract class ShoppingListDatabase : RoomDatabase() {
     abstract fun shoppingListDao(): ShoppingListDao
@@ -44,9 +48,20 @@ abstract class ShoppingListDatabase : RoomDatabase() {
     abstract fun purchaseHistoryDao(): PurchaseHistoryDao
     abstract fun productPriceHistoryDao(): ProductPriceHistoryDao
     abstract fun productFrequencyDao(): ProductFrequencyDao
-    
+
     companion object {
         const val DATABASE_NAME = "shopping_list_db"
+
+        // Agregar migración:
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    "ALTER TABLE shopping_lists ADD COLUMN supermarketId INTEGER DEFAULT NULL"
+                )
+            }
+        }
     }
+
+
 }
 

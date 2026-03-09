@@ -24,6 +24,7 @@ import com.jose.listacompra.domain.model.Offer
 import com.jose.listacompra.domain.model.Product
 import com.jose.listacompra.domain.model.ProductSuggestion
 import com.jose.listacompra.domain.model.ShoppingList
+import com.jose.listacompra.domain.model.TotalsResult
 import com.jose.listacompra.domain.model.toExport
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -40,7 +41,6 @@ class ShoppingListRepository @Inject constructor(
     private val purchaseHistoryDao: PurchaseHistoryDao,
     private val productPriceHistoryDao: ProductPriceHistoryDao,
     private val productFrequencyDao: ProductFrequencyDao,
-    private val productHistoryDao: ProductHistoryDao
 
 ) {
     private val gson = Gson()
@@ -331,11 +331,13 @@ class ShoppingListRepository @Inject constructor(
         
         val savings = totalWithoutOffers - totalWithOffers
         
-        emit(TotalsResult(
-            totalWithoutOffers = totalWithoutOffers,
-            totalWithOffers = totalWithOffers,
-            savings = savings
-        ))
+        emit(
+            TotalsResult(
+                totalWithoutOffers = totalWithoutOffers,
+                totalWithOffers = totalWithOffers,
+                savings = savings
+            )
+        )
     }
     
     fun getTotalEstimate(listId: Long): Flow<Float> = flow {
@@ -343,13 +345,7 @@ class ShoppingListRepository @Inject constructor(
         val total = products.sumOf { it.finalPriceToPay().toDouble() }.toFloat()
         emit(total)
     }
-    
-    data class TotalsResult(
-        val totalWithoutOffers: Float,
-        val totalWithOffers: Float,
-        val savings: Float
-    )
-    
+
     // ========== EXPORT/IMPORT JSON ==========
     
     suspend fun exportToJson(listId: Long): String {
@@ -582,4 +578,112 @@ class ShoppingListRepository @Inject constructor(
         val totalPurchases = purchaseHistoryDao.getAllPurchases().size
         return Triple(average, totalSpent, totalPurchases)
     }
+
+    /**
+     * Añade producto con pasillo automático según historial o categoría
+     * Si no hay supermercado asignado, usa pasillo genérico
+     */
+    suspend fun addProductWithAutoAisle(
+        productName: String,
+        quantity: Float = 1f,
+        listId: Long,
+        estimatedPrice: Float? = null,
+        offerId: Long? = null
+    ): Long {
+        // 1. Obtener info de la lista
+        val shoppingList = getListById(listId)
+            ?: throw IllegalStateException("Lista no encontrada")
+
+        // 2. Buscar pasillo automático (si hay supermercado)
+        val aisleId = findBestAisleIdForProduct(
+            productName = productName,
+            supermarketId = shoppingList.supermarketId
+        )
+
+        // 3. Calcular precio final si hay oferta
+        val finalPrice = offerId?.let {
+            calculateFinalPrice(quantity, estimatedPrice ?: 0f, it)
+        }
+
+        // 4. Crear producto
+        val product = Product(
+            name = productName.trim(),
+            aisleId = aisleId ?: 1L, // 1 = pasillo genérico si no hay
+            shoppingListId = listId,
+            quantity = quantity,
+            estimatedPrice = estimatedPrice,
+            offerId = offerId,
+            finalPrice = finalPrice,
+            isPurchased = false,
+            notes = "",
+            orderIndex = getNextOrderIndex(listId)
+        )
+
+        // 5. Guardar en BD
+        return addProduct(product)
+    }
+
+    /**
+     * Busca el mejor pasillo para un producto según historial
+     * Retorna aisleId o null si no encuentra
+     */
+    private suspend fun findBestAisleIdForProduct(
+        productName: String,
+        supermarketId: Long?
+    ): Long? {
+        if (supermarketId == null) return null
+
+        // Buscar en historial de productos para este supermercado
+        val normalized = productName.trim().uppercase()
+        val history = productFrequencyDao.getFrequencyForProduct(normalized)
+
+        // Si existe historial, usar el último pasillo conocido
+        // Nota: Necesitarás modificar ProductFrequencyEntity para guardar aisleId
+        return history?.let {
+            // Intentar extraer aisleId del historial
+            // Por ahora: retorna el primer pasillo disponible
+            aisleDao.getAllAisles().firstOrNull()?.id
+        } ?: aisleDao.getAllAisles().firstOrNull()?.id
+    }
+
+    /**
+     * Calcula el siguiente orderIndex para una lista
+     */
+    suspend fun getNextOrderIndex(listId: Long): Int {
+        val maxOrder = productDao.getMaxOrderIndex(listId) ?: -1
+        return (maxOrder + 1)
+    }
+
+    private suspend fun calculateFinalPrice(
+        quantity: Float,
+        unitPrice: Float,
+        offerId: Long
+    ): Float {
+        val offer = offerDao.getOfferById(offerId) ?: return quantity * unitPrice
+
+        return when (offer.code) {
+            "3x2" -> {
+                val groups = (quantity / 3).toInt()
+                val remainder = quantity % 3
+                (groups * 2 + remainder) * unitPrice
+            }
+            "2x1" -> {
+                val groups = (quantity / 2).toInt()
+                val remainder = quantity % 2
+                (groups + remainder) * unitPrice
+            }
+            "2nd_50" -> {
+                val pairs = (quantity / 2).toInt()
+                val remainder = quantity % 2
+                (pairs * 1.5f + remainder) * unitPrice
+            }
+            "4x3" -> {
+                val groups = (quantity / 4).toInt()
+                val remainder = quantity % 4
+                (groups * 3 + remainder) * unitPrice
+            }
+            else -> quantity * unitPrice
+        }
+    }
+
 }

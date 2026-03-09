@@ -19,6 +19,9 @@ interface ProductDao {
     @Query("SELECT * FROM products WHERE id = :id")
     suspend fun getProductById(id: Long): ProductEntity?
 
+//    @Query("SELECT * FROM products WHERE shoppingListId = :listId ORDER BY orderIndex ASC")
+//    suspend fun getProductsByList(listId: Long): List<ProductEntity>
+
     @Insert(onConflict = OnConflictStrategy.Companion.REPLACE)
     suspend fun insertProduct(product: ProductEntity): Long
 
@@ -36,4 +39,6 @@ interface ProductDao {
 
     @Query("SELECT MAX(orderIndex) FROM products WHERE shoppingListId = :listId AND aisleId = :aisleId")
     suspend fun getMaxOrderIndexInAisle(listId: Long, aisleId: Long): Int?
+    @Query("SELECT MAX(orderIndex) FROM products WHERE shoppingListId = :listId")
+    suspend fun getMaxOrderIndex(listId: Long): Int?
 }
