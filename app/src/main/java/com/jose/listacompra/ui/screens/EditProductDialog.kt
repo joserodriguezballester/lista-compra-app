@@ -1,13 +1,23 @@
 package com.jose.listacompra.ui.screens
 
+import android.R.attr.enabled
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.jose.listacompra.domain.model.Aisle
 import com.jose.listacompra.domain.model.Offer
 import com.jose.listacompra.domain.model.Product
@@ -20,7 +30,7 @@ fun EditProductDialog(
     aisles: List<Aisle>,
     offers: List<Offer>,
     onDismiss: () -> Unit,
-    onSave: (name: String, aisleId: Long, quantity: Float, price: Float?, offerId: Long?) -> Unit,
+    onSave: (name: String, aisleId: Long, quantity: Float, price: Float?, offerId: Long?,photoUri: String?) -> Unit,
     onCalculateOffer: (quantity: Float, price: Float?, offerId: Long?) -> ShoppingListViewModel.OfferPreviewResult?
 ) {
     var name by remember { mutableStateOf(product.name) }
@@ -30,11 +40,33 @@ fun EditProductDialog(
     var selectedOffer by remember { mutableStateOf(offers.find { it.id == product.offerId }) }
     var aisleExpanded by remember { mutableStateOf(false) }
     var offerExpanded by remember { mutableStateOf(false) }
-    
+
+    // NUEVO: Estado para foto seleccionada (temporal, no guardada aún)
+    var selectedPhotoUri by remember { mutableStateOf<String?>(product.photoUri) }
+
     // Calcular preview de oferta en tiempo real
     val quantityFloat = quantity.toFloatOrNull() ?: 1f
     val priceFloat = price.toFloatOrNull()
     val offerPreview = onCalculateOffer(quantityFloat, priceFloat, selectedOffer?.id)
+
+
+    val context = LocalContext.current
+
+    // NUEVO: PhotoPicker launcher
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia(),
+        onResult = { uri ->
+            if (uri != null) {
+                selectedPhotoUri = uri.toString()
+                Toast.makeText(
+                    context,
+                    "Foto: $uri", Toast.LENGTH_SHORT,
+                ).show()
+            }
+        }
+    )
+
+
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -52,7 +84,39 @@ fun EditProductDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
+                // NUEVO: Preview de foto seleccionada
+                if (selectedPhotoUri != null) {
+                    AsyncImage(
+                        model = selectedPhotoUri,
+                        contentDescription = "Foto del producto",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(120.dp)
+                            .padding(vertical = 8.dp),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+                // PLACEHOLDER: Botón foto (sin acción aún)
+                OutlinedButton(
+                    onClick = {  // Abrir PhotoPicker
+                        photoPickerLauncher.launch(
+                            PickVisualMediaRequest(
+                                ActivityResultContracts.PickVisualMedia.ImageOnly
+                            ) )},
+                    enabled = true
+                ) {
+                    Icon(Icons.Default.AddAPhoto, null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Añadir foto ")
+                }
 
+                // Mostrar EAN si existe
+                if (product.ean != null) {
+                    Text(
+                        "EAN: ${product.ean}",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
                 // Selector de pasillo
                 ExposedDropdownMenuBox(
                     expanded = aisleExpanded,
@@ -236,7 +300,12 @@ fun EditProductDialog(
                     if (name.isNotBlank() && selectedAisle != null) {
                         val qty = quantity.toFloatOrNull() ?: 1f
                         val prc = price.toFloatOrNull()
-                        onSave(name.trim(), selectedAisle!!.id, qty, prc, selectedOffer?.id)
+                        onSave(name.trim(),
+                            selectedAisle!!.id,
+                            qty,
+                            prc,
+                            selectedOffer?.id,
+                            selectedPhotoUri)
                     }
                 },
                 enabled = name.isNotBlank() && selectedAisle != null

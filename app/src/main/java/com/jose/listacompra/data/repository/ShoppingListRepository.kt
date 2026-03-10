@@ -653,7 +653,13 @@ class ShoppingListRepository @Inject constructor(
         val maxOrder = productDao.getMaxOrderIndex(listId) ?: -1
         return (maxOrder + 1)
     }
+    suspend fun updateProductPhoto(productId: Long, photoUri: String?) {
+        productDao.updatePhotoUri(productId, photoUri)
+    }
 
+    suspend fun updateProductEan(productId: Long, ean: String?) {
+        productDao.updateEan(productId, ean)
+    }
     private suspend fun calculateFinalPrice(
         quantity: Float,
         unitPrice: Float,
@@ -685,5 +691,11 @@ class ShoppingListRepository @Inject constructor(
             else -> quantity * unitPrice
         }
     }
+
+    suspend fun getProductById(productId: Long): Product? {
+        val entity = productDao.getProductById(productId)
+        return entity?.toDomain()
+    }
+
 
 }

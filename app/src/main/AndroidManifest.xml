@@ -10,7 +10,15 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Permiso para feedback táctil (vibración) -->
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- PLACEHOLDER: Permiso para fotos (Android 13+) -->
 
+    <uses-permission
+        android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED"
+        android:required="false" />
+
+    <!-- Para Android 12 y menor (retrocompatibilidad) -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
     <application
         android:name=".ListaCompraApplication"
         android:allowBackup="true"

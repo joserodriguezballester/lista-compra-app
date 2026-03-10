@@ -1,7 +1,6 @@
 package com.jose.listacompra.ui.screens
 
 import android.Manifest
-import android.content.Context
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -26,22 +25,11 @@ import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
+import com.jose.listacompra.domain.model.ScannedProduct
 import kotlinx.coroutines.*
 import org.json.JSONObject
 import java.net.URL
 import java.util.concurrent.Executors
-
-/**
- * Datos de producto obtenidos del escaneo
- */
-data class ScannedProduct(
-    val barcode: String,
-    val name: String?,
-    val brand: String?,
-    val imageUrl: String?,
-    val category: String?,
-    val found: Boolean
-)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -266,6 +254,7 @@ fun BarcodeScannerScreen(
                                             category = null,
                                             found = false
                                         )
+
                                     )
                                 },
                                 modifier = Modifier.fillMaxWidth()
@@ -443,13 +432,12 @@ private suspend fun searchProductInOpenFoodFacts(barcode: String): ScannedProduc
             val url = "https://world.openfoodfacts.org/api/v0/product/$barcode.json"
             val connection = URL(url).openConnection()
             connection.setRequestProperty("User-Agent", "ListaCompraApp - Android")
-            
             val response = connection.getInputStream().bufferedReader().use { it.readText() }
             val json = JSONObject(response)
             
             if (json.getInt("status") == 1) {
                 val product = json.getJSONObject("product")
-                
+
                 ScannedProduct(
                     barcode = barcode,
                     name = product.optString("product_name", null),
@@ -459,7 +447,8 @@ private suspend fun searchProductInOpenFoodFacts(barcode: String): ScannedProduc
                         if (tags.length() > 0) tags.getString(0).replace("en:", "")
                         else null
                     },
-                    found = true
+                    found = true,
+                    ean = barcode
                 )
             } else {
                 ScannedProduct(
@@ -468,7 +457,8 @@ private suspend fun searchProductInOpenFoodFacts(barcode: String): ScannedProduc
                     brand = null,
                     imageUrl = null,
                     category = null,
-                    found = false
+                    found = false,
+                    ean = barcode
                 )
             }
         } catch (e: Exception) {

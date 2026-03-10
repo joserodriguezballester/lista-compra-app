@@ -41,4 +41,15 @@ interface ProductDao {
     suspend fun getMaxOrderIndexInAisle(listId: Long, aisleId: Long): Int?
     @Query("SELECT MAX(orderIndex) FROM products WHERE shoppingListId = :listId")
     suspend fun getMaxOrderIndex(listId: Long): Int?
+
+    @Query("UPDATE products SET photoUri = :photoUri WHERE id = :productId")
+    suspend fun updatePhotoUri(productId: Long, photoUri: String?)
+
+    @Query("UPDATE products SET ean = :ean WHERE id = :productId")
+    suspend fun updateEan(productId: Long, ean: String?)
+
+
+
+
+
 }

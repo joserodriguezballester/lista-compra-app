@@ -416,14 +416,15 @@ fun MainScreen(
                 aisles = uiState.aisles,
                 offers = uiState.offers,
                 onDismiss = { showEditProduct = null },
-                onSave = { name, aisleId, quantity, price, offerId ->
+                onSave = { name, aisleId, quantity, price, offerId, photoUri ->
                     viewModel.updateProduct(
                         productId = product.id,
                         name = name,
                         aisleId = aisleId,
                         quantity = quantity,
                         price = price,
-                        offerId = offerId
+                        offerId = offerId,
+                        photoUri = photoUri
                     )
                     showEditProduct = null
                 },

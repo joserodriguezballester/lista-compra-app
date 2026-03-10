@@ -15,7 +15,9 @@ data class Product(
     val finalPrice: Float? = null,        // Precio calculado con oferta aplicada
     val isPurchased: Boolean = false,
     val notes: String = "",
-    val orderIndex: Int = 0               // Para ordenar dentro del pasillo
+    val orderIndex: Int = 0,
+    val photoUri: String? = null,         // URI de la foto
+    val ean: String? = null,
 ) {
     /**
      * Calcula el precio total sin ofertas (precio unitario * cantidad)

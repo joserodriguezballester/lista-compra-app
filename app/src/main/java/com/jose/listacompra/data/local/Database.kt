@@ -34,7 +34,7 @@ import com.jose.listacompra.data.local.entities.ShoppingListEntity
         ProductPriceHistoryEntity::class,
         ProductFrequencyEntity::class
     ],
-    version = 7
+    version = 8
 )
 
 
@@ -53,10 +53,15 @@ abstract class ShoppingListDatabase : RoomDatabase() {
         const val DATABASE_NAME = "shopping_list_db"
 
         // Agregar migración:
-        val MIGRATION_6_7 = object : Migration(6, 7) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL(
-                    "ALTER TABLE shopping_lists ADD COLUMN supermarketId INTEGER DEFAULT NULL"
+        val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Añadir foto URI
+                db.execSQL(
+                    "ALTER TABLE products ADD COLUMN photoUri TEXT DEFAULT NULL"
+                )
+                // Añadir código de barras EAN
+                db.execSQL(
+                    "ALTER TABLE products ADD COLUMN ean TEXT DEFAULT NULL"
                 )
             }
         }

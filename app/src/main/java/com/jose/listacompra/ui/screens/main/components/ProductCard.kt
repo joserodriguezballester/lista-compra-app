@@ -1,8 +1,10 @@
 package com.jose.listacompra.ui.screens.main.components
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,19 +12,27 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddAPhoto
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.jose.listacompra.domain.model.Offer
 import com.jose.listacompra.domain.model.Product
 
@@ -65,6 +75,38 @@ fun ProductCard(
                 verticalAlignment = Alignment.Companion.CenterVertically,
                 modifier = Modifier.Companion.fillMaxWidth()
             ) {
+                // MOSTRAR FOTO REAL si existe
+                if (product.photoUri != null) {
+                    AsyncImage(
+                        model = product.photoUri,
+                        contentDescription = product.name,
+                        modifier = Modifier.size(48.dp),
+                        contentScale = ContentScale.Crop,
+                        // Placeholder mientras carga
+                        placeholder = painterResource(android.R.drawable.ic_menu_gallery),
+                        // Imagen si hay error
+                        error = painterResource(android.R.drawable.ic_menu_gallery)
+                    )
+                } else {
+                    // Placeholder gris (sin cambios del paso 3)
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .background(Color.LightGray),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Default.AddAPhoto,
+                            contentDescription = null,
+                            tint = Color.Gray
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+
+
                 Checkbox(
                     checked = product.isPurchased,
                     onCheckedChange = { onTogglePurchased() },

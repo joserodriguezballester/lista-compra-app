@@ -146,7 +146,9 @@ class ShoppingListViewModel @Inject constructor(
         quantity: Float,
         price: Float?,
         offerId: Long?,
-        notes: String = ""
+        notes: String = "",
+        photoUri: String? = null,
+        ean: String? = null
     ) {
         viewModelScope.launch {
             val listId = _currentListId.value ?: return@launch
@@ -159,6 +161,8 @@ class ShoppingListViewModel @Inject constructor(
                 estimatedPrice = price,
                 offerId = offerId,
                 notes = notes,
+                photoUri = photoUri,
+                ean = ean,
                 isPurchased = false  // Se mantendrá el valor actual si se carga primero
             )
             repository.updateProduct(product)
@@ -347,7 +351,19 @@ class ShoppingListViewModel @Inject constructor(
     fun dismissEmptyListConfirmDialog() {
         _uiState.update { it.copy(showEmptyListConfirmDialog = false) }
     }
+    fun updateProductPhoto(productId: Long, photoUri: String?) {
+        viewModelScope.launch {
+            repository.updateProductPhoto(productId, photoUri)
+            loadData() // Refrescar
+        }
+    }
 
+    fun updateProductEan(productId: Long, ean: String?) {
+        viewModelScope.launch {
+            repository.updateProductEan(productId, ean)
+            loadData()
+        }
+    }
     fun emptyCurrentList() {
         viewModelScope.launch {
             val listId = _uiState.value.currentList?.id ?: return@launch

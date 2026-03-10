@@ -108,8 +108,8 @@ dependencies {
     // Hilt para Jetpack Compose
     implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
 
-
-
+    // Imagenes
+    implementation("io.coil-kt:coil-compose:2.5.0")
 
     // Testing
     testImplementation("junit:junit:4.13.2")

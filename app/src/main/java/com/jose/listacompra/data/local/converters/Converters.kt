@@ -100,9 +100,8 @@ fun ProductEntity.toDomain(): Product = Product(
     notes = this.notes,
     orderIndex = this.orderIndex,
     // Campos de foto (si existen)
-//    photoUri = this.photoUri,
-//    photoTimestamp = this.photoTimestamp,
-//    isPhotoUserSelected = this.isPhotoUserSelected
+    photoUri = this.photoUri,
+    ean = this.ean,
 )
 
 fun Product.toEntity(): ProductEntity = ProductEntity(
@@ -118,11 +117,9 @@ fun Product.toEntity(): ProductEntity = ProductEntity(
     isPurchased = this.isPurchased,
     notes = this.notes,
     orderIndex = this.orderIndex,
-    // Campos de foto (si existen)
-//    photoUri = this.photoUri,
-//    photoTimestamp = this.photoTimestamp,
-//    isPhotoUserSelected = this.isPhotoUserSelected
-)
+    photoUri = this.photoUri,
+    ean = this.ean,
+  )
 
 // ==================== CONVERTERS DE MAP (JSON) ====================
 
