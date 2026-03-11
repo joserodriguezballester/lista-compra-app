@@ -25,7 +25,6 @@ import com.jose.listacompra.domain.model.Product
 import com.jose.listacompra.domain.model.ProductSuggestion
 import com.jose.listacompra.domain.model.ShoppingList
 import com.jose.listacompra.domain.model.TotalsResult
-import com.jose.listacompra.domain.model.toExport
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
@@ -347,62 +346,6 @@ class ShoppingListRepository @Inject constructor(
     }
 
     // ========== EXPORT/IMPORT JSON ==========
-    
-    suspend fun exportToJson(listId: Long): String {
-        val aisles = aisleDao.getAllAisles().map { it.toDomain() }
-        val products = productDao.getAllProducts(listId).map { it.toDomain() }
-        
-        val export = com.jose.listacompra.domain.model.ShoppingListExport(
-            aisles = aisles.map { it.toExport() },
-            products = products.map { it.toExport() }
-        )
-        
-        return gson.toJson(export)
-    }
-    
-    suspend fun importFromJson(json: String, listId: Long): Boolean {
-        return try {
-            val export = gson.fromJson(json, com.jose.listacompra.domain.model.ShoppingListExport::class.java)
-
-            // Limpiar datos actuales de la lista
-            productDao.deleteAllProducts(listId)
-
-            // Importar pasillos (solo custom)
-            export.aisles.filter { !it.isDefault }.forEach { aisle ->
-                aisleDao.insertAisle(
-                    AisleEntity(
-                        id = aisle.id,
-                        name = aisle.name,
-                        emoji = aisle.emoji,
-                        orderIndex = aisle.orderIndex,
-                        isDefault = aisle.isDefault
-                    )
-                )
-            }
-
-            // Importar productos
-            export.products.forEach { product ->
-                productDao.insertProduct(
-                    ProductEntity(
-                        id = 0, // Nuevo ID autogenerado
-                        name = product.name,
-                        aisleId = product.aisleId,
-                        shoppingListId = listId,
-                        quantity = product.quantity,
-                        estimatedPrice = product.estimatedPrice,
-                        offerId = null, // Las ofertas no se exportan/importan
-                        finalPrice = null,
-                        isPurchased = product.isPurchased,
-                        notes = product.notes,
-                        orderIndex = product.orderIndex
-                    )
-                )
-            }
-            true
-        } catch (e: Exception) {
-            false
-        }
-    }
 
     // ========== HISTORIAL DE PRODUCTOS (AUTOCOMPLETADO) ==========
 
