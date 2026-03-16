@@ -6,10 +6,12 @@ import com.google.gson.reflect.TypeToken
 import com.jose.listacompra.data.local.entities.AisleEntity
 import com.jose.listacompra.data.local.entities.OfferEntity
 import com.jose.listacompra.data.local.entities.ProductEntity
+import com.jose.listacompra.data.local.entities.ProductHistoryEntity
 import com.jose.listacompra.data.local.entities.ShoppingListEntity
 import com.jose.listacompra.domain.model.Aisle
 import com.jose.listacompra.domain.model.Offer
 import com.jose.listacompra.domain.model.Product
+import com.jose.listacompra.domain.model.ProductSuggestion
 import com.jose.listacompra.domain.model.ShoppingList
 
 class Converters {
@@ -145,4 +147,14 @@ fun List<String>.toJson(): String {
 fun String.toStringList(): List<String> {
     val type = object : TypeToken<List<String>>() {}.type
     return gson.fromJson(this, type) ?: emptyList()
+}
+
+ fun ProductHistoryEntity.toSuggestion(): ProductSuggestion {
+    return ProductSuggestion(
+        name = this.originalName,
+        aisleId = this.aisleId,
+        suggestedQuantity = this.lastQuantity,
+        suggestedPrice = this.lastPrice,
+        usageCount = this.usageCount
+    )
 }

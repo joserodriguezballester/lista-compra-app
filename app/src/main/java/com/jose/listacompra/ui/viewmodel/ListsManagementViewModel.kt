@@ -1,12 +1,17 @@
 package com.jose.listacompra.ui.viewmodel
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jose.listacompra.data.preferences.ListPreferences
 import com.jose.listacompra.data.repository.ShoppingListRepository
 import com.jose.listacompra.domain.model.ShoppingList
+import com.jose.listacompra.domain.usecase.aisle.InitializeAislesUseCase
+import com.jose.listacompra.domain.usecase.list.CreateListUseCase
+import com.jose.listacompra.domain.usecase.list.DeleteListUseCase
+import com.jose.listacompra.domain.usecase.list.GetActiveListsUseCase
+import com.jose.listacompra.domain.usecase.list.GetArchivedListsUseCase
+import com.jose.listacompra.domain.usecase.list.UnarchiveListUseCase
+import com.jose.listacompra.domain.usecase.list.UpdateListUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -21,9 +26,16 @@ data class ListsUiState(
 
 @HiltViewModel
 class ListsManagementViewModel @Inject constructor(
-    private val repository: ShoppingListRepository,
-    private val listPreferences: ListPreferences
-) : ViewModel() {
+    private val listPreferences: ListPreferences,
+    private val getActiveListsUseCase: GetActiveListsUseCase,
+    private val getArchivedListsUseCase: GetArchivedListsUseCase,
+    private val createListUseCase: CreateListUseCase,
+    private val unarchiveListUseCase: UnarchiveListUseCase,
+    private val deleteListUseCase: DeleteListUseCase,
+    private val updateListUseCase: UpdateListUseCase,
+    private val initializeAislesUseCase: InitializeAislesUseCase
+
+    ) : ViewModel() {
     private val _uiState = MutableStateFlow(ListsUiState())
     val uiState: StateFlow<ListsUiState> = _uiState.asStateFlow()
 
@@ -34,8 +46,8 @@ class ListsManagementViewModel @Inject constructor(
     fun loadLists() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            val activeLists = repository.getActiveLists()
-            val archivedLists = repository.getArchivedLists()
+            val activeLists = getActiveListsUseCase()
+            val archivedLists = getArchivedListsUseCase()
             val currentId = listPreferences.selectedListId.first()
             _uiState.update {
                 it.copy(
@@ -50,13 +62,10 @@ class ListsManagementViewModel @Inject constructor(
 
     fun createList(name: String, useDefaultAisles: Boolean = true, onCreated: (Long) -> Unit = {}) {
         viewModelScope.launch {
-            val listId = repository.createList(name, useDefaultAisles)
-
-            // Si se eligió usar pasillos por defecto, inicializarlos
+            val listId = createListUseCase(name, useDefaultAisles)
             if (useDefaultAisles) {
-                repository.initializeDefaultAisles()
+                initializeAislesUseCase()
             }
-
             listPreferences.setSelectedListId(listId)
             loadLists()
             onCreated(listId)
@@ -65,12 +74,12 @@ class ListsManagementViewModel @Inject constructor(
 
     fun archiveList(listId: Long) {
         viewModelScope.launch {
-            repository.archiveList(listId)
+            getArchivedListsUseCase()
             val currentId = listPreferences.selectedListId.first()
             if (currentId == listId) {
-                val remainingActive = repository.getActiveLists()
+                val remainingActive = getActiveListsUseCase()
                 val newCurrentId =
-                    if (remainingActive.isNotEmpty()) remainingActive.first().id else repository.createList(
+                    if (remainingActive.isNotEmpty()) remainingActive.first().id else createListUseCase(
                         "Mi Lista",
                         true
                     )
@@ -81,13 +90,13 @@ class ListsManagementViewModel @Inject constructor(
     }
 
     fun unarchiveList(listId: Long) {
-        viewModelScope.launch { repository.unarchiveList(listId); loadLists() }
+        viewModelScope.launch { unarchiveListUseCase(listId); loadLists() }
     }
 
     fun deleteList(list: ShoppingList) {
         viewModelScope.launch {
             if (list.isArchived()) {
-                repository.deleteList(list); loadLists()
+                deleteListUseCase(list); loadLists()
             }
         }
     }
@@ -103,6 +112,6 @@ class ListsManagementViewModel @Inject constructor(
     }
 
     fun renameList(list: ShoppingList, newName: String) {
-        viewModelScope.launch { repository.updateList(list.copy(name = newName)); loadLists() }
+        viewModelScope.launch { updateListUseCase(list.copy(name = newName)); loadLists() }
     }
 }

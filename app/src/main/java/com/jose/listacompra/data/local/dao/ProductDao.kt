@@ -7,6 +7,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.jose.listacompra.data.local.entities.ProductEntity
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ProductDao {
@@ -48,7 +49,8 @@ interface ProductDao {
     @Query("UPDATE products SET ean = :ean WHERE id = :productId")
     suspend fun updateEan(productId: Long, ean: String?)
 
-
+    @Query("SELECT * FROM products WHERE shoppingListId = :listId ORDER BY aisleId ASC, orderIndex ASC")
+    fun getProductsByListFlow(listId: Long): Flow<List<ProductEntity>>
 
 
 

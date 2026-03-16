@@ -12,9 +12,8 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.jose.listacompra.domain.model.Aisle
 import com.jose.listacompra.domain.model.Offer
-import com.jose.listacompra.domain.model.Product
+import com.jose.listacompra.domain.model.OfferPreviewResult
 import com.jose.listacompra.domain.model.ProductSuggestion
-import com.jose.listacompra.ui.viewmodel.ShoppingListViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -25,7 +24,7 @@ fun AddProductDialog(
     onDismiss: () -> Unit,
     onAdd: (name: String, aisleId: Long, quantity: Float, price: Float?, offerId: Long?) -> Unit,
     onSearchSuggestions: (query: String) -> Unit,
-    onCalculateOffer: (quantity: Float, price: Float?, offerId: Long?) -> ShoppingListViewModel.OfferPreviewResult?
+    onCalculateOffer: (quantity: Float, price: Float?, offerId: Long?) -> OfferPreviewResult?
 ) {
     var name by remember { mutableStateOf("") }
     var selectedAisle by remember { mutableStateOf(aisles.firstOrNull()) }

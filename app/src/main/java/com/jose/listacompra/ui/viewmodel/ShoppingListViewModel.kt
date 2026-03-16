@@ -8,8 +8,30 @@ import com.jose.listacompra.data.local.entities.ProductFrequencyEntity
 import com.jose.listacompra.data.preferences.ListPreferences
 import com.jose.listacompra.data.repository.ShoppingListRepository
 import com.jose.listacompra.domain.model.Aisle
+import com.jose.listacompra.domain.model.OfferPreviewResult
 import com.jose.listacompra.domain.model.Product
-import com.jose.listacompra.domain.usecase.AddProductUseCase
+import com.jose.listacompra.domain.usecase.aisle.AddAisleUseCase
+import com.jose.listacompra.domain.usecase.aisle.DeleteAisleUseCase
+import com.jose.listacompra.domain.usecase.aisle.GetAllAislesUseCase
+import com.jose.listacompra.domain.usecase.aisle.InitializeAislesUseCase
+import com.jose.listacompra.domain.usecase.aisle.ReorderAislesUseCase
+import com.jose.listacompra.domain.usecase.aisle.UpdateAisleUseCase
+import com.jose.listacompra.domain.usecase.list.GetActiveListsUseCase
+import com.jose.listacompra.domain.usecase.list.GetArchivedListsUseCase
+import com.jose.listacompra.domain.usecase.list.GetDefaultListUseCase
+import com.jose.listacompra.domain.usecase.list.GetListByIdUseCase
+import com.jose.listacompra.domain.usecase.offers.CalculatePriceUseCase
+import com.jose.listacompra.domain.usecase.offers.DeleteOfferUseCase
+import com.jose.listacompra.domain.usecase.offers.GetAllOffersUseCase
+import com.jose.listacompra.domain.usecase.offers.GetOfferByIdUseCase
+import com.jose.listacompra.domain.usecase.offers.InitializeOffersUseCase
+import com.jose.listacompra.domain.usecase.product.AddProductUseCase
+import com.jose.listacompra.domain.usecase.product.DeleteAllProductsUseCase
+import com.jose.listacompra.domain.usecase.product.DeleteProductUseCase
+import com.jose.listacompra.domain.usecase.product.DeletePurchasedProductsUseCase
+import com.jose.listacompra.domain.usecase.product.GetAllProductsUseCase
+import com.jose.listacompra.domain.usecase.product.ToggleProductPurchasedUseCase
+import com.jose.listacompra.domain.usecase.product.UpdateProductUseCase
 import com.jose.listacompra.ui.state.ShoppingListUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -18,9 +40,51 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ShoppingListViewModel @Inject constructor(
-    private val repository: ShoppingListRepository,
+      private val repository: ShoppingListRepository,
+
+    //LISTAS
     private val listPreferences: ListPreferences,
-    private val addProductUseCase: AddProductUseCase, // ← AÑADIR
+    private val getListByIdUseCase: GetListByIdUseCase,
+    private val getActiveListsUseCase: GetActiveListsUseCase,
+    private val getArchivedListsUseCase: GetArchivedListsUseCase,
+    private val getDefaulListUseCase: GetDefaultListUseCase,
+
+
+    //OFFERS
+    private val initializeOffersUseCase: InitializeOffersUseCase,
+    private val getAllOffersUseCase: GetAllOffersUseCase,
+    // private val addOfferUseCase: AddOfferUseCase,
+    // private val updateOfferUseCase: UpdateOfferUseCase,
+    private val deleteOfferUseCase: DeleteOfferUseCase,
+    //  private val reorderOffersUseCase: ReorderOffersUseCase,
+    private val getOfferByIdUseCase: GetOfferByIdUseCase,
+    private val calculatePriceUseCase: CalculatePriceUseCase,
+
+    // AISLE
+    private val getAllAislesUseCase: GetAllAislesUseCase,
+    private val addAisleUseCase: AddAisleUseCase,
+    private val updateAisleUseCase: UpdateAisleUseCase,
+    private val deleteAisleUseCase: DeleteAisleUseCase,
+    private val reorderAislesUseCase: ReorderAislesUseCase,
+    private val initializeAislesUseCase: InitializeAislesUseCase,
+
+    //PRODUCT
+    // --- CONSULTAS ---
+    private val getAllProductsUseCase: GetAllProductsUseCase,
+
+    // --- ACCIONES SOBRE PRODUCTOS ---
+    private val addProductUseCase: AddProductUseCase,
+    private val updateProductUseCase: UpdateProductUseCase,
+    private val deleteProductUseCase: DeleteProductUseCase,
+    private val toggleProductPurchasedUseCase: ToggleProductPurchasedUseCase,
+
+    // --- OPERACIONES MASIVAS ---
+    private val deletePurchasedProductsUseCase: DeletePurchasedProductsUseCase,
+    private val deleteAllProductsUseCase: DeleteAllProductsUseCase,
+
+    // --- UTILIDADES ---
+    // (Opcional, si al final decides no unificarlos en UpdateProductUseCase)
+    // private val updateProductMediaUseCase: UpdateProductMediaUseCase
     //  private val calculatePriceUseCase: CalculateProductPriceUseCase // ← Si lo tienes
     application: Application
 ) : ViewModel() {
@@ -34,18 +98,18 @@ class ShoppingListViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             // 1. Crear pasillos por defecto
-            repository.initializeDefaultAisles()
-
+            //  repository.initializeDefaultAisles()
+            initializeAislesUseCase
             // 2. Crear ofertas por defecto
-            repository.initializeDefaultOffers()
+            initializeOffersUseCase()
 
             // 3. Cargar lista guardada o crear una por defecto
             val savedListId = listPreferences.selectedListId.first()
-            val listId = if (savedListId != -1L && repository.getListById(savedListId) != null) {
+            val listId = if (savedListId != -1L && getListByIdUseCase(savedListId) != null) {
                 savedListId
             } else {
                 // Crear lista por defecto si no hay ninguna
-                repository.createDefaultListIfNeeded()
+                getDefaulListUseCase()
             }
 
             _currentListId.value = listId
@@ -75,10 +139,10 @@ class ShoppingListViewModel @Inject constructor(
 
         val listId = _currentListId.value ?: return
 
-        val currentList = repository.getListById(listId)
-        val aisles = repository.getAllAisles()
-        val products = repository.getAllProducts(listId)
-        val offers = repository.getAllOffers()
+        val currentList = getListByIdUseCase(listId)
+        val aisles = getAllAislesUseCase()
+        val products = getAllProductsUseCase(listId)
+        val offers = getAllOffersUseCase()
 
         // Calcular totales
         val totalWithoutOffers = products.sumOf { it.totalPriceWithoutOffer().toDouble() }.toFloat()
@@ -108,7 +172,7 @@ class ShoppingListViewModel @Inject constructor(
      */
     fun refreshData() {
         viewModelScope.launch {
-          //  val listId = _uiState.value.currentList?.id ?: return@launch
+            //  val listId = _uiState.value.currentList?.id ?: return@launch
             loadData()
         }
     }
@@ -119,18 +183,33 @@ class ShoppingListViewModel @Inject constructor(
     fun addProduct(
         name: String,
         quantity: Float = 1f,
-        price: Float? = null
+        price: Float? = null,
+        offerId: Long? = null,
+        aisleId: Long = 1,
+        photoUri: String? = null,
+        ean: String? = null,
+        notes: String = "",
+        orderIndex: Int = 0,
+        isPurchased: Boolean = false,
+        finalPrice: Float? = null,
     ) {
         viewModelScope.launch {
-            val listId = _uiState.value.currentList?.id ?: return@launch
-
-            // Usa el UseCase - asigna pasillo genérico automáticamente
-            addProductUseCase(
+            val currentListId = _uiState.value.currentList?.id ?: return@launch
+            val newProduct = Product(
                 name = name,
                 quantity = quantity,
-                listId = listId,
-                estimatedPrice = price
+                estimatedPrice = price,
+                offerId = offerId,
+                aisleId = aisleId,
+                photoUri = photoUri,
+                ean = ean,
+                notes = notes,
+                orderIndex = orderIndex,
+                shoppingListId = currentListId,
+                isPurchased = isPurchased,
+                finalPrice = finalPrice
             )
+            addProductUseCase(newProduct)
 
             refreshData()
         }
@@ -165,7 +244,7 @@ class ShoppingListViewModel @Inject constructor(
                 ean = ean,
                 isPurchased = false  // Se mantendrá el valor actual si se carga primero
             )
-            repository.updateProduct(product)
+            updateProductUseCase(product)
             loadData()
         }
     }
@@ -179,48 +258,43 @@ class ShoppingListViewModel @Inject constructor(
         offerId: Long?
     ): OfferPreviewResult? {
         if (unitPrice == null || unitPrice <= 0) return null
-
-        val offer = uiState.value.offers.find { it.id == offerId }
-        val finalPrice = repository.calculateFinalPrice(quantity, unitPrice, offer?.code)
-        val totalWithoutOffer = quantity * unitPrice
-
-        return OfferPreviewResult(
-            finalPrice = finalPrice ?: totalWithoutOffer,
-            savings = totalWithoutOffer - (finalPrice ?: totalWithoutOffer),
-            hasOffer = offer != null
-        )
+        val offerCode = uiState.value.offers.find { it.id == offerId }?.code
+        // val finalPrice = calculatePriceUseCase(quantity, unitPrice, offer?.code)
+        //   val totalWithoutOffer = quantity * unitPrice
+// 3. Devolvemos directamente lo que el Use Case ya empaquetó
+        return calculatePriceUseCase(quantity, unitPrice, offerCode)
+//        return OfferPreviewResult(
+//            finalPrice = finalPrice ?: totalWithoutOffer,
+//            savings = totalWithoutOffer - (finalPrice ?: totalWithoutOffer),
+//            hasOffer = offer != null
+//        )
     }
-
-    data class OfferPreviewResult(
-        val finalPrice: Float,
-        val savings: Float,
-        val hasOffer: Boolean
-    )
 
     fun togglePurchased(product: Product) {
         viewModelScope.launch {
-            repository.toggleProductPurchased(product)
+            toggleProductPurchasedUseCase(product)
+            //  repository.toggleProductPurchased(product)
             loadData()
         }
     }
 
     fun deleteProduct(product: Product) {
         viewModelScope.launch {
-            repository.deleteProduct(product)
+            deleteProductUseCase(product)
             loadData()
         }
     }
 
     fun addAisle(name: String, emoji: String) {
         viewModelScope.launch {
-            val maxOrder = repository.getAllAisles().maxOfOrNull { it.orderIndex } ?: 0
+            val maxOrder = getAllAislesUseCase().maxOfOrNull { it.orderIndex } ?: 0
             val aisle = Aisle(
                 name = name,
                 emoji = emoji.ifBlank { "📦" },
                 orderIndex = maxOrder + 1,
                 isDefault = false
             )
-            repository.addAisle(aisle)
+            addAisleUseCase(aisle)
             loadData()
         }
     }
@@ -229,7 +303,7 @@ class ShoppingListViewModel @Inject constructor(
         viewModelScope.launch {
             // No eliminar pasillos por defecto
             if (!aisle.isDefault) {
-                repository.deleteAisle(aisle)
+                deleteAisleUseCase(aisle)
                 loadData()
             }
         }
@@ -240,7 +314,7 @@ class ShoppingListViewModel @Inject constructor(
      */
     fun reorderAisles(reorderedAisles: List<Aisle>) {
         viewModelScope.launch {
-            repository.reorderAisles(reorderedAisles)
+            reorderAislesUseCase(reorderedAisles)
             loadData()
         }
     }
@@ -248,7 +322,7 @@ class ShoppingListViewModel @Inject constructor(
     fun clearPurchased() {
         viewModelScope.launch {
             val listId = _currentListId.value ?: return@launch
-            repository.deletePurchasedProducts(listId)
+            deletePurchasedProductsUseCase(listId)
             loadData()
         }
     }
@@ -256,7 +330,7 @@ class ShoppingListViewModel @Inject constructor(
     fun clearAllProducts() {
         viewModelScope.launch {
             val listId = _currentListId.value ?: return@launch
-            repository.deleteAllProductsFromList(listId)
+            deleteAllProductsUseCase(listId)
             loadData()
         }
     }
@@ -292,6 +366,7 @@ class ShoppingListViewModel @Inject constructor(
             addProduct(name, quantity, price)
         }
     }
+
     // Para historial
     fun addProductFromHistory(
         name: String,
@@ -351,23 +426,28 @@ class ShoppingListViewModel @Inject constructor(
     fun dismissEmptyListConfirmDialog() {
         _uiState.update { it.copy(showEmptyListConfirmDialog = false) }
     }
-    fun updateProductPhoto(productId: Long, photoUri: String?) {
+
+    fun updateProductPhoto(product: Product, newPhotoUri: String?) {
         viewModelScope.launch {
-            repository.updateProductPhoto(productId, photoUri)
-            loadData() // Refrescar
+            // Creamos la copia con el nuevo dato
+            val updatedProduct = product.copy(photoUri = newPhotoUri)
+            updateProductUseCase(updatedProduct)
+            loadData()
         }
     }
 
-    fun updateProductEan(productId: Long, ean: String?) {
+
+    fun updateProductEan(product: Product, newEan: String?) {
         viewModelScope.launch {
-            repository.updateProductEan(productId, ean)
-            loadData()
+            val updatedProduct = product.copy(ean = newEan)
+            updateProductUseCase(updatedProduct)
         }
     }
     fun emptyCurrentList() {
         viewModelScope.launch {
             val listId = _uiState.value.currentList?.id ?: return@launch
-            repository.deleteAllProductsFromList(listId)
+            deleteAllProductsUseCase(listId)
+            //  repository.deleteAllProductsFromList(listId)
             dismissEmptyListConfirmDialog()
             refreshData()
         }

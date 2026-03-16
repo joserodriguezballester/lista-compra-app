@@ -52,8 +52,8 @@ import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
 import com.jose.listacompra.domain.model.Aisle
 import com.jose.listacompra.domain.model.Offer
+import com.jose.listacompra.domain.model.OfferPreviewResult
 import com.jose.listacompra.domain.model.Product
-import com.jose.listacompra.ui.viewmodel.ShoppingListViewModel
 import java.io.File
 
 //import android.icu.text.SimpleDateFormat
@@ -65,7 +65,7 @@ fun EditProductDialog(
     offers: List<Offer>,
     onDismiss: () -> Unit,
     onSave: (name: String, aisleId: Long, quantity: Float, price: Float?, offerId: Long?, photoUri: String?) -> Unit,
-    onCalculateOffer: (quantity: Float, price: Float?, offerId: Long?) -> ShoppingListViewModel.OfferPreviewResult?
+    onCalculateOffer: (quantity: Float, price: Float?, offerId: Long?) -> OfferPreviewResult?
 ) {
     // --- ESTADOS ---
     var name by remember { mutableStateOf(product.name) }
