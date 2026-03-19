@@ -31,7 +31,7 @@ object DatabaseModule {
             ShoppingListDatabase::class.java,
             "shopping_list_db"
         )
-            .addMigrations(MIGRATION_7_8)
+         //   .addMigrations(MIGRATION_7_8)
             .fallbackToDestructiveMigration()
             .build()
     }

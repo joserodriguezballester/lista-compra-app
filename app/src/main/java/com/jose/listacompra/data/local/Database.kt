@@ -34,7 +34,7 @@ import com.jose.listacompra.data.local.entities.ShoppingListEntity
         ProductPriceHistoryEntity::class,
         ProductFrequencyEntity::class
     ],
-    version = 8
+    version = 9
 )
 
 
