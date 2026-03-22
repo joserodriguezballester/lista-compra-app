@@ -1,45 +1,15 @@
 package com.jose.listacompra.ui.screens.main
 
 
+import android.R.attr.contentDescription
+import android.R.attr.label
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Inventory
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Palette
-import androidx.compose.material.icons.filled.QrCodeScanner
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material3.Divider
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -47,31 +17,72 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.jose.listacompra.domain.model.Product
-import com.jose.listacompra.ui.components.VoiceInputButton
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import com.jose.listacompra.ui.Screen
 import com.jose.listacompra.ui.navigation.DialogType
+import com.jose.listacompra.ui.navigation.Route
 import com.jose.listacompra.ui.screens.AddProductDialog
 import com.jose.listacompra.ui.screens.BarcodeScannerScreen
-import com.jose.listacompra.ui.screens.ColorSettingsDialog
 import com.jose.listacompra.ui.screens.EditProductDialog
 import com.jose.listacompra.ui.screens.ImportTicketScreen
 import com.jose.listacompra.ui.screens.ManageAislesDialog
 import com.jose.listacompra.ui.screens.ProductHistoryScreen
-import com.jose.listacompra.ui.screens.main.components.AisleHeader
-import com.jose.listacompra.ui.screens.main.components.SwipeableProductCard
 import com.jose.listacompra.ui.screens.main.components.TotalsBar
+import com.jose.listacompra.ui.state.ShoppingListUiState
 import com.jose.listacompra.ui.viewmodel.ShoppingListViewModel
 import com.jose.listacompra.utils.vibrateFeedback
+import androidx.compose.material3.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.automirrored.filled.Sort
+import androidx.compose.material.icons.filled.AccountBox
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.Dashboard
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DeleteForever
+import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Inventory
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.RemoveDone
+import androidx.compose.material.icons.filled.Sort
+import androidx.compose.material.icons.filled.UploadFile
 
-enum class Screen {
-    SHOPPING_LIST,
-    ARTICULOS_CATALOGO
-}
+//import androidx.compose.material.icons.filled.Mic
+//import androidx.compose.material.icons.filled.Palette
+//import androidx.compose.material.icons.filled.QrCodeScanner
+//import androidx.compose.material.icons.filled.RemoveDone
+//import androidx.compose.material.icons.filled.Sort
+//import androidx.compose.material.icons.filled.UploadFile
+//import androidx.compose.material.icons.filled.DarkMode
+//import androidx.compose.material.icons.filled.DeleteForever
+//import androidx.compose.material.icons.filled.AutoAwesome
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -84,17 +95,27 @@ fun MainScreen(
     onClearList: (Boolean) -> Unit = {}
 ) {
     // 1. Estado de la pestaña activa
-    var currentScreen by remember { mutableStateOf(Screen.SHOPPING_LIST) }
+    //  var currentScreen by remember { mutableStateOf(Screen.SHOPPING_LIST) }
 
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+
+    // Navigation controller
+    val navController = rememberNavController()
+    val currentRoute by navController.currentBackStackEntryAsState()
+    val currentRouteString = currentRoute?.destination?.route
+
+    var activeDialog by remember { mutableStateOf<DialogType?>(DialogType.None) }
     var showSnackbar by remember { mutableStateOf<String?>(null) }
     var showThemeMenu by remember { mutableStateOf(false) }
-    var activeDialog by remember { mutableStateOf<DialogType?>(null) }
+
     // Estado previo para detectar cuando se completa toda la lista
     var wasListComplete by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
+    // Booleanos para condicionales
+    val isOnList = currentRouteString == Route.ShoppingList.route
 
+    val canGoBack = navController.previousBackStackEntry != null
     // Detectar cuando se completa toda la lista para vibración especial
     LaunchedEffect(uiState.purchasedCount, uiState.totalCount) {
         val isNowComplete = uiState.totalCount > 0 && uiState.purchasedCount == uiState.totalCount
@@ -121,140 +142,89 @@ fun MainScreen(
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
+        // ===== TOP APP BAR (común para todas las pantallas) =====
         topBar = {
-            // Solo mostramos la TopBar de la lista si estamos en esa pestaña
-            if (currentScreen == Screen.SHOPPING_LIST) {
-                TopAppBar(
-                    title = {
-                        Column {
-                            Text("🛒 ${uiState.currentList?.name ?: "Lista de Compra"}")
-                            if (uiState.totalCount > 0) {
-                                Text(
-                                    text = "${uiState.purchasedCount}/${uiState.totalCount} productos",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                    },
-                    actions = {
-                        // Botón de entrada por voz
-                        VoiceInputButton(
-                            onVoiceCommand = { command ->
-                                // Usar el primer pasillo como default, o 1L si no hay pasillos
-                                val defaultAisleId = uiState.aisles.firstOrNull()?.id ?: 1L
-                                // Crear producto desde comando de voz
-                                viewModel.addProduct(
-                                    name = "${command.productName} (${command.quantity.toInt()} ${command.unit})",
-                                    quantity = command.quantity,
-                                    price = null
-                                )
-                            }
+            CenterAlignedTopAppBar(
+                title = {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        // Título según la ruta actual
+                        Text(
+                            text = when (currentRouteString) {
+                                Route.ShoppingList.route -> "🛒 ${uiState.currentList?.name ?: "Lista"}"
+                                Route.Catalogo.route -> "📦 Catálogo"
+                                Route.ImportTicket.route -> "📄 Importar Ticket"
+                                Route.ColorSettings.route -> "🎨 Color"
+                                Route.ProductHistory.route -> "📋 Historial"
+                                Route.BarcodeScanner.route -> "📷 Escanear"
+                                else -> "Lista Compra"
+                            },
+                            maxLines = 1
                         )
 
-                        // Botón de menú de opciones
-                        IconButton(onClick = { showThemeMenu = true }) {
-                            Icon(
-                                imageVector = Icons.Default.Settings,
-                                contentDescription = "Menú opciones"
-                            )
-                        }
-
-                        // Menú de tema
-                        DropdownMenu(
-                            expanded = showThemeMenu,
-                            onDismissRequest = { activeDialog = null }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text("📋 Mis Listas") },
-                                onClick = {
-                                    showThemeMenu = false
-                                    activeDialog = null
-                                    onNavigateToLists()
-                                },
-                                leadingIcon = {
-                                    Icon(Icons.Default.List, contentDescription = null)
-                                }
-                            )
-                            Divider()
-                            // Botón para alternar tema oscuro/claro
-                            DropdownMenuItem(
-                                text = { Text("🌙☀️ Cambiar Modo Oscuro/Claro") },
-                                onClick = {
-                                    onToggleTheme()
-                                    showThemeMenu = false
-                                },
-                                leadingIcon = {
-                                    Icon(Icons.Default.Settings, contentDescription = null)
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("🎨 Cambiar Color") },
-                                onClick = {
-                                    activeDialog = DialogType.ShowColorSettings
-                                    showThemeMenu = false
-                                },
-                                leadingIcon = {
-                                    Icon(Icons.Default.Palette, contentDescription = null)
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("🗂️ Gestionar Pasillos") },
-                                onClick = {
-                                    activeDialog = DialogType.ManageAisles
-                                    showThemeMenu = false
-                                },
-                                leadingIcon = {
-                                    Icon(Icons.Default.MoreVert, contentDescription = null)
-                                }
-                            )
-                            Divider()
-                            // Importar ticket PDF
-                            DropdownMenuItem(
-                                text = { Text("📄 Importar Ticket PDF") },
-                                onClick = {
-                                    activeDialog = DialogType.ImportTicket
-                                    showThemeMenu = false
-                                },
-                                leadingIcon = {
-                                    Icon(Icons.Default.List, contentDescription = null)
-                                }
-                            )
-                            Divider()
-                            // Opciones para limpiar lista
-                            DropdownMenuItem(
-                                text = { Text("🧹 Quitar Comprados") },
-                                onClick = {
-                                    onClearList(false) // false = solo comprados
-                                    showThemeMenu = false
-                                },
-                                leadingIcon = {
-                                    Icon(Icons.Default.Delete, contentDescription = null)
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("🗑️ Vaciar Lista") },
-                                onClick = {
-                                    onClearList(true) // true = todo
-                                    showThemeMenu = false
-                                },
-                                leadingIcon = {
-                                    Icon(Icons.Default.Delete, contentDescription = null)
-                                }
+                        // Subtítulo solo en la lista principal
+                        if (isOnList && uiState.totalCount > 0) {
+                            Text(
+                                text = "${uiState.purchasedCount}/${uiState.totalCount} productos",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
-                )
-            } else {
-                TopAppBar(title = { Text("📦 Mi Catálogo de Artículos") })
-            }
+                },
+
+                // Botón de retroceso (aparece cuando hay backstack)
+                navigationIcon = {
+                    if (canGoBack) {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowBack, contentDescription = "Volver"
+                            )
+                        }
+                    }
+                },
+
+                // ===== ACTIONS (Menú siempre disponible) =====
+                actions = {
+                    // AudioButton solo en lista principal
+                    if (isOnList) {
+                        AudioButton(
+                            viewModel = viewModel,
+                            uiState = uiState,
+                            onCommand = { command ->
+                                when (command) {
+                                    "mostrar_productos" ->
+                                        uiState.currentList?.let { list ->
+                                            navController.navigate(Route.ShoppingList.route)
+                                        }
+
+                                    "limpiar_comprados" -> onClearList(false)
+                                    "vaciar_lista" -> onClearList(true)
+                                    //Todo                               else -> viewModel.processVoiceCommand(command)
+                                }
+                            }
+                        )
+                    }
+
+                    // Menú hamburguesa común
+                    CommonMenu(
+                        navController = navController,
+                        isOnList = isOnList,
+                        onNavigateToLists = onNavigateToLists,
+                        onToggleTheme = onToggleTheme,
+                        onNavigateToColor = { navController.navigate(Route.ColorSettings.route) },
+                        onShowManageAisles = { activeDialog = DialogType.ManageAisles },
+                        onNavigateToImport = { navController.navigate(Route.ImportTicket.route) },
+                        onClearList = onClearList
+                    )
+                }
+            )
         },
+
 // 2. LA BARRA INFERIOR
         bottomBar = {
             Column {
                 // Si estamos en la lista, mostramos la barra de totales encima de la nav
-                if (currentScreen == Screen.SHOPPING_LIST) {
-
+                if (isOnList) {
                     TotalsBar(
                         totalWithOffers = uiState.totalEstimate,
                         totalWithoutOffers = uiState.totalWithoutOffers,
@@ -264,26 +234,40 @@ fun MainScreen(
                     )
                 }
 
-
                 NavigationBar {
                     NavigationBarItem(
-                        selected = currentScreen == Screen.SHOPPING_LIST,
-                        onClick = { currentScreen = Screen.SHOPPING_LIST },
-                        label = { Text("Mi Lista") },
-                        icon = { Icon(Icons.Default.ShoppingCart, contentDescription = null) }
+                        selected = isOnList,
+                        onClick = { if (!isOnList) navController.navigate(Route.ShoppingList.route) },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Default.ShoppingCart,
+                                contentDescription = null
+                            )
+                        },
+                        label = {
+                            Text("Mi Lista")
+                        }
                     )
                     NavigationBarItem(
-                        selected = currentScreen == Screen.ARTICULOS_CATALOGO,
-                        onClick = { currentScreen = Screen.ARTICULOS_CATALOGO },
+                        selected = currentRouteString == Route.Catalogo.route,
+                        onClick = {
+                            if (currentRouteString != Route.Catalogo.route) {
+                                navController.navigate(Route.Catalogo.route)
+                            }
+                        },
                         label = { Text("Artículos") },
-                        icon = { Icon(Icons.Default.Inventory, contentDescription = null) }
+                        icon = {
+                            Icon(
+                                Icons.Default.Inventory, contentDescription = null
+                            )
+                        }
                     )
                 }
             }
         },
         floatingActionButton = {
             // Solo mostramos el FAB de añadir si estamos en la lista
-            if (currentScreen == Screen.SHOPPING_LIST) {
+            if (isOnList) {
                 // Menú desplegable de opciones para añadir producto
                 var showAddMenu by remember { mutableStateOf(false) }
                 Box {
@@ -313,7 +297,10 @@ fun MainScreen(
                                     DialogType.AddProduct  // Por ahora, usamos el diálogo actual
                             },
                             leadingIcon = {
-                                Icon(Icons.Default.Mic, contentDescription = null)
+                                Icon(
+                                    Icons.Default.Mic,
+                                    contentDescription = null
+                                )
                             }
                         )
 
@@ -350,7 +337,10 @@ fun MainScreen(
                                     DialogType.ShowBarcodeScanner // Abrir pantalla de escáner
                             },
                             leadingIcon = {
-                                Icon(Icons.Default.QrCodeScanner, contentDescription = null)
+                                Icon(
+                                    Icons.Default.Add, // QrCodeScanner,
+                                    contentDescription = null
+                                )
                             }
                         )
                     }
@@ -359,210 +349,323 @@ fun MainScreen(
         },
 //
     ) { padding ->
-        // Agrupar productos por pasillo
-        val productsByAisle = uiState.products.groupBy { it.aisleId }
 
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            modifier = Modifier.Companion
-                .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+        NavHost(
+            navController = navController,
+            startDestination = Route.ShoppingList.route,
+            modifier = Modifier.padding(padding)  // Respeta las barras
         ) {
-            uiState.aisles.forEach { aisle ->
-                val aisleProducts = productsByAisle[aisle.id] ?: emptyList()
+            // ---- PANTALLA PRINCIPAL: Lista de la compra ----
+            composable(Route.ShoppingList.route) {
+                ShoppingListContent(
+                    uiState = uiState,
+                    viewModel = viewModel,
+                    onEditProduct = { product ->
+                        activeDialog = DialogType.EditProduct(product)
+                    },
+                    snackbarHostState = snackbarHostState
+                )
+            }
 
-                if (aisleProducts.isNotEmpty()) {
-                    // Header del pasillo (ocupa 2 columnas)
-                    item(span = { GridItemSpan(2) }) {
-                        AisleHeader(
-                            aisle = aisle,
-                            productCount = aisleProducts.size,
-                            purchasedCount = aisleProducts.count { it.isPurchased }
-                        )
-                    }
-
-                    // Productos del pasillo
-                    items(
-                        aisleProducts.size,
-                        key = { index -> aisleProducts[index].id }) { index ->
-                        val product = aisleProducts[index]
-                        val offer = uiState.offers.find { it.id == product.offerId }
-
-                        SwipeableProductCard(
-                            product = product,
-                            offer = offer,
-                            onTogglePurchased = {
-                                // Feedback táctil al marcar/desmarcar producto
-                                context.vibrateFeedback(context, milliseconds = 60L)
-                                viewModel.togglePurchased(product)
-                            },
-                            onDelete = {
-                                viewModel.deleteProduct(product)
-                                showSnackbar = "${product.name} eliminado"
-                            },
-                            onEdit = { activeDialog = DialogType.EditProduct(product) }
-                        )
-                    }
+            // ---- PANTALLA: Catálogo ----
+            composable(Route.Catalogo.route) {
+                // Tu contenido de catálogo (simplificado por ahora)
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("Catálogo (en desarrollo)")
                 }
             }
 
-            // Espacio al final
-            item(span = { GridItemSpan(2) }) {
-                Spacer(modifier = Modifier.Companion.height(80.dp))
+            // ---- PANTALLA: Importar Ticket (antes era dialog) ----
+            composable(Route.ImportTicket.route) {
+                ImportTicketScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            // ---- PANTALLA: Configuración de Color (antes era dialog) ----
+            composable(Route.ColorSettings.route) {
+                ColorSettingsScreen(
+                    currentColor = currentPrimaryColor,
+                    onColorSelected = onColorChanged,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            // ---- PANTALLA: Historial de Productos (antes FAB->dialog) ----
+            composable(Route.ProductHistory.route) {
+                ProductHistoryScreen(
+                    onProductSelected = { product ->
+                        // Añadir a la lista y volver
+                        viewModel.addProduct(product.name)
+                        navController.popBackStack()
+                    },
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            // ---- PANTALLA: Escanear Código (antes FAB->dialog) ----
+            composable(Route.BarcodeScanner.route) {
+                BarcodeScannerScreen(
+                    onBarcodeScanned = { barcode ->
+                        // Procesar el código y volver
+                        viewModel.processScannedBarcode(barcode)
+                        navController.popBackStack()
+                    },
+                    onNavigateBack = { navController.popBackStack() }
+                )
             }
         }
 
+        // ============================================
+        // DIALOGOS MODALES (fuera del NavHost)
+        // Flotan ENCIMA de todo, no son navegación
+        // ============================================
 
-        when (activeDialog) {
-            // Diálogo para añadir producto
-            is DialogType.AddProduct ->
+        when (val dialog = activeDialog) {
+
+            // ---- Dialog: Añadir Producto ----
+            is DialogType.AddProduct -> {
                 AddProductDialog(
+                    articles = uiState.catalog,
                     aisles = uiState.aisles,
-                    offers = uiState.offers,
-                    suggestions = uiState.productSuggestions,
-                    onDismiss = {
-                        activeDialog = null
-                        viewModel.clearSuggestions()
-                    },
-                    onAdd = { name, aisleId, quantity, price, offerId ->
-                        viewModel.addProductWithHistory(name, aisleId, quantity, price, offerId)
-                        //     viewModel.addProductFromHistory(name,  quantity,)
-                        viewModel.clearSuggestions()
-                        activeDialog = null
-                    },
-                    onSearchSuggestions = { query ->
-                        viewModel.searchProductSuggestions(query)
-                    },
-                    onCalculateOffer = { quantity, price, offerId ->
-                        viewModel.calculateOfferPreview(quantity, price, offerId)
+                    onDismiss = { activeDialog = DialogType.None },
+                    onAdd = { name, aisle, price, quantity, unit ->
+                        viewModel.addProduct(name, aisle, price, quantity, unit)
+                        activeDialog = DialogType.None
                     }
                 )
+            }
 
-            // Diálogo para editar producto
-            is DialogType.EditProduct ->
+            // ---- Dialog: Editar Producto ----
+            is DialogType.EditProduct -> {
                 EditProductDialog(
-                    product = (activeDialog as DialogType.EditProduct).product,
+                    product = dialog.product,
                     aisles = uiState.aisles,
-                    offers = uiState.offers,
-                    onDismiss = { activeDialog = null },
-                    onSave = { name, aisleId, quantity, price, offerId, photoUri ->
-                        viewModel.updateProduct(
-                            productId = (activeDialog as DialogType.EditProduct).product.id,
-                            name = name,
-                            aisleId = aisleId,
-                            quantity = quantity,
-                            price = price,
-                            offerId = offerId,
-                            photoUri = photoUri
-                        )
-                        activeDialog = null
+                    onDismiss = { activeDialog = DialogType.None },
+                    onSave = { updated ->
+                        viewModel.updateProduct(updated)
+                        activeDialog = DialogType.None
                     },
-                    onCalculateOffer = { quantity, price, offerId ->
-                        viewModel.calculateOfferPreview(quantity, price, offerId)
+                    onDelete = {
+                        viewModel.deleteProduct(dialog.product.id)
+                        activeDialog = DialogType.None
                     }
                 )
+            }
 
-            // Diálogo para gestionar pasillos
-            is DialogType.ManageAisles ->
+            // ---- Dialog: Gestionar Pasillos ----
+            is DialogType.ManageAisles -> {
                 ManageAislesDialog(
                     aisles = uiState.aisles,
-                    onDismiss = { activeDialog = null },
-                    onAddAisle = { name, emoji ->
-                        viewModel.addAisle(name, emoji)
+                    onDismiss = { activeDialog = DialogType.None },
+                    onAdd = { name, icon ->
+                        viewModel.addAisle(name, icon)
                     },
-                    onDeleteAisle = { aisle ->
+                    onDelete = { aisle ->
                         viewModel.deleteAisle(aisle)
                     },
-                    onReorderAisles = { reorderedAisles ->
+                    onUpdate = { oldName, newName ->
+                        viewModel.updateAisle(oldName, newName)
+                    },
+                    onReorder = { reorderedAisles ->
                         viewModel.reorderAisles(reorderedAisles)
                     }
                 )
+            }
 
-            // Diálogo para cambiar color del tema
-            is DialogType.ShowColorSettings ->
-                ColorSettingsDialog(
-                    currentColor = currentPrimaryColor,
-                    onDismiss = { activeDialog = null },
-                    onColorSelected = { color ->
-                        onColorChanged(color)
-                    }
-                )
-
-            // Pantalla de historial de productos
-            is DialogType.ShowProductHistory ->
-                ProductHistoryScreen(
-                    onProductSelected = { historicalProduct ->
-                        // Añadir producto desde historial
-                        val defaultAisleId = uiState.aisles.firstOrNull()?.id ?: 1L
-                        viewModel.addProduct(
-                            name = historicalProduct.name,
-                            //    aisleId = defaultAisleId,
-                            quantity = 1f,
-                            price = historicalProduct.price
-                        )
-                        activeDialog = null
-                        showSnackbar = "Añadido: ${historicalProduct.name}"
-                    },
-                    onNavigateBack = { activeDialog = null }
-                )
-
-            // Pantalla de importar ticket PDF
-            is DialogType.ImportTicket ->
-                ImportTicketScreen(
-                    onProductsImported = { products, total, tienda, ahorro ->
-                        // Añadir productos del ticket a la lista
-                        val defaultAisleId = uiState.aisles.firstOrNull()?.id ?: 1L
-                        products.forEach { product ->
-                            viewModel.addProduct(
-                                name = product.name,
-                                //       aisleId = defaultAisleId,
-                                quantity = product.quantity.toFloat(),
-                                price = product.price
-                            )
-                        }
-
-                        // Guardar en historial de compras para análisis
-                        val productData = products.map {
-                            Triple(it.name, it.price, null as String?)
-                        }
-                        viewModel.savePurchaseFromTicket(
-                            total = total,
-                            numProductos = products.size,
-                            tienda = tienda,
-                            ahorro = ahorro,
-                            products = productData
-                        )
-
-                        activeDialog = null
-                        showSnackbar = "Añadidos ${products.size} productos y guardado en historial"
-                    },
-                    onNavigateBack = { activeDialog = null }
-                )
-            // Pantalla de escáner de código de barras
-            is DialogType.ShowBarcodeScanner ->
-                BarcodeScannerScreen(
-                    onProductScanned = { scannedProduct ->
-                        // Añadir producto escaneado
-                        val defaultAisleId = uiState.aisles.firstOrNull()?.id ?: 1L
-                        viewModel.addProduct(
-                            name = scannedProduct.name
-                                ?: "Producto ${scannedProduct.barcode.takeLast(4)}",
-                            //     aisleId = defaultAisleId,
-                            quantity = 1f,
-                            price = null
-                        )
-                        activeDialog = null
-                        showSnackbar = "Añadido: ${scannedProduct.name ?: "Producto escaneado"}"
-                    },
-                    onNavigateBack = { activeDialog = null }
-                )
-
-            null -> {}
+            // Nada activo
+            DialogType.None -> {}
         }
     }
 }
+
+@Composable
+fun AudioButton(
+    viewModel: ShoppingListViewModel,
+    uiState: ShoppingListUiState, // O el tipo de estado que uses
+    onCommand: (String) -> Unit
+) {
+    IconButton(onClick = {
+        // Aquí iría la lógica de activación del micrófono
+        // Por ahora simulamos un comando para probar
+        onCommand("mostrar_productos")
+    }) {
+        Icon(
+            imageVector = androidx.compose.material.icons.Icons.Default.AccountBox,
+            contentDescription = "Comando de voz",
+            tint = MaterialTheme.colorScheme.primary
+        )
+    }
+}
+
+// ============================================
+// COMPOSED COMPONENTS (extraer para limpieza)
+// ============================================
+
+@Composable
+private fun CommonMenu(
+    navController: NavHostController,
+    isOnList: Boolean,
+    onNavigateToLists: () -> Unit,
+    onToggleTheme: () -> Unit,
+    onNavigateToColor: () -> Unit,
+    onShowManageAisles: () -> Unit,
+    onNavigateToImport: () -> Unit,
+    onClearList: (Boolean) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    IconButton(onClick = { expanded = true }) {
+        Icon(Icons.Default.Settings, contentDescription = "Menú")
+    }
+
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = { expanded = false }
+    ) {
+        // Navegar a Mis Listas
+        DropdownMenuItem(
+            text = { Text("📋 Mis Listas") },
+            onClick = {
+                expanded = false
+                onNavigateToLists()
+            },
+            leadingIcon = { Icon(Icons.AutoMirrored.Filled.List, null) }
+        )
+
+        HorizontalDivider()
+
+        // Preferencias visuales
+        DropdownMenuItem(
+            text = { Text("🌙☀️ Modo Oscuro/Claro") },
+            onClick = {
+                expanded = false
+                onToggleTheme()
+            },
+            leadingIcon = {
+                Icon(
+                    Icons.Default.DarkMode,
+                    null
+                )
+            }
+        )
+
+        DropdownMenuItem(
+            text = { Text("🎨 Cambiar Color") },
+            onClick = {
+                expanded = false
+                onNavigateToColor()
+            },
+            leadingIcon = {
+                Icon(
+                    Icons.Default.Palette,
+                    null
+                )
+            }
+        )
+
+        DropdownMenuItem(
+            text = { Text("🗂️ Gestionar Pasillos") },
+            onClick = {
+                expanded = false
+                onShowManageAisles()
+            },
+            leadingIcon = {
+                Icon(
+                    Icons.Default.Dashboard,
+                    null
+                )
+            }
+        )
+
+        HorizontalDivider()
+
+        // Importaciones
+        DropdownMenuItem(
+            text = { Text("📄 Importar Ticket PDF") },
+            onClick = {
+                expanded = false
+                onNavigateToImport()
+            },
+            leadingIcon = {
+                Icon(
+                    Icons.Default. UploadFile,
+                    null
+                )
+            }
+        )
+
+        // Acciones de lista (solo si estamos en la lista)
+        if (isOnList) {
+            HorizontalDivider()
+
+            DropdownMenuItem(
+                text = { Text("🧹 Quitar Comprados") },
+                onClick = {
+                    expanded = false
+                    onClearList(false)
+                },
+                leadingIcon = {
+                    Icon(
+                        Icons.Default. RemoveDone,
+                        null
+                    )
+                }
+            )
+
+            DropdownMenuItem(
+                text = {
+                    Text("🗑️ Vaciar Lista Completa")
+                },
+                onClick = {
+                    expanded = false
+                    onClearList(true)
+                },
+                leadingIcon = {
+                    Icon(
+                        Icons.Default. DeleteForever,
+                        null
+                    )
+                },
+                modifier = androidx.compose.ui.Modifier
+            )
+        }
+    }
+}
+
+@Composable
+private fun ShoppingBottomBar(
+    uiState: ShoppingListUiState,
+    viewModel: ShoppingListViewModel,
+    onClearList: (Boolean) -> Unit
+) {
+    BottomAppBar {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Categorizar
+            IconButton(onClick = { viewModel.categorizeProducts() }) {
+                Icon(
+                    Icons.Default.AutoAwesome,
+                    "Categorizar"
+                )
+            }
+
+            // Ordenar por pasillo
+            IconButton(onClick = { viewModel.toggleSortOrder() }) {
+                Icon(
+                    Icons.AutoMirrored.Filled.Sort,
+                    "Ordenar"
+                )
+            }
+        }
+    }
+}
+
 
 

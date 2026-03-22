@@ -34,7 +34,11 @@ import com.jose.listacompra.domain.usecase.product.ToggleProductPurchasedUseCase
 import com.jose.listacompra.domain.usecase.product.UpdateProductUseCase
 import com.jose.listacompra.ui.state.ShoppingListUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -451,5 +455,13 @@ class ShoppingListViewModel @Inject constructor(
             dismissEmptyListConfirmDialog()
             refreshData()
         }
+    }
+
+    fun categorizeProducts() {
+        TODO("Not yet implemented")
+    }
+
+    fun toggleSortOrder() {
+        TODO("Not yet implemented")
     }
 }
