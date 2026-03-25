@@ -2,8 +2,11 @@ package com.jose.listacompra.domain.usecase.articulo
 
 import com.jose.listacompra.domain.model.Articulo
 import com.jose.listacompra.domain.repository.IArticuloRepository
+import javax.inject.Inject
 
-class SaveArticuloUseCase(private val repository: IArticuloRepository) {
+class SaveArticuloUseCase@Inject constructor(
+    private val repository: IArticuloRepository
+){
     suspend operator fun invoke(articulo: Articulo): Result<Unit> {
         // Reglas de negocio
         if (articulo.name.isBlank()) {

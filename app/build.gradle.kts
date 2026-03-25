@@ -40,7 +40,7 @@ android {
     kotlinOptions {
         jvmTarget = "19"
     }
-    
+
     // Usar Java 19 del sistema
     java {
         toolchain {
@@ -63,50 +63,41 @@ android {
 dependencies {
     // Core Android
     implementation("androidx.core:core-ktx:1.12.0")
-//    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
     implementation("androidx.activity:activity-compose:1.8.2")
-//    implementation("androidx.activity:activity-compose:1.8.1")
 
     // Jetpack Compose
-    // 1. Usamos un BOM de 2024 (mucho más compatible y estable)
     implementation(platform("androidx.compose:compose-bom:2024.02.00"))
- //   implementation(platform("androidx.compose:compose-bom:2023.10.01"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     // MATERIAL 3
     implementation("androidx.compose.material3:material3")
-    // ICONOS (Solo estas dos líneas son necesarias)
-    implementation("androidx.compose.material.icons:material-icons-core")
-    implementation("androidx.compose.material.icons:material-icons-extended")
-
+    // --- ICONOS
     implementation("androidx.compose.material:material-icons-core")
-// Opcional: para tener acceso a todos los iconos definidos
     implementation("androidx.compose.material:material-icons-extended")
 
-
-            // Navigation
+    // Navigation
     implementation("androidx.navigation:navigation-compose:2.7.5")
-    
+
     // Room Database
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
-    kapt("androidx.room:room-compiler:2.6.1")
+    // Usamos solo KSP para Room para evitar conflictos con Kapt
     ksp("androidx.room:room-compiler:2.6.1")
-    
+
     // ViewModel
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
-    
+
     // Speech Recognition
     implementation("androidx.activity:activity-ktx:1.8.1")
-    
+
     // JSON (Gson)
     implementation("com.google.code.gson:gson:2.10.1")
-    
+
     // DataStore para preferencias
     implementation("androidx.datastore:datastore-preferences:1.0.0")
-    
+
     // ML Kit - Escáner de códigos de barras
     implementation("com.google.mlkit:barcode-scanning:17.2.0")
     implementation("androidx.camera:camera-core:1.3.0")
@@ -124,11 +115,14 @@ dependencies {
     // Imagenes
     implementation("io.coil-kt:coil-compose:2.5.0")
 
+    // Solución para error de SQLite native library en Windows durante Kapt/KSP
+    kapt("org.xerial:sqlite-jdbc:3.45.1.0")
+
     // Testing
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
-    androidTestImplementation(platform("androidx.compose:compose-bom:2023.10.01"))
+    androidTestImplementation(platform("androidx.compose:compose-bom:2024.02.00"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")

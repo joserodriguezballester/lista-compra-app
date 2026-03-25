@@ -39,4 +39,8 @@ class ArticuloRepositoryImpl(
     override suspend fun deleteArticulo(articulo: Articulo) {
         articuloDao.deleteArticulo(articulo.toEntity())
     }
+
+    override suspend fun updateArticulo(articulo: Articulo) {
+        articuloDao.insertArticulo(articulo.toEntity()) // da igual crear que modificar
+    }
 }

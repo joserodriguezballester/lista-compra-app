@@ -15,6 +15,7 @@ import com.jose.listacompra.data.local.dao.ProductPriceHistoryDao
 import com.jose.listacompra.data.local.dao.PurchaseHistoryDao
 import com.jose.listacompra.data.local.dao.ShoppingListDao
 import com.jose.listacompra.data.local.entities.AisleEntity
+import com.jose.listacompra.data.local.entities.ArticuloEntity
 import com.jose.listacompra.data.local.entities.OfferEntity
 import com.jose.listacompra.data.local.entities.ProductEntity
 import com.jose.listacompra.data.local.entities.ProductFrequencyEntity
@@ -25,6 +26,7 @@ import com.jose.listacompra.data.local.entities.ShoppingListEntity
 
 @Database(
     entities = [
+        ArticuloEntity::class,
         ShoppingListEntity::class,
         AisleEntity::class,
         OfferEntity::class,
@@ -34,7 +36,8 @@ import com.jose.listacompra.data.local.entities.ShoppingListEntity
         ProductPriceHistoryEntity::class,
         ProductFrequencyEntity::class
     ],
-    version = 9
+    version = 10,
+    exportSchema = false
 )
 
 

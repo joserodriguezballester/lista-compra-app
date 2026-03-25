@@ -1,6 +1,5 @@
 package com.jose.listacompra.domain.model
 
-import coil.size.Size
 
 data class Articulo(
     val id: Long = 0,

@@ -1,5 +1,6 @@
 package com.jose.listacompra.ui
 
+//import com.jose.listacompra.ui.screens.main.MainScreen
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -7,20 +8,24 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.*
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.jose.listacompra.data.preferences.ThemePreferences
 import com.jose.listacompra.ui.screens.ListsScreen
-import com.jose.listacompra.ui.screens.main.MainScreen
 import com.jose.listacompra.ui.screens.SplashScreen
 import com.jose.listacompra.ui.theme.ListaCompraTheme
 import com.jose.listacompra.ui.theme.ThemeViewModel
 import com.jose.listacompra.ui.viewmodel.ShoppingListViewModel
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import androidx.lifecycle.ViewModelProvider
-import dagger.hilt.android.AndroidEntryPoint
 
 sealed class Screen {
     object Splash : Screen()
@@ -101,24 +106,24 @@ class MainActivity : ComponentActivity() {
                                     }
                                 )
                             }
-                            is Screen.Main -> {
-                                MainScreen(
-                                    viewModel = shoppingListViewModel,
-                                    currentPrimaryColor = primaryColor ?: ThemePreferences.DEFAULT_COLOR,
-                                    onColorChanged = onColorChanged,
-                                    onNavigateToLists = {
-                                        currentScreen = Screen.Lists
-                                    },
-                                    onToggleTheme = { themeViewModel.toggleTheme() },
-                                    onClearList = { clearAll ->
-                                        if (clearAll) {
-                                            shoppingListViewModel.clearAllProducts()
-                                        } else {
-                                            shoppingListViewModel.clearPurchased()
-                                        }
-                                    }
-                                )
-                            }
+//                            is Screen.Main -> {
+//                                MainScreen(
+//                                    viewModel = shoppingListViewModel,
+//                                    currentPrimaryColor = primaryColor ?: ThemePreferences.DEFAULT_COLOR,
+//                                    onColorChanged = onColorChanged,
+//                                    onNavigateToLists = {
+//                                        currentScreen = Screen.Lists
+//                                    },
+//                                    onToggleTheme = { themeViewModel.toggleTheme() },
+//                                    onClearList = { clearAll ->
+//                                        if (clearAll) {
+//                                            shoppingListViewModel.clearAllProducts()
+//                                        } else {
+//                                            shoppingListViewModel.clearPurchased()
+//                                        }
+//                                    }
+//                                )
+//                            }
                             is Screen.Lists -> {
                                 ListsScreen(
                                     onListSelected = onListSelected,
@@ -127,6 +132,8 @@ class MainActivity : ComponentActivity() {
                                     }
                                 )
                             }
+
+                            else -> {}
                         }
                     }
                 }

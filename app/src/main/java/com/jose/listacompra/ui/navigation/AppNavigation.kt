@@ -7,6 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.jose.listacompra.ui.screens.catalog.CatalogScreen
 import com.jose.listacompra.ui.viewmodel.ShoppingListViewModel
 
 @Composable
@@ -23,11 +24,11 @@ fun AppNavigation(
     ) {
         composable(NavScreen.ShoppingList.route) {
             // Aquí mueves todo tu LazyVerticalGrid de la lista
-            ShoppingListScreen(viewModel = shoppingViewModel)
+       //     ShoppingListScreen(viewModel = shoppingViewModel)
         }
         composable(NavScreen.Catalogo.route) {
             // Tu nueva pantalla de catálogo
-            ArticulosCatalogoScreen()
+            CatalogScreen()
         }
     }
 }
