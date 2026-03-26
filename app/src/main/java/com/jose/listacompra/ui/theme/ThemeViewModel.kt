@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.jose.listacompra.data.preferences.ThemePreferences
+import com.jose.listacompra.data.preferences.ThemePreferences.Companion.DEFAULT_COLOR
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -22,7 +23,8 @@ class ThemeViewModel(application: Application) : AndroidViewModel(application) {
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = ThemePreferences.DEFAULT_MODE
         )
-    
+    val primaryColor = themePreferences.primaryColor
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), DEFAULT_COLOR)
     val followSystem: StateFlow<Boolean> = themePreferences.followSystem
         .stateIn(
             scope = viewModelScope,

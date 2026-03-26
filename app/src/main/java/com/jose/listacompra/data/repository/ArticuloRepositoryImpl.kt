@@ -7,8 +7,9 @@ import com.jose.listacompra.domain.model.Articulo
 import com.jose.listacompra.domain.repository.IArticuloRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import javax.inject.Inject
 
-class ArticuloRepositoryImpl(
+class ArticuloRepositoryImpl @Inject constructor(
     private val articuloDao: ArticuloDao
 ) : IArticuloRepository {
 

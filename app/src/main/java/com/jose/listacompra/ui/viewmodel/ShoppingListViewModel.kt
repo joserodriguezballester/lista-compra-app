@@ -3,7 +3,7 @@ package com.jose.listacompra.ui.viewmodel
 import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.jose.listacompra.data.local.InitialDataSeeder
+import com.jose.listacompra.data.local.dataseeder.InitialDataSeeder
 import com.jose.listacompra.data.local.entities.ProductFrequencyEntity
 import com.jose.listacompra.data.preferences.ListPreferences
 import com.jose.listacompra.data.repository.ShoppingListRepository

@@ -3,10 +3,12 @@ package com.jose.listacompra.di
 import android.content.Context
 import com.jose.listacompra.data.preferences.ListPreferences
 import com.jose.listacompra.data.repository.AisleRepositoryImpl
+import com.jose.listacompra.data.repository.ArticuloRepositoryImpl
 import com.jose.listacompra.data.repository.OfferRepositoryImpl
 import com.jose.listacompra.data.repository.ProductRepositoryImpl
 import com.jose.listacompra.data.repository.ShoppingListRepositoryImpl
 import com.jose.listacompra.domain.repository.IAisleRepository
+import com.jose.listacompra.domain.repository.IArticuloRepository
 import com.jose.listacompra.domain.repository.IOfferRepository
 import com.jose.listacompra.domain.repository.IProductRepository
 import com.jose.listacompra.domain.repository.IShoppingListRepository
@@ -53,5 +55,11 @@ abstract class RepositoryModule {
     abstract fun bindProductRepository(
         impl: ProductRepositoryImpl
     ): IProductRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindArticuloRepository(
+        articuloRepositoryImpl: ArticuloRepositoryImpl
+    ): IArticuloRepository
 
 }

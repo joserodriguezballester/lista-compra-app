@@ -7,6 +7,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.jose.listacompra.data.local.converters.Converters
 import com.jose.listacompra.data.local.dao.AisleDao
+import com.jose.listacompra.data.local.dao.ArticuloDao
 import com.jose.listacompra.data.local.dao.OfferDao
 import com.jose.listacompra.data.local.dao.ProductDao
 import com.jose.listacompra.data.local.dao.ProductFrequencyDao
@@ -51,6 +52,7 @@ abstract class ShoppingListDatabase : RoomDatabase() {
     abstract fun purchaseHistoryDao(): PurchaseHistoryDao
     abstract fun productPriceHistoryDao(): ProductPriceHistoryDao
     abstract fun productFrequencyDao(): ProductFrequencyDao
+    abstract fun articuloDao(): ArticuloDao
 
     companion object {
         const val DATABASE_NAME = "shopping_list_db"

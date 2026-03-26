@@ -2,16 +2,16 @@ package com.jose.listacompra.di
 
 import android.content.Context
 import androidx.room.Room
+import com.jose.listacompra.data.local.ShoppingListDatabase
 import com.jose.listacompra.data.local.dao.AisleDao
+import com.jose.listacompra.data.local.dao.ArticuloDao
 import com.jose.listacompra.data.local.dao.OfferDao
 import com.jose.listacompra.data.local.dao.ProductDao
-import com.jose.listacompra.data.local.dao.ProductHistoryDao
-import com.jose.listacompra.data.local.dao.ShoppingListDao
-import com.jose.listacompra.data.local.ShoppingListDatabase
-import com.jose.listacompra.data.local.ShoppingListDatabase.Companion.MIGRATION_7_8
 import com.jose.listacompra.data.local.dao.ProductFrequencyDao
+import com.jose.listacompra.data.local.dao.ProductHistoryDao
 import com.jose.listacompra.data.local.dao.ProductPriceHistoryDao
 import com.jose.listacompra.data.local.dao.PurchaseHistoryDao
+import com.jose.listacompra.data.local.dao.ShoppingListDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -65,6 +65,11 @@ object DatabaseModule {
     @Provides
     fun provideProductFrequencyDao(db: ShoppingListDatabase): ProductFrequencyDao =
         db.productFrequencyDao()
+
+    @Provides
+    fun provideArticuloDao(db: ShoppingListDatabase): ArticuloDao =
+        db.articuloDao()
+
 
 
 }

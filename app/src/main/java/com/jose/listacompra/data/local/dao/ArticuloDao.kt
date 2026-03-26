@@ -1,5 +1,6 @@
 package com.jose.listacompra.data.local.dao
 
+import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -7,7 +8,7 @@ import androidx.room.Query
 import androidx.room.Update
 import com.jose.listacompra.data.local.entities.ArticuloEntity
 import kotlinx.coroutines.flow.Flow
-
+@Dao
 interface ArticuloDao {
 
     @Query("SELECT * FROM articulos ORDER BY name ASC")
@@ -36,4 +37,6 @@ interface ArticuloDao {
     // Busca coincidencias en el nombre (ej: "leche")
     @Query("SELECT * FROM articulos WHERE name LIKE '%' || :query || '%' ORDER BY name ASC")
    suspend fun searchArticulosByName(query: String): List<ArticuloEntity>
+    @Query("SELECT COUNT(*) FROM articulos")
+    suspend fun getArticulosCount(): Int
 }

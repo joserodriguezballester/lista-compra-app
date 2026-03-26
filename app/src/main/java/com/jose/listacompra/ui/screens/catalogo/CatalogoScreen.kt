@@ -45,7 +45,7 @@ import com.jose.listacompra.ui.viewmodel.ArticuloViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CatalogScreen(
+fun CatalogoScreen(
     onNavigateBack: () -> Unit = {},
     onScanBarcode: () -> Unit = {},
     onNavigateToAdd: () -> Unit = {},
@@ -163,7 +163,7 @@ fun CatalogScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(articulosFiltrados, key = { it.id }) { articulo ->
-                        ArticuloCard(
+                        ArticuloCard (
                             articulo = articulo,
                             onClick = { onEditArticulo(articulo) },
                             onLongClick = { showDeleteConfirm = articulo }

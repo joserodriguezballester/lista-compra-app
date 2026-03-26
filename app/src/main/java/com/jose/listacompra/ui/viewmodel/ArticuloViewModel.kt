@@ -7,6 +7,7 @@ import com.jose.listacompra.domain.usecase.articulo.DeleteArticuloUseCase
 import com.jose.listacompra.domain.usecase.articulo.GetAllArticulosUseCase
 import com.jose.listacompra.domain.usecase.articulo.GetArticuloByEanUseCase
 import com.jose.listacompra.domain.usecase.articulo.SaveArticuloUseCase
+import com.jose.listacompra.domain.usecase.articulo.SeedCatalogUseCase
 import com.jose.listacompra.domain.usecase.articulo.UpdateArticuloUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -20,9 +21,10 @@ class ArticuloViewModel @Inject constructor(
     private val saveArticuloUseCase: SaveArticuloUseCase,
     private val deleteArticuloUseCase: DeleteArticuloUseCase,
     private val getArticuloByEanUseCase: GetArticuloByEanUseCase,
-  private val updateArticuloUseCase: UpdateArticuloUseCase,
-   // private val getArticuloByIdUseCase: GetArticuloByIdUseCase,
-   // private val searchArticulosUseCase: SearchArticulosUseCase
+    private val updateArticuloUseCase: UpdateArticuloUseCase,
+    private val seedCatalogUseCase: SeedCatalogUseCase,
+    // private val getArticuloByIdUseCase: GetArticuloByIdUseCase,
+    // private val searchArticulosUseCase: SearchArticulosUseCase
 ) : ViewModel() {
 
     // Estado observable para la UI
@@ -31,11 +33,18 @@ class ArticuloViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = emptyList()
     )
+    init {
+        // Al iniciar el ViewModel, comprobamos si hay que insertar los 15 artículos
+        viewModelScope.launch {
+            seedCatalogUseCase()
+        }
+    }
 
     // Guardar artículo (crear o actualizar)
     fun addArticulo(articulo: Articulo) {
         viewModelScope.launch { saveArticuloUseCase(articulo) }
     }
+
     fun updateArticulo(nuevoArticulo: Articulo) {
         viewModelScope.launch { updateArticuloUseCase(nuevoArticulo) }
     }
