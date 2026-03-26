@@ -14,8 +14,12 @@ import com.jose.listacompra.ui.screens.catalog.CatalogoScreen
 fun AppNavigation(
     navController: NavHostController,
     padding: PaddingValues,
- //   shoppingViewModel: ShoppingListViewModel,
-    // articuloViewModel: ArticuloViewModel // Añadirás este luego
+    // Theme settings (pasados desde MainActivity)
+    isDarkMode: Boolean = false,
+    onToggleTheme: () -> Unit = {},
+    onChangeColor: () -> Unit = {},
+    onOpenLists: () -> Unit = {},
+    onOpenImport: () -> Unit = {},
 ) {
     NavHost(
         navController = navController,
@@ -26,12 +30,22 @@ fun AppNavigation(
             SplashScreen(navController = navController)
         }
         composable(NavScreen.ShoppingList.route) {
-            // Aquí mueves todo tu LazyVerticalGrid de la lista
-       //     ShoppingListScreen(viewModel = shoppingViewModel)
+            // TODO: ProductListScreen con los callbacks
+            // ShoppingListScreen(
+            //     isDarkMode = isDarkMode,
+            //     onToggleTheme = onToggleTheme,
+            //     onChangeColor = onChangeColor
+            // )
         }
         composable(NavScreen.Catalogo.route) {
-            // Tu nueva pantalla de catálogo
-            CatalogoScreen()
+            CatalogoScreen(
+                onNavigateBack = { navController.popBackStack() },
+                isDarkMode = isDarkMode,
+                onToggleDarkMode = { onToggleTheme() },
+                onChangeColor = onChangeColor,
+                onOpenLists = onOpenLists,
+                onOpenImport = onOpenImport
+            )
         }
     }
 }

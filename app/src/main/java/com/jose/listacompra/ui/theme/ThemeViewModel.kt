@@ -60,6 +60,15 @@ class ThemeViewModel(application: Application) : AndroidViewModel(application) {
     }
     
     /**
+     * Cambia el color primario de la app
+     */
+    fun setPrimaryColor(color: Int) {
+        viewModelScope.launch {
+            themePreferences.setPrimaryColor(color)
+        }
+    }
+    
+    /**
      * Determina si usar tema oscuro basado en preferencias
      */
     fun isDarkTheme(systemIsDark: Boolean): Boolean {
