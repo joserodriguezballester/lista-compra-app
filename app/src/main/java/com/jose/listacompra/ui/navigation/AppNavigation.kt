@@ -10,7 +10,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.jose.listacompra.ui.screens.SplashScreen
-import com.jose.listacompra.ui.screens.catalog.CatalogoScreen
+import com.jose.listacompra.ui.screens.catalogo.CatalogoScreen
 import com.jose.listacompra.ui.screens.home.HomeScreen
 import com.jose.listacompra.ui.screens.productlist.ProductListScreen
 import com.jose.listacompra.ui.screens.scanner.BarcodeScannerScreen
