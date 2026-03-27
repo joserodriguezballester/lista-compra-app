@@ -1,10 +1,6 @@
 package com.jose.listacompra.ui.screens.main.components
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -15,48 +11,45 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun TotalsBar(
-    totalWithOffers: Float,
-    totalWithoutOffers: Float,
-    savings: Float,
-    purchasedCount: Int,
-    totalCount: Int
+    total: Float = 0f,
+    savings: Float = 0f,
+    modifier: Modifier = Modifier
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.primaryContainer,
-        tonalElevation = 3.dp
+        modifier = modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        tonalElevation = 2.dp
     ) {
-        Column(
-            modifier = Modifier.Companion
+        Row(
+            modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Fila superior: contador y total principal
-            Row(
-                modifier = Modifier.Companion.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Companion.CenterVertically
-            ) {
+            Column {
                 Text(
-                    text = "$purchasedCount de $totalCount productos",
-                    style = MaterialTheme.typography.bodyMedium
+                    text = "Total",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = "Total: %.2f€".format(totalWithOffers),
-                    style = MaterialTheme.typography.titleMedium,
+                    text = String.format("%.2f €", total),
+                    style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.primary
                 )
             }
-
-            // Fila inferior: ahorro (si hay)
-            if (savings > 0.01f) {
-                Row(
-                    modifier = Modifier.Companion.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.Companion.CenterVertically
-                ) {
+            
+            if (savings > 0) {
+                Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = "Ahorrado: %.2f€ 🎉".format(savings),
-                        style = MaterialTheme.typography.bodySmall,
+                        text = "Ahorro",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = String.format("%.2f €", savings),
+                        style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.tertiary
                     )
                 }

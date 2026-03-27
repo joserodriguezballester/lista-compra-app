@@ -15,7 +15,6 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.jose.listacompra.domain.model.Articulo
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddEditArticuloDialog(
     articulo: Articulo? = null,
@@ -35,9 +34,7 @@ fun AddEditArticuloDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         modifier = Modifier.fillMaxWidth(),
-        title = {
-            Text(if (articulo == null) "Nuevo artículo" else "Editar artículo")
-        },
+        title = { Text(if (articulo == null) "Nuevo artículo" else "Editar artículo") },
         text = {
             Column(
                 modifier = Modifier
@@ -49,115 +46,63 @@ fun AddEditArticuloDialog(
                     AsyncImage(
                         model = photoUri,
                         contentDescription = name,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(150.dp),
+                        modifier = Modifier.fillMaxWidth().height(150.dp),
                         contentScale = ContentScale.Crop
                     )
                 } else {
                     Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(100.dp),
+                        modifier = Modifier.fillMaxWidth().height(100.dp),
                         color = MaterialTheme.colorScheme.surfaceVariant,
                         shape = MaterialTheme.shapes.medium
                     ) {
                         Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                Icons.Default.Image,
-                                contentDescription = null,
-                                modifier = Modifier.size(48.dp),
-                                tint = MaterialTheme.colorScheme.outline
-                            )
+                            Icon(Icons.Default.Image, null, Modifier.size(48.dp), MaterialTheme.colorScheme.outline)
                         }
                     }
                 }
 
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Nombre *") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
+                OutlinedTextField(name, { name = it }, { Text("Nombre *") }, Modifier.fillMaxWidth(), singleLine = true)
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    OutlinedTextField(
-                        value = size,
-                        onValueChange = { size = it },
-                        label = { Text("Tamaño") },
-                        modifier = Modifier.weight(1f),
-                        singleLine = true
-                    )
-                    OutlinedTextField(
-                        value = unit,
-                        onValueChange = { unit = it },
-                        label = { Text("Unidad") },
-                        modifier = Modifier.weight(1f),
-                        singleLine = true
-                    )
+                Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(size, { size = it }, { Text("Tamaño") }, Modifier.weight(1f), singleLine = true)
+                    OutlinedTextField(unit, { unit = it }, { Text("Unidad") }, Modifier.weight(1f), singleLine = true)
                 }
 
-                OutlinedTextField(
-                    value = price,
-                    onValueChange = { price = it },
-                    label = { Text("Precio (€)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
+                OutlinedTextField(price, { price = it }, { Text("Precio (€)") }, Modifier.fillMaxWidth(), singleLine = true)
 
                 OutlinedTextField(
-                    value = eanValue,
-                    onValueChange = { eanValue = it },
-                    label = { Text("Código de barras") },
-                    modifier = Modifier.fillMaxWidth(),
+                    eanValue, 
+                    { eanValue = it }, 
+                    { Text("Código de barras") },
+                    Modifier.fillMaxWidth(),
                     singleLine = true,
                     trailingIcon = {
-                        IconButton(onClick = onScanBarcode) {
-                            Icon(
-                                Icons.Default.QrCodeScanner,
-                                contentDescription = "Escanear código"
-                            )
+                        IconButton(onScanBarcode) {
+                            Icon(Icons.Default.QrCodeScanner, "Escanear")
                         }
                     }
                 )
 
-                OutlinedTextField(
-                    value = categoryId,
-                    onValueChange = { categoryId = it },
-                    label = { Text("Categoría") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
+                OutlinedTextField(categoryId, { categoryId = it }, { Text("Categoría") }, Modifier.fillMaxWidth(), singleLine = true)
             }
         },
         confirmButton = {
-            Button(
-                onClick = {
-                    val newArticulo = Articulo(
-                        id = articulo?.id ?: 0,
-                        name = name,
-                        size = size.toDoubleOrNull() ?: 1.0,
-                        unit = unit.ifBlank { "ud" },
-                        finalPrice = price.toFloatOrNull(),
-                        ean = eanValue.ifBlank { null },
-                        categoryId = categoryId.toLongOrNull() ?: articulo?.categoryId,
-                        photoUri = photoUri.ifBlank { null }
-                    )
-                    onSave(newArticulo)
-                },
-                enabled = name.isNotBlank()
-            ) {
+            Button({
+                val newArticulo = Articulo(
+                    id = articulo?.id ?: 0,
+                    name = name,
+                    size = size.toDoubleOrNull() ?: 1.0,
+                    unit = unit.ifBlank { "ud" },
+                    finalPrice = price.toFloatOrNull(),
+                    ean = eanValue.ifBlank { null },
+                    categoryId = categoryId.toLongOrNull() ?: articulo?.categoryId,
+                    photoUri = photoUri.ifBlank { null }
+                )
+                onSave(newArticulo)
+            }, enabled = name.isNotBlank()) {
                 Text("Guardar")
             }
         },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancelar")
-            }
-        }
+        dismissButton = { TextButton(onDismiss) { Text("Cancelar") } }
     )
 }

@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Inventory
 import androidx.compose.material3.*
@@ -46,42 +47,40 @@ fun CatalogoScreen(
 
     val articulosFiltrados = remember(articulos, searchQuery, selectedCategory) {
         var result = articulos
-        
         if (searchQuery.isNotBlank()) {
-            result = result.filter {
-                it.name.contains(searchQuery, ignoreCase = true) ||
-                it.ean?.contains(searchQuery, ignoreCase = true) == true
-            }
+            result = result.filter { it.name.contains(searchQuery, ignoreCase = true) || it.ean?.contains(searchQuery, ignoreCase = true) == true }
         }
-        
         if (selectedCategory != null) {
             result = result.filter { it.categoryId?.toString() == selectedCategory }
         }
-        
         result
     }
     
     val articuloNames = remember(articulos) {
-        articulos.groupBy { it.name.lowercase() }
-            .filter { it.value.size > 1 }
-            .keys
+        articulos.groupBy { it.name.lowercase() }.filter { it.value.size > 1 }.keys
     }
     
     val categories = remember(articulos) {
-        articulos.mapNotNull { it.categoryId?.toString() }
-            .distinct()
-            .sorted()
+        articulos.mapNotNull { it.categoryId?.toString() }.distinct().sorted()
     }
 
     Scaffold(
         topBar = {
             if (showSearchBar) {
-                SearchBar(
-                    query = searchQuery,
-                    onQueryChange = { searchQuery = it },
-                    onClose = { 
-                        showSearchBar = false
-                        searchQuery = ""
+                TopAppBar(
+                    title = {
+                        OutlinedTextField(
+                            searchQuery, 
+                            { searchQuery = it },
+                            { Text("Buscar artículos...") },
+                            Modifier.fillMaxWidth(),
+                            singleLine = true
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton({ showSearchBar = false; searchQuery = "" }) {
+                            Icon(Icons.Default.ArrowBack, "Cerrar")
+                        }
                     }
                 )
             } else {
@@ -106,7 +105,7 @@ fun CatalogoScreen(
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = { showAddDialog = true },
-                icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                icon = { Icon(Icons.Default.Add, null) },
                 text = { Text("Añadir artículo") },
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -115,44 +114,26 @@ fun CatalogoScreen(
     ) { paddingValues ->
         if (articulosFiltrados.isEmpty()) {
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                Modifier.fillMaxSize().padding(paddingValues),
+                Alignment.CenterHorizontally,
+                Arrangement.Center
             ) {
-                Icon(
-                    imageVector = Icons.Default.Inventory,
-                    contentDescription = null,
-                    modifier = Modifier.size(64.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                )
-                Text(
-                    text = "No hay artículos",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Icon(Icons.Default.Inventory, null, Modifier.size(64.dp), MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
+                Text("No hay artículos", MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         } else {
             LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 150.dp),
-                contentPadding = PaddingValues(
-                    start = 16.dp,
-                    end = 16.dp,
-                    top = 16.dp,
-                    bottom = 16.dp
-                ),
+                columns = GridCells.Adaptive(150.dp),
+                contentPadding = PaddingValues(16.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.padding(paddingValues)
             ) {
-                items(articulosFiltrados, key = { it.id }) { articulo ->
-                    val hasVariants = articulo.name.lowercase() in articuloNames
-                    
+                items(articulosFiltrados, { it.id }) { articulo ->
                     ArticuloCard(
-                        articulo = articulo,
-                        onClick = { selectedArticulo = articulo },
-                        hasVariants = hasVariants
+                        articulo,
+                        { selectedArticulo = articulo },
+                        articulo.name.lowercase() in articuloNames
                     )
                 }
             }
@@ -161,47 +142,29 @@ fun CatalogoScreen(
 
     if (showAddDialog) {
         AddEditArticuloDialog(
-            articulo = null,
-            ean = scannedEan,
-            onDismiss = { 
-                showAddDialog = false
-                scannedEan = null
-            },
-            onSave = { articulo ->
-                viewModel.addArticulo(articulo)
-                showAddDialog = false
-                scannedEan = null
-            },
-            onScanBarcode = {
-                showAddDialog = false
-                navController?.navigate(NavScreen.BarcodeScanner.route)
-            }
+            null,
+            scannedEan,
+            { showAddDialog = false; scannedEan = null },
+            { viewModel.addArticulo(it); showAddDialog = false; scannedEan = null },
+            { showAddDialog = false; navController?.navigate(NavScreen.BarcodeScanner.route) }
         )
     }
 
     selectedArticulo?.let { articulo ->
         ArticuloDetailDialog(
-            articulo = articulo,
-            onDismiss = { selectedArticulo = null },
-            onSave = { updatedArticulo ->
-                viewModel.updateArticulo(updatedArticulo)
-                selectedArticulo = null
-            },
-            onDelete = {
-                showDeleteConfirm = articulo
-                selectedArticulo = null
-            }
+            articulo,
+            { selectedArticulo = null },
+            { viewModel.updateArticulo(it); selectedArticulo = null },
+            { showDeleteConfirm = articulo; selectedArticulo = null }
         )
     }
 
     if (showFilterDialog) {
         CategoryFilterDialog(
-            categories = categories,
-            selectedCategory = selectedCategory,
-            onDismiss = { showFilterDialog = false },
-            onCategorySelected = { category ->
-                selectedCategory = category
-            }
+            categories,
+            selectedCategory,
+            { showFilterDialog = false },
+            { selectedCategory = it }
         )
     }
 
@@ -211,51 +174,14 @@ fun CatalogoScreen(
             title = { Text("Eliminar artículo") },
             text = { Text("¿Eliminar '${articulo.name}' del catálogo?") },
             confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.deleteArticulo(articulo)
-                        showDeleteConfirm = null
-                    },
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = MaterialTheme.colorScheme.error
-                    )
-                ) {
+                TextButton({
+                    viewModel.deleteArticulo(articulo)
+                    showDeleteConfirm = null
+                }, ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)) {
                     Text("Eliminar")
                 }
             },
-            dismissButton = {
-                TextButton(onClick = { showDeleteConfirm = null }) {
-                    Text("Cancelar")
-                }
-            }
+            dismissButton = { TextButton({ showDeleteConfirm = null }) { Text("Cancelar") } }
         )
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun SearchBar(
-    query: String,
-    onQueryChange: (String) -> Unit,
-    onClose: () -> Unit
-) {
-    TopAppBar(
-        title = {
-            OutlinedTextField(
-                value = query,
-                onValueChange = onQueryChange,
-                placeholder = { Text("Buscar artículos...") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
-        },
-        navigationIcon = {
-            IconButton(onClick = onClose) {
-                Icon(
-                    imageVector = androidx.compose.material.icons.Icons.Default.ArrowBack,
-                    contentDescription = "Cerrar búsqueda"
-                )
-            }
-        }
-    )
 }

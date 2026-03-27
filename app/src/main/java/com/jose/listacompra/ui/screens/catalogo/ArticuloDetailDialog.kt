@@ -15,7 +15,6 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.jose.listacompra.domain.model.Articulo
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ArticuloDetailDialog(
     articulo: Articulo,
@@ -29,200 +28,89 @@ fun ArticuloDetailDialog(
     var price by remember { mutableStateOf(articulo.finalPrice?.toString() ?: "") }
     var ean by remember { mutableStateOf(articulo.ean ?: "") }
     var categoryId by remember { mutableStateOf(articulo.categoryId?.toString() ?: "") }
-    
     var isEditing by remember { mutableStateOf(false) }
-    
+
     AlertDialog(
         onDismissRequest = onDismiss,
         tonalElevation = 0.dp,
         shape = RoundedCornerShape(24.dp),
         text = {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState()),
+                modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(180.dp),
+                    modifier = Modifier.fillMaxWidth().height(180.dp),
                     shape = RoundedCornerShape(16.dp),
                     color = MaterialTheme.colorScheme.surfaceVariant
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         if (!articulo.photoUri.isNullOrEmpty()) {
-                            AsyncImage(
-                                model = articulo.photoUri,
-                                contentDescription = articulo.name,
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
-                            )
+                            AsyncImage(articulo.photoUri, articulo.name, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
                         } else {
-                            Icon(
-                                imageVector = Icons.Default.Image,
-                                contentDescription = null,
-                                modifier = Modifier.size(64.dp),
-                                tint = MaterialTheme.colorScheme.outline
-                            )
+                            Icon(Icons.Default.Image, null, Modifier.size(64.dp), MaterialTheme.colorScheme.outline)
                         }
                     }
                 }
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
+
+                Spacer(Modifier.height(16.dp))
+
                 if (isEditing) {
-                    OutlinedTextField(
-                        value = name,
-                        onValueChange = { newValue -> name = newValue },
-                        label = { Text("Nombre") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        OutlinedTextField(
-                            value = size,
-                            onValueChange = { newValue -> size = newValue },
-                            label = { Text("Cantidad") },
-                            modifier = Modifier.weight(1f),
-                            singleLine = true
-                        )
-                        
-                        OutlinedTextField(
-                            value = unit,
-                            onValueChange = { newValue -> unit = newValue },
-                            label = { Text("Unidad") },
-                            modifier = Modifier.weight(1f),
-                            singleLine = true
-                        )
+                    OutlinedTextField(name, { name = it }, { Text("Nombre") }, Modifier.fillMaxWidth(), singleLine = true)
+                    Spacer(Modifier.height(8.dp))
+                    Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(size, { size = it }, { Text("Cantidad") }, Modifier.weight(1f), singleLine = true)
+                        OutlinedTextField(unit, { unit = it }, { Text("Unidad") }, Modifier.weight(1f), singleLine = true)
                     }
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    OutlinedTextField(
-                        value = price,
-                        onValueChange = { newValue -> price = newValue },
-                        label = { Text("Precio (€)") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    OutlinedTextField(
-                        value = ean,
-                        onValueChange = { newValue -> ean = newValue },
-                        label = { Text("Código de barras") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    OutlinedTextField(
-                        value = categoryId,
-                        onValueChange = { newValue -> categoryId = newValue },
-                        label = { Text("Categoría") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedTextField(price, { price = it }, { Text("Precio (€)") }, Modifier.fillMaxWidth(), singleLine = true)
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedTextField(ean, { ean = it }, { Text("Código de barras") }, Modifier.fillMaxWidth(), singleLine = true)
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedTextField(categoryId, { categoryId = it }, { Text("Categoría") }, Modifier.fillMaxWidth(), singleLine = true)
                 } else {
+                    Text(articulo.name, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
+                    Spacer(Modifier.height(8.dp))
+                    Text("${articulo.size} ${articulo.unit}", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.height(4.dp))
                     Text(
-                        text = articulo.name,
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    Text(
-                        text = "${articulo.size} ${articulo.unit}",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    
-                    Spacer(modifier = Modifier.height(4.dp))
-                    
-                    Text(
-                        text = if (articulo.finalPrice != null) {
-                            "${String.format("%.2f", articulo.finalPrice)} €"
-                        } else {
-                            "Precio no disponible"
-                        },
+                        if (articulo.finalPrice != null) "${String.format("%.2f", articulo.finalPrice)} €" else "Precio no disponible",
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.primary
                     )
-                    
                     if (!articulo.ean.isNullOrBlank()) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "EAN: ${articulo.ean}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Spacer(Modifier.height(8.dp))
+                        Text("EAN: ${articulo.ean}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    
                     if (articulo.categoryId != null) {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Categoría: ${articulo.categoryId}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text("Categoría: ${articulo.categoryId}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
         },
         confirmButton = {
             if (isEditing) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TextButton(onClick = { isEditing = false }) {
-                        Text("Cancelar")
-                    }
-                    Button(
-                        onClick = {
-                            val updatedArticulo = articulo.copy(
-                                name = name,
-                                size = size.toDoubleOrNull() ?: articulo.size,
-                                unit = unit,
-                                finalPrice = price.toDoubleOrNull(),
-                                ean = ean.ifBlank { null },
-                                categoryId = categoryId.toLongOrNull()
-                            )
-                            onSave(updatedArticulo)
-                        }
-                    ) {
-                        Text("Guardar")
-                    }
+                Row(Arrangement.spacedBy(8.dp)) {
+                    TextButton({ isEditing = false }) { Text("Cancelar") }
+                    Button({
+                        onSave(articulo.copy(
+                            name = name,
+                            size = size.toDoubleOrNull() ?: articulo.size,
+                            unit = unit,
+                            finalPrice = price.toFloatOrNull(),
+                            ean = ean.ifBlank { null },
+                            categoryId = categoryId.toLongOrNull() ?: articulo.categoryId
+                        ))
+                    }) { Text("Guardar") }
                 }
             } else {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TextButton(
-                        onClick = onDelete,
-                        colors = ButtonDefaults.textButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error
-                        )
-                    ) {
-                        Text("Eliminar")
-                    }
-                    Button(onClick = { isEditing = true }) {
-                        Text("Editar")
-                    }
+                Row(Arrangement.spacedBy(8.dp)) {
+                    TextButton(onDelete, ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)) { Text("Eliminar") }
+                    Button({ isEditing = true }) { Text("Editar") }
                 }
             }
         },
-        dismissButton = {
-            if (!isEditing) {
-                TextButton(onClick = onDismiss) {
-                    Text("Cerrar")
-                }
-            }
-        }
+        dismissButton = { if (!isEditing) TextButton(onDismiss) { Text("Cerrar") } }
     )
 }

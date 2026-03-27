@@ -18,17 +18,13 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.LifecycleOwner
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import java.util.concurrent.Executors
 
-/**
- * Pantalla de escaneo de códigos de barras
- * Usa CameraX + ML Kit
- */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BarcodeScannerScreen(
     onBarcodeScanned: (String) -> Unit,
@@ -39,23 +35,16 @@ fun BarcodeScannerScreen(
     
     var isScanning by remember { mutableStateOf(true) }
     
-    // Scanner de ML Kit
     val scanner: BarcodeScanner = remember {
         BarcodeScanning.getClient(
             BarcodeScannerOptions.Builder()
-                .setBarcodeFormats(
-                    Barcode.FORMAT_EAN_13,
-                    Barcode.FORMAT_EAN_8,
-                    Barcode.FORMAT_UPC_A,
-                    Barcode.FORMAT_UPC_E
-                )
+                .setBarcodeFormats(Barcode.FORMAT_EAN_13, Barcode.FORMAT_EAN_8, Barcode.FORMAT_UPC_A, Barcode.FORMAT_UPC_E)
                 .build()
         )
     }
     
     val executor = remember { Executors.newSingleThreadExecutor() }
     
-    // Cleanup
     DisposableEffect(Unit) {
         onDispose {
             scanner.close()
@@ -68,29 +57,19 @@ fun BarcodeScannerScreen(
             TopAppBar(
                 title = { Text("Escanear código") },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.Close, contentDescription = "Cerrar")
+                    IconButton(onNavigateBack) {
+                        Icon(Icons.Default.Close, "Cerrar")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
-                )
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f))
             )
         }
     ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            // Camera preview
+        Box(Modifier.fillMaxSize().padding(paddingValues)) {
             AndroidView(
                 factory = { ctx ->
                     val previewView = PreviewView(ctx).apply {
-                        layoutParams = ViewGroup.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            ViewGroup.LayoutParams.MATCH_PARENT
-                        )
+                        layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
                         scaleType = PreviewView.ScaleType.FILL_CENTER
                     }
                     
@@ -99,9 +78,7 @@ fun BarcodeScannerScreen(
                     cameraProviderFuture.addListener({
                         val cameraProvider = cameraProviderFuture.get()
                         
-                        val preview = Preview.Builder()
-                            .build()
-                            .also { it.setSurfaceProvider(previewView.surfaceProvider) }
+                        val preview = Preview.Builder().build().also { it.setSurfaceProvider(previewView.surfaceProvider) }
                         
                         val imageAnalysis = ImageAnalysis.Builder()
                             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
@@ -129,9 +106,7 @@ fun BarcodeScannerScreen(
                                                     }
                                                 }
                                             }
-                                            .addOnCompleteListener {
-                                                imageProxy.close()
-                                            }
+                                            .addOnCompleteListener { imageProxy.close() }
                                     } else {
                                         imageProxy.close()
                                     }
@@ -140,12 +115,7 @@ fun BarcodeScannerScreen(
                         
                         try {
                             cameraProvider.unbindAll()
-                            cameraProvider.bindToLifecycle(
-                                lifecycleOwner,
-                                CameraSelector.DEFAULT_BACK_CAMERA,
-                                preview,
-                                imageAnalysis
-                            )
+                            cameraProvider.bindToLifecycle(lifecycleOwner, CameraSelector.DEFAULT_BACK_CAMERA, preview, imageAnalysis)
                         } catch (e: Exception) {
                             e.printStackTrace()
                         }
@@ -156,17 +126,14 @@ fun BarcodeScannerScreen(
                 modifier = Modifier.fillMaxSize()
             )
             
-            // Overlay con instrucciones
             Surface(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth(),
+                modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth(),
                 color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
             ) {
                 Text(
-                    text = "Apunta la cámara al código de barras del producto",
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(16.dp)
+                    "Apunta la cámara al código de barras del producto",
+                    Modifier.padding(16.dp),
+                    MaterialTheme.typography.bodyMedium
                 )
             }
         }
