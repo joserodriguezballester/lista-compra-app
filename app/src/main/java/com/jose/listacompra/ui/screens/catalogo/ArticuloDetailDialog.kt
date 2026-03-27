@@ -74,7 +74,7 @@ fun ArticuloDetailDialog(
                 if (isEditing) {
                     OutlinedTextField(
                         value = name,
-                        onValueChange = { name = it },
+                        onValueChange = { newValue -> name = newValue },
                         label = { Text("Nombre") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
@@ -88,7 +88,7 @@ fun ArticuloDetailDialog(
                     ) {
                         OutlinedTextField(
                             value = size,
-                            onValueChange = { size = it },
+                            onValueChange = { newValue -> size = newValue },
                             label = { Text("Cantidad") },
                             modifier = Modifier.weight(1f),
                             singleLine = true
@@ -96,7 +96,7 @@ fun ArticuloDetailDialog(
                         
                         OutlinedTextField(
                             value = unit,
-                            onValueChange = { unit = it },
+                            onValueChange = { newValue -> unit = newValue },
                             label = { Text("Unidad") },
                             modifier = Modifier.weight(1f),
                             singleLine = true
@@ -107,7 +107,7 @@ fun ArticuloDetailDialog(
                     
                     OutlinedTextField(
                         value = price,
-                        onValueChange = { price = it },
+                        onValueChange = { newValue -> price = newValue },
                         label = { Text("Precio (€)") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
@@ -117,7 +117,7 @@ fun ArticuloDetailDialog(
                     
                     OutlinedTextField(
                         value = ean,
-                        onValueChange = { ean = it },
+                        onValueChange = { newValue -> ean = newValue },
                         label = { Text("Código de barras") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
@@ -127,7 +127,7 @@ fun ArticuloDetailDialog(
                     
                     OutlinedTextField(
                         value = categoryId,
-                        onValueChange = { categoryId = it },
+                        onValueChange = { newValue -> categoryId = newValue },
                         label = { Text("Categoría") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
