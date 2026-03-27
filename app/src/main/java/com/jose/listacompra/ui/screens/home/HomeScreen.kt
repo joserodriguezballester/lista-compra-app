@@ -20,7 +20,6 @@ fun HomeScreen(
     onNavigateToList: () -> Unit = {},
     onNavigateToCatalogo: () -> Unit = {},
     onNavigateToSupermarkets: () -> Unit = {},
-    // Theme settings
     isDarkMode: Boolean = false,
     onToggleDarkMode: (Boolean) -> Unit = {},
     onOpenLists: () -> Unit = {},
@@ -31,7 +30,7 @@ fun HomeScreen(
         topBar = {
             CommonTopBar(
                 title = "Lista Compra",
-                onNavigateBack = null, // Home no tiene back
+                onNavigateBack = null,
                 isDarkMode = isDarkMode,
                 onToggleDarkMode = onToggleDarkMode,
                 onOpenLists = onOpenLists,
@@ -48,19 +47,16 @@ fun HomeScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Título de bienvenida
             Text(
                 text = "¿Qué quieres hacer?",
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             
-            // Grid de cards (2 columnas)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Card 1: Mi Lista
                 HomeCard(
                     modifier = Modifier.weight(1f),
                     title = "Mi Lista",
@@ -70,7 +66,6 @@ fun HomeScreen(
                     onClick = onNavigateToList
                 )
                 
-                // Card 2: Catálogo
                 HomeCard(
                     modifier = Modifier.weight(1f),
                     title = "Catálogo",
@@ -85,7 +80,6 @@ fun HomeScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Card 3: Supermercados (HABILITADO)
                 HomeCard(
                     modifier = Modifier.weight(1f),
                     title = "Supermercados",
@@ -96,7 +90,6 @@ fun HomeScreen(
                     onClick = onNavigateToSupermarkets
                 )
                 
-                // Card 4: Ofertas (placeholder)
                 HomeCard(
                     modifier = Modifier.weight(1f),
                     title = "Ofertas",
@@ -104,7 +97,7 @@ fun HomeScreen(
                     icon = Icons.Default.LocalOffer,
                     emoji = "🏷️",
                     enabled = false,
-                    onClick = { /* TODO */ }
+                    onClick = { }
                 )
             }
             
@@ -112,7 +105,6 @@ fun HomeScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Card 5: Historial (placeholder)
                 HomeCard(
                     modifier = Modifier.weight(1f),
                     title = "Historial",
@@ -120,10 +112,9 @@ fun HomeScreen(
                     icon = Icons.Default.History,
                     emoji = "📊",
                     enabled = false,
-                    onClick = { /* TODO */ }
+                    onClick = { }
                 )
                 
-                // Card 6: Categorías (placeholder)
                 HomeCard(
                     modifier = Modifier.weight(1f),
                     title = "Categorías",
@@ -131,7 +122,7 @@ fun HomeScreen(
                     icon = Icons.Default.Category,
                     emoji = "📂",
                     enabled = false,
-                    onClick = { /* TODO */ }
+                    onClick = { }
                 )
             }
         }
@@ -149,8 +140,7 @@ private fun HomeCard(
     onClick: () -> Unit
 ) {
     Card(
-        modifier = modifier
-            .height(140.dp),
+        modifier = modifier.height(140.dp),
         onClick = onClick,
         enabled = enabled,
         colors = CardDefaults.cardColors(
@@ -167,7 +157,6 @@ private fun HomeCard(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Emoji
             Text(
                 text = emoji,
                 style = MaterialTheme.typography.displaySmall
@@ -175,7 +164,6 @@ private fun HomeCard(
             
             Spacer(modifier = Modifier.height(8.dp))
             
-            // Título
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
@@ -186,7 +174,6 @@ private fun HomeCard(
                 textAlign = TextAlign.Center
             )
             
-            // Subtítulo
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodySmall,

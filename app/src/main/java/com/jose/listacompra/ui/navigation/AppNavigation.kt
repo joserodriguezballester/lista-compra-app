@@ -13,6 +13,7 @@ import com.jose.listacompra.ui.screens.SplashScreen
 import com.jose.listacompra.ui.screens.catalog.CatalogoScreen
 import com.jose.listacompra.ui.screens.home.HomeScreen
 import com.jose.listacompra.ui.screens.productlist.ProductListScreen
+import com.jose.listacompra.ui.screens.scanner.BarcodeScannerScreen
 import com.jose.listacompra.ui.screens.supermarket.SupermarketAislesScreen
 import com.jose.listacompra.ui.screens.supermarket.SupermarketListScreen
 
@@ -48,6 +49,7 @@ fun AppNavigation(
             HomeScreen(
                 onNavigateToList = { navController.navigate(NavScreen.ShoppingList.route) },
                 onNavigateToCatalogo = { navController.navigate(NavScreen.Catalogo.route) },
+                onNavigateToSupermarkets = { navController.navigate(NavScreen.Supermarkets.route) },
                 isDarkMode = isDarkMode,
                 onToggleDarkMode = { onToggleTheme() },
                 onChangeColor = onChangeColor,
@@ -74,11 +76,25 @@ fun AppNavigation(
             CatalogoScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToList = { navController.navigate(NavScreen.ShoppingList.route) },
+                navController = navController,
                 isDarkMode = isDarkMode,
                 onToggleDarkMode = { onToggleTheme() },
                 onChangeColor = onChangeColor,
                 onOpenLists = onOpenLists,
                 onOpenImport = onOpenImport
+            )
+        }
+        
+        // Scanner de códigos de barras
+        composable(NavScreen.BarcodeScanner.route) {
+            BarcodeScannerScreen(
+                onBarcodeScanned = { barcode ->
+                    navController.previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.set("scannedEan", barcode)
+                    navController.popBackStack()
+                },
+                onNavigateBack = { navController.popBackStack() }
             )
         }
         
