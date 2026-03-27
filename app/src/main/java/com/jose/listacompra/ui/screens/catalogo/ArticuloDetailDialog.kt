@@ -23,13 +23,12 @@ fun ArticuloDetailDialog(
     onSave: (Articulo) -> Unit,
     onDelete: () -> Unit
 ) {
-    // Estado editable
     var name by remember { mutableStateOf(articulo.name) }
     var size by remember { mutableStateOf(articulo.size.toString()) }
     var unit by remember { mutableStateOf(articulo.unit) }
     var price by remember { mutableStateOf(articulo.finalPrice?.toString() ?: "") }
     var ean by remember { mutableStateOf(articulo.ean ?: "") }
-    var categoryId by remember { mutableStateOf(articulo.categoryId ?: "") }
+    var categoryId by remember { mutableStateOf(articulo.categoryId?.toString() ?: "") }
     
     var isEditing by remember { mutableStateOf(false) }
     
@@ -44,7 +43,6 @@ fun ArticuloDetailDialog(
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Imagen del artículo
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -52,9 +50,7 @@ fun ArticuloDetailDialog(
                     shape = RoundedCornerShape(16.dp),
                     color = MaterialTheme.colorScheme.surfaceVariant
                 ) {
-                    Box(
-                        contentAlignment = Alignment.Center
-                    ) {
+                    Box(contentAlignment = Alignment.Center) {
                         if (!articulo.photoUri.isNullOrEmpty()) {
                             AsyncImage(
                                 model = articulo.photoUri,
@@ -75,9 +71,7 @@ fun ArticuloDetailDialog(
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 
-                // Campos
                 if (isEditing) {
-                    // Modo edición
                     OutlinedTextField(
                         value = name,
                         onValueChange = { name = it },
@@ -139,7 +133,6 @@ fun ArticuloDetailDialog(
                         singleLine = true
                     )
                 } else {
-                    // Modo visualización
                     Text(
                         text = articulo.name,
                         style = MaterialTheme.typography.titleLarge,
@@ -200,7 +193,7 @@ fun ArticuloDetailDialog(
                                 unit = unit,
                                 finalPrice = price.toDoubleOrNull(),
                                 ean = ean.ifBlank { null },
-                                categoryId = categoryId.ifBlank { null }
+                                categoryId = categoryId.toLongOrNull()
                             )
                             onSave(updatedArticulo)
                         }

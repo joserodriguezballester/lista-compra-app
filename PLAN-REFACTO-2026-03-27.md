@@ -132,4 +132,10 @@ data class Product(
 
 ---
 
-*Actualizado: 2026-03-27 04:05*
+---
+
+## 🔗 Nodo Milo (Cenito)
+
+**Pendiente:** Cuando tenga acceso al nodo Milo, decirle a Cenito que Jose también pueda usarlo para compilar sus proyectos Android.
+
+---
