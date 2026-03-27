@@ -168,7 +168,7 @@ fun ArticuloDetailDialog(
                         )
                     }
                     
-                    if (!articulo.categoryId.isNullOrBlank()) {
+                    if (articulo.categoryId != null) {
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = "Categoría: ${articulo.categoryId}",
