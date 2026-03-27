@@ -19,6 +19,7 @@ import com.jose.listacompra.ui.components.CommonTopBar
 fun HomeScreen(
     onNavigateToList: () -> Unit = {},
     onNavigateToCatalogo: () -> Unit = {},
+    onNavigateToSupermarkets: () -> Unit = {},
     // Theme settings
     isDarkMode: Boolean = false,
     onToggleDarkMode: (Boolean) -> Unit = {},
@@ -84,24 +85,24 @@ fun HomeScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Card 3: Ofertas (placeholder)
+                // Card 3: Supermercados (HABILITADO)
+                HomeCard(
+                    modifier = Modifier.weight(1f),
+                    title = "Supermercados",
+                    subtitle = "Gestionar",
+                    icon = Icons.Default.Store,
+                    emoji = "🏪",
+                    enabled = true,
+                    onClick = onNavigateToSupermarkets
+                )
+                
+                // Card 4: Ofertas (placeholder)
                 HomeCard(
                     modifier = Modifier.weight(1f),
                     title = "Ofertas",
                     subtitle = "Próximamente",
                     icon = Icons.Default.LocalOffer,
                     emoji = "🏷️",
-                    enabled = false,
-                    onClick = { /* TODO */ }
-                )
-                
-                // Card 4: Supermercados (placeholder)
-                HomeCard(
-                    modifier = Modifier.weight(1f),
-                    title = "Supermercados",
-                    subtitle = "Próximamente",
-                    icon = Icons.Default.Store,
-                    emoji = "🏪",
                     enabled = false,
                     onClick = { /* TODO */ }
                 )
@@ -166,7 +167,7 @@ private fun HomeCard(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Emoji o icono
+            // Emoji
             Text(
                 text = emoji,
                 style = MaterialTheme.typography.displaySmall

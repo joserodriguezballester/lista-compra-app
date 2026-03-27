@@ -1,25 +1,25 @@
 package com.jose.listacompra.ui.navigation
 
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.jose.listacompra.ui.screens.SplashScreen
 import com.jose.listacompra.ui.screens.catalog.CatalogoScreen
 import com.jose.listacompra.ui.screens.home.HomeScreen
 import com.jose.listacompra.ui.screens.productlist.ProductListScreen
+import com.jose.listacompra.ui.screens.supermarket.SupermarketAislesScreen
+import com.jose.listacompra.ui.screens.supermarket.SupermarketListScreen
 
 @Composable
 fun AppNavigation(
     navController: NavHostController,
     padding: PaddingValues,
-    // Theme settings (pasados desde MainActivity)
     isDarkMode: Boolean = false,
     onToggleTheme: () -> Unit = {},
     onChangeColor: () -> Unit = {},
@@ -46,12 +46,8 @@ fun AppNavigation(
         // Home
         composable(NavScreen.Home.route) {
             HomeScreen(
-                onNavigateToList = { 
-                    navController.navigate(NavScreen.ShoppingList.route) 
-                },
-                onNavigateToCatalogo = { 
-                    navController.navigate(NavScreen.Catalogo.route) 
-                },
+                onNavigateToList = { navController.navigate(NavScreen.ShoppingList.route) },
+                onNavigateToCatalogo = { navController.navigate(NavScreen.Catalogo.route) },
                 isDarkMode = isDarkMode,
                 onToggleDarkMode = { onToggleTheme() },
                 onChangeColor = onChangeColor,
@@ -78,6 +74,40 @@ fun AppNavigation(
             CatalogoScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToList = { navController.navigate(NavScreen.ShoppingList.route) },
+                isDarkMode = isDarkMode,
+                onToggleDarkMode = { onToggleTheme() },
+                onChangeColor = onChangeColor,
+                onOpenLists = onOpenLists,
+                onOpenImport = onOpenImport
+            )
+        }
+        
+        // Lista de Supermercados
+        composable(NavScreen.Supermarkets.route) {
+            SupermarketListScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToAisles = { supermarketId ->
+                    navController.navigate(NavScreen.SupermarketAisles.createRoute(supermarketId))
+                },
+                isDarkMode = isDarkMode,
+                onToggleDarkMode = { onToggleTheme() },
+                onChangeColor = onChangeColor,
+                onOpenLists = onOpenLists,
+                onOpenImport = onOpenImport
+            )
+        }
+        
+        // Pasillos de un Supermercado
+        composable(
+            route = NavScreen.SupermarketAisles.route,
+            arguments = listOf(
+                navArgument("supermarketId") { type = NavType.LongType }
+            )
+        ) { backStackEntry ->
+            val supermarketId = backStackEntry.arguments?.getLong("supermarketId") ?: 1L
+            SupermarketAislesScreen(
+                supermarketId = supermarketId,
+                onNavigateBack = { navController.popBackStack() },
                 isDarkMode = isDarkMode,
                 onToggleDarkMode = { onToggleTheme() },
                 onChangeColor = onChangeColor,

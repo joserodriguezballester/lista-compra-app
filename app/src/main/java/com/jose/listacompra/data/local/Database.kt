@@ -10,6 +10,7 @@ import com.jose.listacompra.data.local.dao.AisleDao
 import com.jose.listacompra.data.local.dao.ArticuloDao
 import com.jose.listacompra.data.local.dao.ArticuloSupermarketDefaultDao
 import com.jose.listacompra.data.local.dao.CategoryDao
+import com.jose.listacompra.data.local.dao.CategorySupermarketOrderDao
 import com.jose.listacompra.data.local.dao.OfferDao
 import com.jose.listacompra.data.local.dao.ProductDao
 import com.jose.listacompra.data.local.dao.ProductFrequencyDao
@@ -22,6 +23,7 @@ import com.jose.listacompra.data.local.entities.AisleEntity
 import com.jose.listacompra.data.local.entities.ArticuloEntity
 import com.jose.listacompra.data.local.entities.ArticuloSupermarketDefaultEntity
 import com.jose.listacompra.data.local.entities.CategoryEntity
+import com.jose.listacompra.data.local.entities.CategorySupermarketOrderEntity
 import com.jose.listacompra.data.local.entities.OfferEntity
 import com.jose.listacompra.data.local.entities.ProductEntity
 import com.jose.listacompra.data.local.entities.ProductFrequencyEntity
@@ -42,16 +44,14 @@ import com.jose.listacompra.data.local.entities.SupermarketEntity
         PurchaseHistoryEntity::class,
         ProductPriceHistoryEntity::class,
         ProductFrequencyEntity::class,
-        // Nuevas entidades
         SupermarketEntity::class,
         CategoryEntity::class,
-        ArticuloSupermarketDefaultEntity::class
+        ArticuloSupermarketDefaultEntity::class,
+        CategorySupermarketOrderEntity::class  // NUEVA
     ],
-    version = 11,
+    version = 12,  // Incrementado
     exportSchema = false
 )
-
-
 @TypeConverters(Converters::class)
 abstract class ShoppingListDatabase : RoomDatabase() {
     abstract fun shoppingListDao(): ShoppingListDao
@@ -63,30 +63,23 @@ abstract class ShoppingListDatabase : RoomDatabase() {
     abstract fun productPriceHistoryDao(): ProductPriceHistoryDao
     abstract fun productFrequencyDao(): ProductFrequencyDao
     abstract fun articuloDao(): ArticuloDao
-    // Nuevos DAOs
     abstract fun supermarketDao(): SupermarketDao
     abstract fun categoryDao(): CategoryDao
     abstract fun articuloSupermarketDefaultDao(): ArticuloSupermarketDefaultDao
+    abstract fun categorySupermarketOrderDao(): CategorySupermarketOrderDao  // NUEVO
 
     companion object {
         const val DATABASE_NAME = "shopping_list_db"
 
-        // Migraciones existentes
         val MIGRATION_7_8 = object : Migration(7, 8) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL(
-                    "ALTER TABLE products ADD COLUMN photoUri TEXT DEFAULT NULL"
-                )
-                db.execSQL(
-                    "ALTER TABLE products ADD COLUMN ean TEXT DEFAULT NULL"
-                )
+                db.execSQL("ALTER TABLE products ADD COLUMN photoUri TEXT DEFAULT NULL")
+                db.execSQL("ALTER TABLE products ADD COLUMN ean TEXT DEFAULT NULL")
             }
         }
         
-        // Migración 10 → 11: Añadir supermercados, categorías y nuevos campos
         val MIGRATION_10_11 = object : Migration(10, 11) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                // Crear tabla supermarkets
                 db.execSQL("""
                     CREATE TABLE IF NOT EXISTS supermarkets (
                         id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -96,7 +89,6 @@ abstract class ShoppingListDatabase : RoomDatabase() {
                     )
                 """)
                 
-                // Crear tabla categories
                 db.execSQL("""
                     CREATE TABLE IF NOT EXISTS categories (
                         id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -105,14 +97,10 @@ abstract class ShoppingListDatabase : RoomDatabase() {
                     )
                 """)
                 
-                // Añadir supermarketId a aisles
                 db.execSQL("ALTER TABLE aisles ADD COLUMN supermarketId INTEGER NOT NULL DEFAULT 1")
-                
-                // Añadir articuloId y supermarketId a products
                 db.execSQL("ALTER TABLE products ADD COLUMN articuloId INTEGER")
                 db.execSQL("ALTER TABLE products ADD COLUMN supermarketId INTEGER NOT NULL DEFAULT 1")
                 
-                // Crear tabla articulo_supermarket_defaults
                 db.execSQL("""
                     CREATE TABLE IF NOT EXISTS articulo_supermarket_defaults (
                         id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -125,13 +113,28 @@ abstract class ShoppingListDatabase : RoomDatabase() {
                     )
                 """)
                 
-                // Crear índices
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_aisles_supermarketId ON aisles(supermarketId)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_products_articuloId ON products(articuloId)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_products_supermarketId ON products(supermarketId)")
-                db.execSQL("CREATE INDEX IF NOT EXISTS index_articulo_supermarket_defaults_articuloId ON articulo_supermarket_defaults(articuloId)")
-                db.execSQL("CREATE INDEX IF NOT EXISTS index_articulo_supermarket_defaults_supermarketId ON articulo_supermarket_defaults(supermarketId)")
-                db.execSQL("CREATE INDEX IF NOT EXISTS index_articulo_supermarket_defaults_aisleId ON articulo_supermarket_defaults(aisleId)")
+            }
+        }
+        
+        // Migración 11→12: Añadir tabla de orden de categorías por supermercado
+        val MIGRATION_11_12 = object : Migration(11, 12) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS category_supermarket_orders (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        categoryId INTEGER NOT NULL,
+                        supermarketId INTEGER NOT NULL,
+                        orderIndex INTEGER NOT NULL,
+                        FOREIGN KEY(categoryId) REFERENCES categories(id) ON DELETE CASCADE,
+                        FOREIGN KEY(supermarketId) REFERENCES supermarkets(id) ON DELETE CASCADE
+                    )
+                """)
+                
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_category_supermarket_orders_categoryId ON category_supermarket_orders(categoryId)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_category_supermarket_orders_supermarketId ON category_supermarket_orders(supermarketId)")
             }
         }
     }
