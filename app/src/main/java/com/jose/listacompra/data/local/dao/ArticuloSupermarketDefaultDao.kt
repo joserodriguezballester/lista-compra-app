@@ -16,7 +16,7 @@ interface ArticuloSupermarketDefaultDao {
     fun getDefaultsForArticulo(articuloId: Long): Flow<List<ArticuloSupermarketDefaultEntity>>
     
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertOrUpdate(default: ArticuloSupermarketDefaultEntity): Long
+    suspend fun insertOrUpdate(entity: ArticuloSupermarketDefaultEntity): Long
     
     @Query("DELETE FROM articulo_supermarket_defaults WHERE articuloId = :articuloId AND supermarketId = :supermarketId")
     suspend fun deleteDefault(articuloId: Long, supermarketId: Long)
