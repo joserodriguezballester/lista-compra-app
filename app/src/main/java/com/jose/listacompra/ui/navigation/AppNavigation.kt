@@ -9,6 +9,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.jose.listacompra.ui.screens.SplashScreen
 import com.jose.listacompra.ui.screens.catalog.CatalogoScreen
+import com.jose.listacompra.ui.screens.home.HomeScreen
 
 @Composable
 fun AppNavigation(
@@ -26,17 +27,48 @@ fun AppNavigation(
         startDestination = NavScreen.Splash.route,
         modifier = Modifier.padding(padding)
     ) {
+        // Splash → Home
         composable(NavScreen.Splash.route) {
-            SplashScreen(navController = navController)
+            SplashScreen(
+                navController = navController,
+                onNavigateToHome = { 
+                    navController.navigate(NavScreen.Home.route) {
+                        popUpTo(NavScreen.Splash.route) { inclusive = true }
+                    }
+                }
+            )
         }
+        
+        // Home
+        composable(NavScreen.Home.route) {
+            HomeScreen(
+                onNavigateToList = { 
+                    navController.navigate(NavScreen.ShoppingList.route) 
+                },
+                onNavigateToCatalogo = { 
+                    navController.navigate(NavScreen.Catalogo.route) 
+                },
+                isDarkMode = isDarkMode,
+                onToggleDarkMode = { onToggleTheme() },
+                onChangeColor = onChangeColor,
+                onOpenLists = onOpenLists,
+                onOpenImport = onOpenImport
+            )
+        }
+        
+        // ShoppingList (ProductListScreen - TODO: crear)
         composable(NavScreen.ShoppingList.route) {
-            // TODO: ProductListScreen con los callbacks
-            // ShoppingListScreen(
-            //     isDarkMode = isDarkMode,
-            //     onToggleTheme = onToggleTheme,
-            //     onChangeColor = onChangeColor
-            // )
+            // TODO: ProductListScreen
+            // Por ahora placeholder
+            androidx.compose.foundation.layout.Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = androidx.compose.ui.Alignment.Center
+            ) {
+                androidx.compose.material3.Text("ProductListScreen (pendiente)")
+            }
         }
+        
+        // Catálogo
         composable(NavScreen.Catalogo.route) {
             CatalogoScreen(
                 onNavigateBack = { navController.popBackStack() },

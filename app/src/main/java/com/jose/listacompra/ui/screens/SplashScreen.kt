@@ -30,12 +30,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.jose.listacompra.ui.navigation.NavScreen
 import kotlinx.coroutines.delay
 
 @Composable
 fun SplashScreen(
-    navController: NavHostController
+    navController: NavHostController? = null,
+    onNavigateToHome: () -> Unit = {}
 ) {
     var startAnimation by remember { mutableStateOf(false) }
     
@@ -66,10 +66,8 @@ fun SplashScreen(
     LaunchedEffect(key1 = true) {
         startAnimation = true
         delay(2500) // Esperar 2.5 segundos
-        // Navegamos al catálogo y limpiamos la Splash del historial
-        navController.navigate(NavScreen.Catalogo.route) {
-            popUpTo(NavScreen.Splash.route) { inclusive = true }
-        }
+        // Navegar a Home
+        onNavigateToHome()
     }
     
     Box(
