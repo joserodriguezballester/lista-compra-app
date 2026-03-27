@@ -128,6 +128,7 @@ data class Product(
 3. **Integrar FAB de Home y ProductList** - Añadir producto desde catálogo
 4. **UI de selección de pasillo inteligente** - Usar `ArticuloSupermarketDefault`
 5. **Eliminar ShoppingViewModel** - Ya no se usa
+6. **Marcar productos de tienda fija** - Aunque el producto aparezca en la lista de otro supermercado, poder indicar "esto siempre lo compro en X tienda". Útil para cuando vas a varios supermercados y quieres recordar dónde comprar cada cosa
 
 ---
 
