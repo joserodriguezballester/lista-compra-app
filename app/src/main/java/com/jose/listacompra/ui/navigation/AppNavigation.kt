@@ -10,12 +10,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.jose.listacompra.ui.screens.SplashScreen
-import com.jose.listacompra.ui.screens.catalogo.CatalogoScreen
 import com.jose.listacompra.ui.screens.home.HomeScreen
 import com.jose.listacompra.ui.screens.productlist.ProductListScreen
 import com.jose.listacompra.ui.screens.scanner.BarcodeScannerScreen
 import com.jose.listacompra.ui.screens.supermarket.SupermarketAislesScreen
 import com.jose.listacompra.ui.screens.supermarket.SupermarketListScreen
+import com.jose.listacompra.ui.screens.catalogo.CatalogoScreen
 
 @Composable
 fun AppNavigation(
@@ -32,7 +32,6 @@ fun AppNavigation(
         startDestination = NavScreen.Splash.route,
         modifier = Modifier.padding(padding)
     ) {
-        // Splash → Home
         composable(NavScreen.Splash.route) {
             SplashScreen(
                 navController = navController,
@@ -44,7 +43,6 @@ fun AppNavigation(
             )
         }
         
-        // Home
         composable(NavScreen.Home.route) {
             HomeScreen(
                 onNavigateToList = { navController.navigate(NavScreen.ShoppingList.route) },
@@ -58,7 +56,6 @@ fun AppNavigation(
             )
         }
         
-        // ShoppingList (ProductListScreen)
         composable(NavScreen.ShoppingList.route) {
             ProductListScreen(
                 onNavigateBack = { navController.popBackStack() },
@@ -71,7 +68,6 @@ fun AppNavigation(
             )
         }
         
-        // Catálogo
         composable(NavScreen.Catalogo.route) {
             CatalogoScreen(
                 onNavigateBack = { navController.popBackStack() },
@@ -85,7 +81,6 @@ fun AppNavigation(
             )
         }
         
-        // Scanner de códigos de barras
         composable(NavScreen.BarcodeScanner.route) {
             BarcodeScannerScreen(
                 onBarcodeScanned = { barcode ->
@@ -98,7 +93,6 @@ fun AppNavigation(
             )
         }
         
-        // Lista de Supermercados
         composable(NavScreen.Supermarkets.route) {
             SupermarketListScreen(
                 onNavigateBack = { navController.popBackStack() },
@@ -113,7 +107,6 @@ fun AppNavigation(
             )
         }
         
-        // Pasillos de un Supermercado
         composable(
             route = NavScreen.SupermarketAisles.route,
             arguments = listOf(

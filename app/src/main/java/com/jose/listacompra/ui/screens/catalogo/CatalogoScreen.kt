@@ -1,10 +1,11 @@
-package com.jose.listacompra.ui.screens.catalog
+package com.jose.listacompra.ui.screens.catalogo
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Inventory
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -12,12 +13,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavHostController
 import com.jose.listacompra.domain.model.Articulo
 import com.jose.listacompra.ui.components.CatalogBottomBar
 import com.jose.listacompra.ui.components.CommonTopBar
-import com.jose.listacompra.ui.screens.catalogo.ArticuloCard
-import com.jose.listacompra.ui.screens.catalogo.ArticuloDetailDialog
-import com.jose.listacompra.ui.screens.catalogo.CategoryFilterDialog
+import com.jose.listacompra.ui.navigation.NavScreen
 import com.jose.listacompra.ui.viewmodel.ArticuloViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -25,7 +25,7 @@ import com.jose.listacompra.ui.viewmodel.ArticuloViewModel
 fun CatalogoScreen(
     onNavigateBack: () -> Unit = {},
     onNavigateToList: () -> Unit = {},
-    // Theme settings
+    navController: NavHostController? = null,
     isDarkMode: Boolean = false,
     onToggleDarkMode: (Boolean) -> Unit = {},
     onOpenLists: () -> Unit = {},
@@ -35,19 +35,18 @@ fun CatalogoScreen(
 ) {
     val articulos by viewModel.listaArticulos.collectAsState()
     
-    // Estados de UI
     var searchQuery by remember { mutableStateOf("") }
     var showSearchBar by remember { mutableStateOf(false) }
     var showFilterDialog by remember { mutableStateOf(false) }
     var selectedArticulo by remember { mutableStateOf<Articulo?>(null) }
+    var showAddDialog by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf<Articulo?>(null) }
     var selectedCategory by remember { mutableStateOf<String?>(null) }
+    var scannedEan by remember { mutableStateOf<String?>(null) }
 
-    // Filtrar artículos
     val articulosFiltrados = remember(articulos, searchQuery, selectedCategory) {
         var result = articulos
         
-        // Filtro por búsqueda
         if (searchQuery.isNotBlank()) {
             result = result.filter {
                 it.name.contains(searchQuery, ignoreCase = true) ||
@@ -55,24 +54,21 @@ fun CatalogoScreen(
             }
         }
         
-        // Filtro por categoría
         if (selectedCategory != null) {
-            result = result.filter { it.categoryId == selectedCategory }
+            result = result.filter { it.categoryId?.toString() == selectedCategory }
         }
         
         result
     }
     
-    // Detectar variantes (mismo nombre, distinta cantidad)
     val articuloNames = remember(articulos) {
         articulos.groupBy { it.name.lowercase() }
             .filter { it.value.size > 1 }
             .keys
     }
     
-    // Obtener categorías únicas (placeholder)
     val categories = remember(articulos) {
-        articulos.mapNotNull { it.categoryId }
+        articulos.mapNotNull { it.categoryId?.toString() }
             .distinct()
             .sorted()
     }
@@ -80,7 +76,6 @@ fun CatalogoScreen(
     Scaffold(
         topBar = {
             if (showSearchBar) {
-                // Search Bar temporal
                 SearchBar(
                     query = searchQuery,
                     onQueryChange = { searchQuery = it },
@@ -107,38 +102,38 @@ fun CatalogoScreen(
                 onFilterClick = { showFilterDialog = true },
                 onCartClick = onNavigateToList
             )
+        },
+        floatingActionButton = {
+            ExtendedFloatingActionButton(
+                onClick = { showAddDialog = true },
+                icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                text = { Text("Añadir artículo") },
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+            )
         }
     ) { paddingValues ->
-        // Empty state
         if (articulosFiltrados.isEmpty()) {
-            Box(
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues),
-                contentAlignment = Alignment.Center
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Inventory,
-                        contentDescription = null,
-                        modifier = Modifier.size(64.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                    )
-                    Text(
-                        text = if (searchQuery.isEmpty() && selectedCategory == null) 
-                            "No hay artículos" 
-                        else 
-                            "Sin resultados",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                Icon(
+                    imageVector = Icons.Default.Inventory,
+                    contentDescription = null,
+                    modifier = Modifier.size(64.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                )
+                Text(
+                    text = "No hay artículos",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         } else {
-            // Grid of products
             LazyVerticalGrid(
                 columns = GridCells.Adaptive(minSize = 150.dp),
                 contentPadding = PaddingValues(
@@ -164,7 +159,26 @@ fun CatalogoScreen(
         }
     }
 
-    // Diálogo de detalle/editar
+    if (showAddDialog) {
+        AddEditArticuloDialog(
+            articulo = null,
+            ean = scannedEan,
+            onDismiss = { 
+                showAddDialog = false
+                scannedEan = null
+            },
+            onSave = { articulo ->
+                viewModel.addArticulo(articulo)
+                showAddDialog = false
+                scannedEan = null
+            },
+            onScanBarcode = {
+                showAddDialog = false
+                navController?.navigate(NavScreen.BarcodeScanner.route)
+            }
+        )
+    }
+
     selectedArticulo?.let { articulo ->
         ArticuloDetailDialog(
             articulo = articulo,
@@ -180,7 +194,6 @@ fun CatalogoScreen(
         )
     }
 
-    // Diálogo de filtro por categoría
     if (showFilterDialog) {
         CategoryFilterDialog(
             categories = categories,
@@ -192,7 +205,6 @@ fun CatalogoScreen(
         )
     }
 
-    // Confirmación de eliminar
     showDeleteConfirm?.let { articulo ->
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = null },

@@ -19,12 +19,11 @@ import com.jose.listacompra.domain.model.Articulo
 @Composable
 fun AddEditArticuloDialog(
     articulo: Articulo? = null,
-    ean: String? = null, // EAN escaneado para pre-rellenar
+    ean: String? = null,
     onDismiss: () -> Unit,
     onSave: (Articulo) -> Unit,
     onScanBarcode: () -> Unit = {}
 ) {
-    // Estado del formulario
     var name by remember { mutableStateOf(articulo?.name ?: "") }
     var size by remember { mutableStateOf(articulo?.size?.toString() ?: "") }
     var unit by remember { mutableStateOf(articulo?.unit ?: "") }
@@ -35,7 +34,6 @@ fun AddEditArticuloDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        tonalElevation = 0.dp,
         modifier = Modifier.fillMaxWidth(),
         title = {
             Text(if (articulo == null) "Nuevo artículo" else "Editar artículo")
@@ -47,7 +45,6 @@ fun AddEditArticuloDialog(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Imagen
                 if (!photoUri.isNullOrEmpty()) {
                     AsyncImage(
                         model = photoUri,
@@ -76,7 +73,6 @@ fun AddEditArticuloDialog(
                     }
                 }
 
-                // Nombre
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
@@ -85,7 +81,6 @@ fun AddEditArticuloDialog(
                     singleLine = true
                 )
 
-                // Tamaño y Unidad
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -106,7 +101,6 @@ fun AddEditArticuloDialog(
                     )
                 }
 
-                // Precio
                 OutlinedTextField(
                     value = price,
                     onValueChange = { price = it },
@@ -115,7 +109,6 @@ fun AddEditArticuloDialog(
                     singleLine = true
                 )
 
-                // EAN con botón de escanear
                 OutlinedTextField(
                     value = eanValue,
                     onValueChange = { eanValue = it },
@@ -132,7 +125,6 @@ fun AddEditArticuloDialog(
                     }
                 )
 
-                // Categoría
                 OutlinedTextField(
                     value = categoryId,
                     onValueChange = { categoryId = it },
@@ -150,9 +142,9 @@ fun AddEditArticuloDialog(
                         name = name,
                         size = size.toDoubleOrNull() ?: 1.0,
                         unit = unit.ifBlank { "ud" },
-                        finalPrice = price.toDoubleOrNull(),
+                        finalPrice = price.toFloatOrNull(),
                         ean = eanValue.ifBlank { null },
-                        categoryId = categoryId.toLongOrNull(),
+                        categoryId = categoryId.toLongOrNull() ?: articulo?.categoryId,
                         photoUri = photoUri.ifBlank { null }
                     )
                     onSave(newArticulo)
