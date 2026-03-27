@@ -1,8 +1,11 @@
 package com.jose.listacompra.ui.navigation
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -10,6 +13,7 @@ import androidx.navigation.compose.composable
 import com.jose.listacompra.ui.screens.SplashScreen
 import com.jose.listacompra.ui.screens.catalog.CatalogoScreen
 import com.jose.listacompra.ui.screens.home.HomeScreen
+import com.jose.listacompra.ui.screens.productlist.ProductListScreen
 
 @Composable
 fun AppNavigation(
@@ -56,16 +60,17 @@ fun AppNavigation(
             )
         }
         
-        // ShoppingList (ProductListScreen - TODO: crear)
+        // ShoppingList (ProductListScreen)
         composable(NavScreen.ShoppingList.route) {
-            // TODO: ProductListScreen
-            // Por ahora placeholder
-            androidx.compose.foundation.layout.Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = androidx.compose.ui.Alignment.Center
-            ) {
-                androidx.compose.material3.Text("ProductListScreen (pendiente)")
-            }
+            ProductListScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToCatalogo = { navController.navigate(NavScreen.Catalogo.route) },
+                isDarkMode = isDarkMode,
+                onToggleDarkMode = { onToggleTheme() },
+                onChangeColor = onChangeColor,
+                onOpenLists = onOpenLists,
+                onOpenImport = onOpenImport
+            )
         }
         
         // Catálogo

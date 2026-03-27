@@ -5,9 +5,9 @@ import com.jose.listacompra.domain.repository.IProductRepository
 import javax.inject.Inject
 
 class GetAllProductsUseCase @Inject constructor(
-    private val repository: IProductRepository
+    private val productRepository: IProductRepository
 ) {
     suspend operator fun invoke(listId: Long): List<Product> {
-        return repository.getAllProducts(listId)
+        return productRepository.getAllProducts(listId)
     }
 }
