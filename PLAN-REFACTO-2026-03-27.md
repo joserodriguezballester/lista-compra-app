@@ -1,84 +1,134 @@
 # Plan Refactorización - 2026-03-27
 
-**Estado:** Planificación
+**Estado:** ✅ COMPLETADO (Fases 1-5)
+
+**Rama:** `feature/supermarket-refactor`
 
 ---
 
 ## 🎯 Objetivo Principal
 
-Reestructurar la navegación y pantallas de la app.
+Reestructurar la app para soportar múltiples supermercados con pasillos específicos.
 
 ---
 
-## 📱 Pantallas
+## ✅ Fases completadas
 
-### 1. HomeScreen (nueva)
-- **BottomBar:** ❌ No
-- **Contenido:** Cards de navegación (Catálogo, Lista Compra, Ofertas*, Supermercados*, Historial*)
-- **TopBar:** CommonTopBar (ya existe)
-- *Los marcados con * son placeholders sin enlace
+### Fase 1: Modelos nuevos
+| Modelo | Estado | Archivo |
+|--------|--------|---------|
+| `Supermarket` | ✅ | `domain/model/Supermarket.kt` |
+| `Category` | ✅ | `domain/model/Category.kt` |
+| `ArticuloSupermarketDefault` | ✅ | `domain/model/ArticuloSupermarketDefault.kt` |
+| `SupermarketEntity` | ✅ | `data/local/entities/SupermarketEntity.kt` |
+| `CategoryEntity` | ✅ | `data/local/entities/CategoryEntity.kt` |
+| `ArticuloSupermarketDefaultEntity` | ✅ | `data/local/entities/ArticuloSupermarketDefaultEntity.kt` |
 
-### 2. ProductListScreen (ex-ShoppingListScreen/MainScreen)
-- **BottomBar:** ✅ Sí (¿qué botones?)
-- **Contenido:** Productos ordenados por pasillo
-- **FAB:** Añadir producto
-- **NOTA:** Hay que darle otra pensada
+### Fase 2: Modelos modificados
+| Modelo | Cambio | Estado |
+|--------|--------|--------|
+| `Aisle` | + `supermarketId` | ✅ |
+| `Product` | + `articuloId`, `supermarketId` | ✅ |
 
-### 3. CatalogoScreen
-- **BottomBar:** ✅ Sí con lupa y filtro
-- **FAB:** Añadir artículo (NO producto) → O quitar FAB y poner + en la barra
-- **TopBar:** CommonTopBar
+### Fase 3: Repositorios y UseCases
+| Componente | Estado |
+|------------|--------|
+| `SupermarketRepository` | ✅ |
+| `CategoryRepository` | ✅ |
+| `ArticuloSupermarketDefaultRepository` | ✅ |
+| `GetAllSupermarketsUseCase` | ✅ |
+| `GetAislesBySupermarketUseCase` | ✅ |
+
+### Fase 4: Base de datos
+| Cambio | Estado |
+|--------|--------|
+| Migración 10→11 | ✅ |
+| DataSeeder actualizado | ✅ |
+| DI Module actualizado | ✅ |
+
+### Fase 5: UI
+| Pantalla/Componente | Estado |
+|---------------------|--------|
+| `SupermarketBottomBar` | ✅ |
+| `ProductListViewModel` | ✅ |
+| `ProductListScreen` | ✅ |
+| `HomeScreen` | ✅ |
+| `CatalogoScreen` refactorizado | ✅ |
+| Navegación actualizada | ✅ |
 
 ---
 
-## 🔧 Tema/Color (Settings)
-
-### Problema actual
-- `MainActivity` declara `var primaryColor by remember { mutableStateOf<Int?>(null) }` local
-- Nunca se conecta con `ThemeViewModel.primaryColor`
-- El color no persiste ni funciona
-
-### Solución
-1. MainActivity observa `themeViewModel.primaryColor.collectAsState()`
-2. Pasar el color real al `ListaCompraTheme`
-3. ThemeViewModel: eliminar duplicado (hay 2)
-
-### ShoppingViewModel
-- Jose quiere eliminarlo
-- ¿Qué lo sustituye? ¿Dónde va la lógica de lista?
-
----
-
-## 🗺️ Navegación (no urge)
+## 🗺️ Flujo de la app
 
 ```
-Splash → Home → ProductList
-              ↘ Catalogo
-              ↘ (Ofertas - placeholder)
-              ↘ (Supermercados - placeholder)
-              ↘ (Historial - placeholder)
+Splash (2.5s)
+    ↓
+Home (cards de navegación)
+    ├── Mi Lista → ProductListScreen (con BottomBar de supermercados)
+    └── Catálogo → CatalogoScreen
+
+ProductListScreen:
+├── TopBar: CommonTopBar
+├── Lista: productos agrupados por pasillo
+├── TotalsBar: totales y ahorro
+├── BottomBar: chips de supermercados
+└── FAB: añadir producto
 ```
 
-Pendiente: añadir rutas nuevas
+---
+
+## 📋 Cambios en modelos
+
+### Supermarket (nuevo)
+```kotlin
+data class Supermarket(
+    val id: Long,
+    val name: String,          // "Carrefour La Alberca"
+    val emoji: String,         // "🛒"
+    val isDefault: Boolean
+)
+```
+
+### Category (nuevo)
+```kotlin
+data class Category(
+    val id: Long,
+    val name: String,          // "Frutas y Verduras"
+    val icon: String           // "🍎"
+)
+```
+
+### Aisle (modificado)
+```kotlin
+data class Aisle(
+    val id: Long,
+    val name: String,
+    val emoji: String,
+    val orderIndex: Int,
+    val supermarketId: Long,   // NUEVO: FK al supermercado
+    val isDefault: Boolean
+)
+```
+
+### Product (modificado)
+```kotlin
+data class Product(
+    // ... campos existentes ...
+    val articuloId: Long?,      // NUEVO: FK al artículo del catálogo
+    val supermarketId: Long    // NUEVO: FK al supermercado
+)
+```
 
 ---
 
-## 📋 Orden de trabajo
+## ⚠️ Pendiente / Mejoras futuras
 
-1. **Arreglar Settings** (tema/color) ← EMPEZAMOS AQUÍ
-2. Crear HomeScreen
-3. Refactor ProductListScreen
-4. Modificar CatalogoScreen (BottomBar + FAB)
-5. Actualizar navegación
-
----
-
-## ❓ Dudas pendientes
-
-- ProductListScreen: ¿qué botones en BottomBar?
-- ShoppingViewModel: ¿qué lo sustituye?
-- Catálogo: ¿FAB o botón en barra?
+1. **Probar compilación** - Muchos cambios, puede haber errores
+2. **Migrar datos existentes** - Los pasillos actuales deben asociarse a un supermercado
+3. **Integrar FAB de Home y ProductList** - Añadir producto desde catálogo
+4. **UI de selección de pasillo inteligente** - Usar `ArticuloSupermarketDefault`
+5. **Eliminar ShoppingViewModel** - Ya no se usa
 
 ---
 
-*Actualizado: 2026-03-27 00:14*
+*Actualizado: 2026-03-27 04:05*
