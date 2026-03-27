@@ -5,6 +5,8 @@ import androidx.room.Room
 import com.jose.listacompra.data.local.ShoppingListDatabase
 import com.jose.listacompra.data.local.dao.AisleDao
 import com.jose.listacompra.data.local.dao.ArticuloDao
+import com.jose.listacompra.data.local.dao.ArticuloSupermarketDefaultDao
+import com.jose.listacompra.data.local.dao.CategoryDao
 import com.jose.listacompra.data.local.dao.OfferDao
 import com.jose.listacompra.data.local.dao.ProductDao
 import com.jose.listacompra.data.local.dao.ProductFrequencyDao
@@ -12,6 +14,16 @@ import com.jose.listacompra.data.local.dao.ProductHistoryDao
 import com.jose.listacompra.data.local.dao.ProductPriceHistoryDao
 import com.jose.listacompra.data.local.dao.PurchaseHistoryDao
 import com.jose.listacompra.data.local.dao.ShoppingListDao
+import com.jose.listacompra.data.local.dao.SupermarketDao
+import com.jose.listacompra.data.repository.AisleRepositoryImpl
+import com.jose.listacompra.data.repository.ArticuloSupermarketDefaultRepository
+import com.jose.listacompra.data.repository.CategoryRepository
+import com.jose.listacompra.data.repository.SupermarketRepository
+import com.jose.listacompra.domain.repository.IAisleRepository
+import com.jose.listacompra.domain.repository.IArticuloSupermarketDefaultRepository
+import com.jose.listacompra.domain.repository.ICategoryRepository
+import com.jose.listacompra.domain.repository.ISupermarketRepository
+import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -31,7 +43,6 @@ object DatabaseModule {
             ShoppingListDatabase::class.java,
             "shopping_list_db"
         )
-         //   .addMigrations(MIGRATION_7_8)
             .fallbackToDestructiveMigration()
             .build()
     }
@@ -48,7 +59,6 @@ object DatabaseModule {
     @Provides
     fun provideOfferDao(db: ShoppingListDatabase): OfferDao = db.offerDao()
 
-
     @Provides
     fun provideProductHistoryDao(db: ShoppingListDatabase): ProductHistoryDao =
         db.productHistoryDao()
@@ -58,7 +68,7 @@ object DatabaseModule {
         return database.purchaseHistoryDao()
     }
 
-   @Provides
+    @Provides
     fun provideProductPriceHistoryDao(db: ShoppingListDatabase): ProductPriceHistoryDao =
         db.productPriceHistoryDao()
 
@@ -70,6 +80,45 @@ object DatabaseModule {
     fun provideArticuloDao(db: ShoppingListDatabase): ArticuloDao =
         db.articuloDao()
 
+    // Nuevos DAOs
+    @Provides
+    fun provideSupermarketDao(db: ShoppingListDatabase): SupermarketDao =
+        db.supermarketDao()
 
+    @Provides
+    fun provideCategoryDao(db: ShoppingListDatabase): CategoryDao =
+        db.categoryDao()
 
+    @Provides
+    fun provideArticuloSupermarketDefaultDao(db: ShoppingListDatabase): ArticuloSupermarketDefaultDao =
+        db.articuloSupermarketDefaultDao()
+}
+
+@Module
+@InstallIn(SingletonComponent::class)
+abstract class RepositoryModule {
+    
+    @Binds
+    @Singleton
+    abstract fun bindAisleRepository(
+        impl: AisleRepositoryImpl
+    ): IAisleRepository
+    
+    @Binds
+    @Singleton
+    abstract fun bindSupermarketRepository(
+        impl: SupermarketRepository
+    ): ISupermarketRepository
+    
+    @Binds
+    @Singleton
+    abstract fun bindCategoryRepository(
+        impl: CategoryRepository
+    ): ICategoryRepository
+    
+    @Binds
+    @Singleton
+    abstract fun bindArticuloSupermarketDefaultRepository(
+        impl: ArticuloSupermarketDefaultRepository
+    ): IArticuloSupermarketDefaultRepository
 }

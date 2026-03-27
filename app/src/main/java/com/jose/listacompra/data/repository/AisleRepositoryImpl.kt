@@ -1,13 +1,12 @@
 package com.jose.listacompra.data.repository
 
-import com.jose.listacompra.data.local.converters.toDomain
-import com.jose.listacompra.data.local.converters.toEntity
 import com.jose.listacompra.data.local.dao.AisleDao
+import com.jose.listacompra.data.local.entities.AisleEntity
 import com.jose.listacompra.domain.model.Aisle
 import com.jose.listacompra.domain.repository.IAisleRepository
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.collections.mapIndexed
 
 @Singleton
 class AisleRepositoryImpl @Inject constructor(
@@ -17,28 +16,30 @@ class AisleRepositoryImpl @Inject constructor(
     override suspend fun getAllAisles(): List<Aisle> {
         return aisleDao.getAllAisles().map { it.toDomain() }
     }
+    
+    override suspend fun getAislesBySupermarket(supermarketId: Long): List<Aisle> {
+        return aisleDao.getAislesBySupermarket(supermarketId).map { it.toDomain() }
+    }
+    
+    override fun getAislesBySupermarketFlow(supermarketId: Long) = 
+        aisleDao.getAislesBySupermarketFlow(supermarketId).map { entities ->
+            entities.map { it.toDomain() }
+        }
 
     override suspend fun addAisle(aisle: Aisle): Long {
-        return aisleDao.insertAisle(aisle.toEntity())
+        return aisleDao.insertAisle(AisleEntity.fromDomain(aisle))
     }
 
     override suspend fun updateAisle(aisle: Aisle) {
-        aisleDao.updateAisle(aisle.toEntity())
+        aisleDao.updateAisle(AisleEntity.fromDomain(aisle))
     }
 
     override suspend fun updateAisles(aisles: List<Aisle>) {
-        val entities = aisles.map { it.toEntity() }
+        val entities = aisles.map { AisleEntity.fromDomain(it) }
         aisleDao.updateAisles(entities)
     }
 
     override suspend fun deleteAisle(aisle: Aisle) {
-        aisleDao.deleteAisle(aisle.toEntity())
+        aisleDao.deleteAisle(AisleEntity.fromDomain(aisle))
     }
-
-//    override suspend fun reorderAisles(reorderedAisles: List<Aisle>) {
-//        val updatedAisles = reorderedAisles.mapIndexed { index, aisle ->
-//            aisle.copy(orderIndex = index).toEntity()
-//        }
-//        aisleDao.updateAisles(updatedAisles)
-//    }
 }

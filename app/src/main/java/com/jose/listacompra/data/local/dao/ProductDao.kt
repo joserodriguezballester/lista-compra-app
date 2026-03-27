@@ -13,6 +13,9 @@ import kotlinx.coroutines.flow.Flow
 interface ProductDao {
     @Query("SELECT * FROM products WHERE shoppingListId = :listId ORDER BY aisleId ASC, orderIndex ASC")
     suspend fun getAllProducts(listId: Long): List<ProductEntity>
+    
+    @Query("SELECT * FROM products WHERE shoppingListId = :listId AND supermarketId = :supermarketId ORDER BY aisleId ASC, orderIndex ASC")
+    suspend fun getProductsBySupermarket(listId: Long, supermarketId: Long): List<ProductEntity>
 
     @Query("SELECT * FROM products WHERE shoppingListId = :listId AND aisleId = :aisleId ORDER BY orderIndex ASC")
     suspend fun getProductsByAisle(listId: Long, aisleId: Long): List<ProductEntity>
@@ -20,10 +23,7 @@ interface ProductDao {
     @Query("SELECT * FROM products WHERE id = :id")
     suspend fun getProductById(id: Long): ProductEntity?
 
-//    @Query("SELECT * FROM products WHERE shoppingListId = :listId ORDER BY orderIndex ASC")
-//    suspend fun getProductsByList(listId: Long): List<ProductEntity>
-
-    @Insert(onConflict = OnConflictStrategy.Companion.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertProduct(product: ProductEntity): Long
 
     @Update
@@ -40,6 +40,7 @@ interface ProductDao {
 
     @Query("SELECT MAX(orderIndex) FROM products WHERE shoppingListId = :listId AND aisleId = :aisleId")
     suspend fun getMaxOrderIndexInAisle(listId: Long, aisleId: Long): Int?
+    
     @Query("SELECT MAX(orderIndex) FROM products WHERE shoppingListId = :listId")
     suspend fun getMaxOrderIndex(listId: Long): Int?
 
@@ -51,7 +52,10 @@ interface ProductDao {
 
     @Query("SELECT * FROM products WHERE shoppingListId = :listId ORDER BY aisleId ASC, orderIndex ASC")
     fun getProductsByListFlow(listId: Long): Flow<List<ProductEntity>>
-
-
-
+    
+    @Query("SELECT * FROM products WHERE shoppingListId = :listId AND supermarketId = :supermarketId ORDER BY aisleId ASC, orderIndex ASC")
+    fun getProductsBySupermarketFlow(listId: Long, supermarketId: Long): Flow<List<ProductEntity>>
+    
+    @Query("UPDATE products SET isPurchased = :isPurchased WHERE id = :id")
+    suspend fun updatePurchased(id: Long, isPurchased: Boolean)
 }
