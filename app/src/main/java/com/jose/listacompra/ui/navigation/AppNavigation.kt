@@ -72,6 +72,7 @@ fun AppNavigation(
         composable(NavScreen.Catalogo.route) {
             CatalogoScreen(
                 onNavigateBack = { navController.popBackStack() },
+                onNavigateToList = { navController.navigate(NavScreen.ShoppingList.route) },
                 isDarkMode = isDarkMode,
                 onToggleDarkMode = { onToggleTheme() },
                 onChangeColor = onChangeColor,

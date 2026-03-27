@@ -2,6 +2,7 @@ package com.jose.listacompra.ui.screens.catalogo
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -37,20 +39,31 @@ import com.jose.listacompra.domain.model.Articulo
 fun ArticuloCard(
     articulo: Articulo,
     onClick: () -> Unit,
-    onLongClick: () -> Unit
+    hasVariants: Boolean = false // True si hay otros artículos con mismo nombre distinta cantidad
 ) {
+    val borderColor = if (hasVariants) {
+        MaterialTheme.colorScheme.tertiary
+    } else {
+        MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+    }
+    
+    val borderThickness = if (hasVariants) 2.dp else 1.dp
+    
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .combinedClickable(
-                onClick = onClick,
-                onLongClick = onLongClick
+            .clip(RoundedCornerShape(12.dp))
+            .border(
+                width = borderThickness,
+                color = borderColor,
+                shape = RoundedCornerShape(12.dp)
             ),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface,
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        onClick = onClick
     ) {
         Column {
             // Sección de la Imagen
@@ -75,6 +88,27 @@ fun ArticuloCard(
                         modifier = Modifier.size(40.dp),
                         tint = MaterialTheme.colorScheme.outline
                     )
+                }
+                
+                // Badge de variantes
+                if (hasVariants) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(8.dp)
+                            .background(
+                                color = MaterialTheme.colorScheme.tertiary,
+                                shape = RoundedCornerShape(4.dp)
+                            )
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = "+",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onTertiary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
 
