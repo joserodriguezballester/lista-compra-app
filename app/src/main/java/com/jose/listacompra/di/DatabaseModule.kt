@@ -18,10 +18,12 @@ import com.jose.listacompra.data.local.dao.SupermarketDao
 import com.jose.listacompra.data.repository.AisleRepositoryImpl
 import com.jose.listacompra.data.repository.ArticuloSupermarketDefaultRepository
 import com.jose.listacompra.data.repository.CategoryRepository
+import com.jose.listacompra.data.repository.ProductRepository
 import com.jose.listacompra.data.repository.SupermarketRepository
 import com.jose.listacompra.domain.repository.IAisleRepository
 import com.jose.listacompra.domain.repository.IArticuloSupermarketDefaultRepository
 import com.jose.listacompra.domain.repository.ICategoryRepository
+import com.jose.listacompra.domain.repository.IProductRepository
 import com.jose.listacompra.domain.repository.ISupermarketRepository
 import dagger.Binds
 import dagger.Module
@@ -121,4 +123,10 @@ abstract class RepositoryModule {
     abstract fun bindArticuloSupermarketDefaultRepository(
         impl: ArticuloSupermarketDefaultRepository
     ): IArticuloSupermarketDefaultRepository
+    
+    @Binds
+    @Singleton
+    abstract fun bindProductRepository(
+        impl: ProductRepository
+    ): IProductRepository
 }

@@ -5,9 +5,9 @@ import com.jose.listacompra.domain.repository.IProductRepository
 import javax.inject.Inject
 
 class DeleteProductUseCase @Inject constructor(
-    private val repository: IProductRepository
+    private val productRepository: IProductRepository
 ) {
     suspend operator fun invoke(product: Product) {
-        repository.deleteProduct(product)
+        productRepository.deleteProduct(product)
     }
 }

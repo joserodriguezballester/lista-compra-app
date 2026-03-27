@@ -5,13 +5,9 @@ import com.jose.listacompra.domain.repository.IProductRepository
 import javax.inject.Inject
 
 class ToggleProductPurchasedUseCase @Inject constructor(
-    private val repository: IProductRepository
+    private val productRepository: IProductRepository
 ) {
     suspend operator fun invoke(product: Product) {
-        // Invertimos el estado del booleano
-        val updatedProduct = product.copy(isPurchased = !product.isPurchased)
-
-        // Lo mandamos al repositorio (que ya usa la interfaz)
-        repository.updateProduct(updatedProduct)
+        productRepository.togglePurchased(product.id, !product.isPurchased)
     }
 }
