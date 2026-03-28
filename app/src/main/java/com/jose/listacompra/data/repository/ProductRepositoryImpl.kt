@@ -38,6 +38,7 @@ class ProductRepositoryImpl @Inject constructor(
         productDao.updatePurchased(productId, isPurchased)
     }
 
+    // NO suspend - Flow methods
     override fun getProductsByListFlow(listId: Long): Flow<List<Product>> {
         return productDao.getProductsByListFlow(listId).map { entities ->
             entities.map { it.toDomain() }
