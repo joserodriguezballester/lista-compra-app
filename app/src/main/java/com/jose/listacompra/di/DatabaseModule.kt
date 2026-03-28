@@ -95,27 +95,27 @@ object DatabaseModule {
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
-    
+
     @Binds
     @Singleton
     abstract fun bindAisleRepository(impl: AisleRepositoryImpl): IAisleRepository
-    
+
     @Binds
     @Singleton
     abstract fun bindSupermarketRepository(impl: SupermarketRepository): ISupermarketRepository
-    
+
     @Binds
     @Singleton
     abstract fun bindCategoryRepository(impl: CategoryRepository): ICategoryRepository
-    
+
     @Binds
     @Singleton
     abstract fun bindArticuloSupermarketDefaultRepository(impl: ArticuloSupermarketDefaultRepository): IArticuloSupermarketDefaultRepository
-    
+
     @Binds
     @Singleton
     abstract fun bindProductRepository(impl: ProductRepository): IProductRepository
-    
+
     @Binds
     @Singleton
     abstract fun bindCategorySupermarketOrderRepository(impl: CategorySupermarketOrderRepository): ICategorySupermarketOrderRepository

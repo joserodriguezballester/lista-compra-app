@@ -1,6 +1,10 @@
 package com.jose.listacompra.ui.screens.main.components
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -11,49 +15,87 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun TotalsBar(
-    total: Float = 0f,
-    savings: Float = 0f,
-    modifier: Modifier = Modifier
+    totalWithOffers: Float,
+    totalWithoutOffers: Float,
+    savings: Float,
+    purchasedCount: Int,
+    totalCount: Int
 ) {
     Surface(
-        modifier = modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        tonalElevation = 2.dp
+        color = MaterialTheme.colorScheme.primaryContainer,
+        tonalElevation = 3.dp
     ) {
-        Row(
-            modifier = Modifier
+        Column(
+            modifier = Modifier.Companion
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+                .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
-            Column {
+            // Fila superior: contador y total principal
+            Row(
+                modifier = Modifier.Companion.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Companion.CenterVertically
+            ) {
                 Text(
-                    text = "Total",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = "$purchasedCount de $totalCount productos",
+                    style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    text = String.format("%.2f €", total),
-                    style = MaterialTheme.typography.titleLarge,
+                    text = "Total: %.2f€".format(totalWithOffers),
+                    style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
             }
-            
-            if (savings > 0) {
-                Column(horizontalAlignment = Alignment.End) {
+
+            // Fila inferior: ahorro (si hay)
+            if (savings > 0.01f) {
+                Row(
+                    modifier = Modifier.Companion.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.Companion.CenterVertically
+                ) {
                     Text(
-                        text = "Ahorro",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = String.format("%.2f €", savings),
-                        style = MaterialTheme.typography.titleMedium,
+                        text = "Ahorrado: %.2f€ 🎉".format(savings),
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.tertiary
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun TotalsBar2(
+    total: Float,
+    savings: Float,
+) {
+    Surface(
+        color = MaterialTheme.colorScheme.primaryContainer,
+        tonalElevation = 3.dp
+    ) {
+        Column(
+            modifier = Modifier.Companion
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+        ) {
+            // Fila superior: contador y total principal
+            Row(
+                modifier = Modifier.Companion.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Companion.CenterVertically
+            ) {
+//                Text(
+//                    text = "$purchasedCount de $totalCount productos",
+//                    style = MaterialTheme.typography.bodyMedium
+//                )
+                Text(
+                    text = "Total: %.2f€".format(total),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+
         }
     }
 }

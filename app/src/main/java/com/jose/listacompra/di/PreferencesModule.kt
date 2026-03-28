@@ -32,7 +32,7 @@ object PreferencesModule {
 }
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class RepositoryModule {
+abstract class PreferencesRepositoryModule {
     @Binds
     @Singleton
     abstract fun bindShoppingListRepository(
