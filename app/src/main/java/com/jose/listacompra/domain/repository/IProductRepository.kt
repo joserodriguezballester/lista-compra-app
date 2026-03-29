@@ -10,16 +10,16 @@ interface IProductRepository {
     suspend fun updateProduct(product: Product)
     suspend fun deleteProduct(product: Product)
     suspend fun togglePurchased(productId: Long, isPurchased: Boolean)
-    
-    // Flow methods - NO suspend
     fun getProductsByListFlow(listId: Long): Flow<List<Product>>
     fun getProductsBySupermarketFlow(listId: Long, supermarketId: Long): Flow<List<Product>>
-    
-    // Additional methods
     suspend fun updatePhoto(productId: Long, photoUri: String?)
     suspend fun updateEan(productId: Long, ean: String?)
+    suspend fun getProductsByList(listId: Long): List<Product>
     suspend fun getNextOrderIndex(listId: Long): Int?
     suspend fun deletePurchasedProducts(listId: Long)
     suspend fun deleteAllProductsFromList(listId: Long)
     suspend fun getProductsByAisle(listId: Long, aisleId: Long): List<Product>
+
+
+
 }
