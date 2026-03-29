@@ -14,9 +14,9 @@ data class Aisle(
 ) {
     companion object {
         /**
-         * Pasillos por defecto para Carrefour La Alberca
+         * Pasillos por defecto
          */
-        fun getDefaultAislesForCarrefour(): List<Aisle> = listOf(
+        fun getDefaultAisles(): List<Aisle> = listOf(
             Aisle(1, "Higiene y Belleza", "🧴", 0, 1),
             Aisle(2, "Fruta y Verdura", "🍎", 1, 1),
             Aisle(3, "Charcutería", "🥓", 2, 1),

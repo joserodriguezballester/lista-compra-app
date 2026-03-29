@@ -11,7 +11,9 @@ class GetListTotalsUseCase @Inject constructor(
 ) {
     // Retornamos un Flow para que la UI se actualice sola si un precio cambia
     operator fun invoke(listId: Long): Flow<TotalsResult> {
-        return repository.getProductsByList(listId).map { products ->
+        return repository.getProductsByListFlow(listId).map { products ->
+// LOG PARA DEPURAR:
+            println("DEBUG: Se han encontrado ${products.size} productos para la lista $listId")
 
             // Calculamos los totales usando la lista de productos actual
             val totalWithoutOffers = products.sumOf {

@@ -58,4 +58,7 @@ interface ProductDao {
     
     @Query("UPDATE products SET isPurchased = :isPurchased WHERE id = :id")
     suspend fun updatePurchased(id: Long, isPurchased: Boolean)
+
+    @Query("UPDATE products SET photoUri = :photoUri WHERE id = :productId")
+    suspend fun updateProductPhoto(productId: Long, photoUri: String?)
 }

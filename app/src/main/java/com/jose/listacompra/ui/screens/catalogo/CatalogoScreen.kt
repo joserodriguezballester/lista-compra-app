@@ -11,7 +11,6 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Inventory
@@ -58,7 +57,7 @@ fun CatalogoScreen(
     viewModel: ArticuloViewModel = hiltViewModel(),
 ) {
     val articulos by viewModel.listaArticulos.collectAsState()
-    
+
     var searchQuery by remember { mutableStateOf("") }
     var showSearchBar by remember { mutableStateOf(false) }
     var showFilterDialog by remember { mutableStateOf(false) }
@@ -78,11 +77,11 @@ fun CatalogoScreen(
         }
         result
     }
-    
+
     val articuloNames = remember(articulos) {
         articulos.groupBy { it.name.lowercase() }.filter { it.value.size > 1 }.keys
     }
-    
+
     val categories = remember(articulos) {
         articulos.mapNotNull { it.categoryId?.toString() }.distinct().sorted()
     }
@@ -93,11 +92,11 @@ fun CatalogoScreen(
                 TopAppBar(
                     title = {
                         OutlinedTextField(
-                            searchQuery, 
-                            { searchQuery = it },
-                            { Text("Buscar artículos...") },
-                            Modifier.fillMaxWidth(),
-                            singleLine = true
+                            value = searchQuery,
+                            onValueChange = { searchQuery = it },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            placeholder = { Text("Buscar artículos...") }
                         )
                     },
                     navigationIcon = {
@@ -137,13 +136,23 @@ fun CatalogoScreen(
     ) { paddingValues ->
         if (articulosFiltrados.isEmpty()) {
             Column(
-                Modifier.fillMaxSize().padding(paddingValues),
-                Alignment.CenterHorizontally,
-                Arrangement.Center
+                modifier = Modifier.fillMaxSize().padding(paddingValues),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Icon(Icons.Default.Inventory, null, Modifier.size(64.dp), MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
-                Text("No hay artículos", MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Icon(
+                    imageVector = Icons.Default.Inventory,
+                    contentDescription = null,
+                    modifier = Modifier.size(64.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                )
+                Text(
+                    text = "No hay artículos",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
+
         } else {
             LazyVerticalGrid(
                 columns = GridCells.Adaptive(150.dp),
@@ -197,12 +206,16 @@ fun CatalogoScreen(
             title = { Text("Eliminar artículo") },
             text = { Text("¿Eliminar '${articulo.name}' del catálogo?") },
             confirmButton = {
-                TextButton({
-                    viewModel.deleteArticulo(articulo)
-                    showDeleteConfirm = null
-                }, ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)) {
+                TextButton(
+                    onClick = {
+                        viewModel.deleteArticulo(articulo)
+                        showDeleteConfirm = null
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) {
                     Text("Eliminar")
                 }
+
             },
             dismissButton = { TextButton({ showDeleteConfirm = null }) { Text("Cancelar") } }
         )

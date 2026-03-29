@@ -13,7 +13,11 @@ import com.jose.listacompra.domain.usecase.product.ToggleProductPurchasedUseCase
 import com.jose.listacompra.domain.usecase.product.UpdateProductUseCase
 import com.jose.listacompra.domain.usecase.supermarket.GetAllSupermarketsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -74,12 +78,20 @@ class ProductListViewModel @Inject constructor(
                     _uiState.update { state ->
                         state.copy(
                             supermarkets = supermarkets,
-                            selectedSupermarketId = supermarkets.firstOrNull()?.id ?: 1
+                            // Solo actualizamos el ID si no hay uno seleccionado
+                            selectedSupermarketId = state.selectedSupermarketId
+                        //    selectedSupermarketId = supermarkets.firstOrNull()?.id ?: 1
                         )
                     }
-                    loadAisles(supermarkets.firstOrNull()?.id ?: 1)
-                    loadProducts()
+                    // Si es la primera vez, cargamos los pasillos del primer super
+                    if (supermarkets.isNotEmpty()) {
+                        loadAisles(supermarkets.first().id)
+                    }
                 }
+        }
+        // 2. Cargar Productos de forma independiente (¡ESTO AHORA SÍ SE EJECUTARÁ!)
+        viewModelScope.launch {
+            loadProducts()
         }
     }
     
@@ -92,20 +104,22 @@ class ProductListViewModel @Inject constructor(
                 _uiState.update { it.copy(aisles = aisles) }
             }
     }
-    
-    private suspend fun loadProducts() {
-        _uiState.update { it.copy(isLoading = true) }
-        
-        val products = getAllProductsUseCase(currentListId)
-        
-        _uiState.update { 
-            it.copy(
-                products = products,
-                isLoading = false
-            )
+
+    private fun loadProducts() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+
+            getAllProductsUseCase(currentListId)
+                .collect { products ->
+                    _uiState.update {
+                        it.copy(
+                            products = products,
+                            isLoading = false
+                        )
+                    }
+                }
         }
     }
-    
     fun selectSupermarket(supermarketId: Long) {
         _uiState.update { it.copy(selectedSupermarketId = supermarketId) }
         
