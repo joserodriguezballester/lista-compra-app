@@ -3,7 +3,6 @@ package com.jose.listacompra.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jose.listacompra.domain.model.Articulo
-import com.jose.listacompra.domain.usecase.SeedAllDataUseCase
 import com.jose.listacompra.domain.usecase.articulo.DeleteArticuloUseCase
 import com.jose.listacompra.domain.usecase.articulo.GetAllArticulosUseCase
 import com.jose.listacompra.domain.usecase.articulo.GetArticuloByEanUseCase
@@ -21,10 +20,7 @@ class ArticuloViewModel @Inject constructor(
     private val saveArticuloUseCase: SaveArticuloUseCase,
     private val deleteArticuloUseCase: DeleteArticuloUseCase,
     private val getArticuloByEanUseCase: GetArticuloByEanUseCase,
-    private val updateArticuloUseCase: UpdateArticuloUseCase,
-    private val seedAllDataUseCase: SeedAllDataUseCase,
-    // private val getArticuloByIdUseCase: GetArticuloByIdUseCase,
-    // private val searchArticulosUseCase: SearchArticulosUseCase
+    private val updateArticuloUseCase: UpdateArticuloUseCase
 ) : ViewModel() {
 
     // Estado observable para la UI
@@ -33,12 +29,6 @@ class ArticuloViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = emptyList()
     )
-    init {
-        // Al iniciar el ViewModel, comprobamos si hay que poblar la BD
-        viewModelScope.launch {
-            seedAllDataUseCase()
-        }
-    }
 
     // Guardar artículo (crear o actualizar)
     fun addArticulo(articulo: Articulo) {
@@ -69,16 +59,4 @@ class ArticuloViewModel @Inject constructor(
             }
         }
     }
-
-    // Buscar por ID (para edición)
-//    suspend fun getArticuloById(id: Long): Articulo? {
-//        return getArticuloByIdUseCase(id)
-//    }
-
-    // Búsqueda por texto (para catálogo)
-//    suspend fun searchArticulos(query: String): List<Articulo> {
-//        return searchArticulosUseCase(query)
-//    }
-
-
 }
