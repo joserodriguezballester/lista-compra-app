@@ -16,12 +16,15 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Inventory
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -76,6 +79,7 @@ fun CatalogoScreen(
     var scannedEan by remember { mutableStateOf<String?>(null) }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var showImageSourceDialog by remember { mutableStateOf(false) }
+    var fabExpanded by remember { mutableStateOf(false) }
 
     val articulosFiltrados = remember(articulos, searchQuery, selectedCategory) {
         var result = articulos
@@ -143,26 +147,78 @@ fun CatalogoScreen(
         },
         floatingActionButton = {
             Column(
-                horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalAlignment = Alignment.End
             ) {
-                // FAB 1: Escanear código (destacado)
-                ExtendedFloatingActionButton(
-                    onClick = { navController?.navigate(NavScreen.BarcodeScanner.route) },
-                    icon = { Icon(Icons.Default.QrCodeScanner, null) },
-                    text = { Text("Escanear") },
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                )
+                // Opciones desplegadas
+                if (fabExpanded) {
+                    Column(
+                        horizontalAlignment = Alignment.End,
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    ) {
+                        // Opción: Escanear
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = "Escanear",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            SmallFloatingActionButton(
+                                onClick = { 
+                                    fabExpanded = false
+                                    navController?.navigate(NavScreen.BarcodeScanner.route) 
+                                },
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            ) {
+                                Icon(Icons.Default.QrCodeScanner, "Escanear código")
+                            }
+                        }
+                        
+                        // Opción: Manual
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = "Manual",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            SmallFloatingActionButton(
+                                onClick = { 
+                                    fabExpanded = false
+                                    showAddDialog = true 
+                                },
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                            ) {
+                                Icon(Icons.Default.Add, "Añadir manual")
+                            }
+                        }
+                    }
+                }
                 
-                // FAB 2: Añadir manualmente
-                ExtendedFloatingActionButton(
-                    onClick = { showAddDialog = true },
-                    icon = { Icon(Icons.Default.Add, null) },
-                    text = { Text("Manual") },
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                )
+                // FAB principal (abre/cierra)
+                FloatingActionButton(
+                    onClick = { fabExpanded = !fabExpanded },
+                    containerColor = if (fabExpanded) 
+                        MaterialTheme.colorScheme.error 
+                    else 
+                        MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = if (fabExpanded) 
+                        MaterialTheme.colorScheme.onError 
+                    else 
+                        MaterialTheme.colorScheme.onPrimaryContainer
+                ) {
+                    Icon(
+                        if (fabExpanded) Icons.Default.Close else Icons.Default.Add,
+                        if (fabExpanded) "Cerrar" else "Añadir"
+                    )
+                }
             }
         }
     ) { paddingValues ->
