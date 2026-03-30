@@ -3,8 +3,6 @@ package com.jose.listacompra.data.local.dataseeder
 import android.util.Log
 import com.jose.listacompra.data.repository.ShoppingListRepository
 import com.jose.listacompra.domain.model.Aisle
-import com.jose.listacompra.domain.model.Category
-import com.jose.listacompra.domain.model.Supermarket
 import com.jose.listacompra.domain.repository.IAisleRepository
 import com.jose.listacompra.domain.repository.IArticuloRepository
 import com.jose.listacompra.domain.repository.ICategoryRepository
@@ -80,7 +78,7 @@ class InitialDataSeeder @Inject constructor(
             Log.d(TAG, "Seeding aisles...")
             
             // Pasillos de Carrefour (supermercado por defecto)
-            val carrefourAisles = Aisle.getDefaultAislesForCarrefour()
+            val carrefourAisles = Aisle.getDefaultAisles()
             aisleRepository.insertAll(carrefourAisles)
             Log.d(TAG, "Inserted ${carrefourAisles.size} Carrefour aisles")
             

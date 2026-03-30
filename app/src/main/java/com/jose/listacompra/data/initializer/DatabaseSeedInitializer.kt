@@ -2,8 +2,9 @@ package com.jose.listacompra.data.initializer
 
 import android.content.Context
 import android.util.Log
-import androidx.startup.AppInitializer
 import androidx.startup.Initializer
+//import androidx.startup.AppInitializer
+//import androidx.startup.Initializer
 import com.jose.listacompra.data.local.dataseeder.InitialDataSeeder
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
