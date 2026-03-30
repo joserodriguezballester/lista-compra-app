@@ -3,11 +3,11 @@ package com.jose.listacompra.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jose.listacompra.domain.model.Articulo
+import com.jose.listacompra.domain.usecase.SeedAllDataUseCase
 import com.jose.listacompra.domain.usecase.articulo.DeleteArticuloUseCase
 import com.jose.listacompra.domain.usecase.articulo.GetAllArticulosUseCase
 import com.jose.listacompra.domain.usecase.articulo.GetArticuloByEanUseCase
 import com.jose.listacompra.domain.usecase.articulo.SaveArticuloUseCase
-import com.jose.listacompra.domain.usecase.articulo.SeedCatalogUseCase
 import com.jose.listacompra.domain.usecase.articulo.UpdateArticuloUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -22,7 +22,7 @@ class ArticuloViewModel @Inject constructor(
     private val deleteArticuloUseCase: DeleteArticuloUseCase,
     private val getArticuloByEanUseCase: GetArticuloByEanUseCase,
     private val updateArticuloUseCase: UpdateArticuloUseCase,
-    private val seedCatalogUseCase: SeedCatalogUseCase,
+    private val seedAllDataUseCase: SeedAllDataUseCase,
     // private val getArticuloByIdUseCase: GetArticuloByIdUseCase,
     // private val searchArticulosUseCase: SearchArticulosUseCase
 ) : ViewModel() {
@@ -34,9 +34,9 @@ class ArticuloViewModel @Inject constructor(
         initialValue = emptyList()
     )
     init {
-        // Al iniciar el ViewModel, comprobamos si hay que insertar los 15 artículos
+        // Al iniciar el ViewModel, comprobamos si hay que poblar la BD
         viewModelScope.launch {
-            seedCatalogUseCase()
+            seedAllDataUseCase()
         }
     }
 
