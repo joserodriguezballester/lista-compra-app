@@ -16,10 +16,10 @@
   - Integrado en diálogos de edición
 - [x] **Investigar**: ¿Qué son los elementos en esquina inferior derecha? → **Icono QrCode cuando tiene EAN** ✅
 - [x] **Al editar artículo (AddEditArticuloDialog/ArticuloDetailDialog)**:
-  - [ ] No deja clickar en imagen para cambiarla
-  - [ ] No deja cambiar categoría
-  - [ ] Mostrar **nombre de categoría** en lugar de categoryId
-  - [ ] Añadir funcionalidad de **scanner** de códigos de barras
+  - [x] Click en imagen para cambiarla ✅
+  - [x] Cambiar categoría ✅ (dropdown con nombres)
+  - [x] Mostrar **nombre de categoría** en lugar de categoryId ✅
+  - [ ] Añadir funcionalidad de **scanner** de códigos de barras (verificar si funciona)
 
 ### Modo Claro/Oscuro
 - [ ] Mover toggle de tema de TopAppBar al menú lateral
