@@ -1,5 +1,6 @@
 package com.jose.listacompra.ui.screens.catalogo
 
+import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,11 +16,16 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddAPhoto
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -41,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.jose.listacompra.R
 import com.jose.listacompra.domain.model.Articulo
+import com.jose.listacompra.domain.model.Category
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,6 +55,7 @@ fun AddEditArticuloDialog(
     articulo: Articulo? = null,
     ean: String? = null,
     selectedImageUri: String? = null,
+    categories: List<Category> = emptyList(),
     onDismiss: () -> Unit,
     onSave: (Articulo) -> Unit,
     onScanBarcode: () -> Unit = {},
@@ -58,8 +66,11 @@ fun AddEditArticuloDialog(
     var unit by remember { mutableStateOf(articulo?.unit ?: "") }
     var price by remember { mutableStateOf(articulo?.finalPrice?.toString() ?: "") }
     var eanValue by remember { mutableStateOf(articulo?.ean ?: ean ?: "") }
-    var categoryId by remember { mutableStateOf(articulo?.categoryId?.toString() ?: "") }
+    var selectedCategory by remember { mutableStateOf(
+        categories.find { it.id == articulo?.categoryId } ?: categories.firstOrNull()
+    ) }
     var photoUri by remember { mutableStateOf(selectedImageUri ?: articulo?.photoUri ?: "") }
+    var categoryExpanded by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -181,13 +192,39 @@ fun AddEditArticuloDialog(
                     }
                 )
 
-                OutlinedTextField(
-                    value = categoryId,
-                    onValueChange = { categoryId = it },
-                    label = { Text("Categoría") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
+                // Dropdown de categorías con nombres
+                ExposedDropdownMenuBox(
+                    expanded = categoryExpanded,
+                    onExpandedChange = { categoryExpanded = it }
+                ) {
+                    OutlinedTextField(
+                        value = selectedCategory?.let { "${it.icon} ${it.name}" } ?: "Sin categoría",
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Categoría") },
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded)
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor()
+                    )
+                    
+                    ExposedDropdownMenu(
+                        expanded = categoryExpanded,
+                        onDismissRequest = { categoryExpanded = false }
+                    ) {
+                        categories.forEach { category ->
+                            DropdownMenuItem(
+                                text = { Text("${category.icon} ${category.name}") },
+                                onClick = {
+                                    selectedCategory = category
+                                    categoryExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
             }
         },
         confirmButton = {
@@ -200,7 +237,7 @@ fun AddEditArticuloDialog(
                         unit = unit.ifBlank { "ud" },
                         finalPrice = price.toFloatOrNull(),
                         ean = eanValue.ifBlank { null },
-                        categoryId = categoryId.toLongOrNull() ?: articulo?.categoryId ?: 0L,
+                        categoryId = selectedCategory?.id ?: 0L,
                         photoUri = photoUri.ifBlank { null }
                     )
                     onSave(newArticulo)

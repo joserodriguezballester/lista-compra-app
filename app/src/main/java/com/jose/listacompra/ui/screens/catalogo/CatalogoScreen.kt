@@ -61,6 +61,7 @@ fun CatalogoScreen(
     viewModel: ArticuloViewModel = hiltViewModel(),
 ) {
     val articulos by viewModel.listaArticulos.collectAsState()
+    val categorias by viewModel.categorias.collectAsState()
 
     var searchQuery by remember { mutableStateOf("") }
     var showSearchBar by remember { mutableStateOf(false) }
@@ -72,7 +73,6 @@ fun CatalogoScreen(
     var scannedEan by remember { mutableStateOf<String?>(null) }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var showImageSourceDialog by remember { mutableStateOf(false) }
-    var isAddingNewArticulo by remember { mutableStateOf(false) }
 
     val articulosFiltrados = remember(articulos, searchQuery, selectedCategory) {
         var result = articulos
@@ -200,16 +200,21 @@ fun CatalogoScreen(
             articulo = null,
             ean = scannedEan,
             selectedImageUri = selectedImageUri?.toString(),
+            categories = categorias,
             onDismiss = { showAddDialog = false; scannedEan = null; selectedImageUri = null },
             onSave = { viewModel.addArticulo(it); showAddDialog = false; scannedEan = null; selectedImageUri = null },
-            onScanBarcode = { showAddDialog = false; navController?.navigate(NavScreen.BarcodeScanner.route) },
-            onSelectImage = { showImageSourceDialog = true; isAddingNewArticulo = true }
+            onScanBarcode = { 
+                showAddDialog = false
+                navController?.navigate(NavScreen.BarcodeScanner.route) 
+            },
+            onSelectImage = { showImageSourceDialog = true }
         )
     }
 
     selectedArticulo?.let { articulo ->
         ArticuloDetailDialog(
             articulo = articulo.copy(photoUri = selectedImageUri?.toString() ?: articulo.photoUri),
+            categories = categorias,
             onDismiss = { selectedArticulo = null; selectedImageUri = null },
             onSave = { viewModel.updateArticulo(it); selectedArticulo = null; selectedImageUri = null },
             onDelete = { showDeleteConfirm = articulo; selectedArticulo = null },

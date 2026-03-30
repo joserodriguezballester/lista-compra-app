@@ -3,11 +3,13 @@ package com.jose.listacompra.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jose.listacompra.domain.model.Articulo
+import com.jose.listacompra.domain.model.Category
 import com.jose.listacompra.domain.usecase.articulo.DeleteArticuloUseCase
 import com.jose.listacompra.domain.usecase.articulo.GetAllArticulosUseCase
 import com.jose.listacompra.domain.usecase.articulo.GetArticuloByEanUseCase
 import com.jose.listacompra.domain.usecase.articulo.SaveArticuloUseCase
 import com.jose.listacompra.domain.usecase.articulo.UpdateArticuloUseCase
+import com.jose.listacompra.domain.usecase.category.GetAllCategoriesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
@@ -20,11 +22,19 @@ class ArticuloViewModel @Inject constructor(
     private val saveArticuloUseCase: SaveArticuloUseCase,
     private val deleteArticuloUseCase: DeleteArticuloUseCase,
     private val getArticuloByEanUseCase: GetArticuloByEanUseCase,
-    private val updateArticuloUseCase: UpdateArticuloUseCase
+    private val updateArticuloUseCase: UpdateArticuloUseCase,
+    private val getAllCategoriesUseCase: GetAllCategoriesUseCase
 ) : ViewModel() {
 
     // Estado observable para la UI
     val listaArticulos = getAllArticulosUseCase().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
+
+    // Categorías disponibles
+    val categorias = getAllCategoriesUseCase().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = emptyList()

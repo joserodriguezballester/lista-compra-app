@@ -20,7 +20,10 @@ import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -41,25 +44,30 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.jose.listacompra.R
 import com.jose.listacompra.domain.model.Articulo
+import com.jose.listacompra.domain.model.Category
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ArticuloDetailDialog(
     articulo: Articulo,
+    categories: List<Category> = emptyList(),
     onDismiss: () -> Unit,
     onSave: (Articulo) -> Unit,
     onDelete: () -> Unit,
-    onSelectImage: (String) -> Unit = {}
+    onSelectImage: () -> Unit = {}
 ) {
     var name by remember { mutableStateOf(articulo.name) }
     var size by remember { mutableStateOf(articulo.size.toString()) }
     var unit by remember { mutableStateOf(articulo.unit) }
     var price by remember { mutableStateOf(articulo.finalPrice?.toString() ?: "") }
     var ean by remember { mutableStateOf(articulo.ean ?: "") }
-    var categoryId by remember { mutableStateOf(articulo.categoryId?.toString() ?: "") }
+    var selectedCategory by remember { mutableStateOf(
+        categories.find { it.id == articulo.categoryId } ?: categories.firstOrNull()
+    ) }
     var photoUri by remember { mutableStateOf(articulo.photoUri ?: "") }
     
     var isEditing by remember { mutableStateOf(false) }
+    var categoryExpanded by remember { mutableStateOf(false) }
     
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -80,7 +88,7 @@ fun ArticuloDetailDialog(
                         .clip(RoundedCornerShape(16.dp))
                         .then(
                             if (isEditing) {
-                                Modifier.clickable { /* abrir selector de imagen */ }
+                                Modifier.clickable { onSelectImage() }
                             } else {
                                 Modifier
                             }
@@ -193,13 +201,39 @@ fun ArticuloDetailDialog(
                     
                     Spacer(modifier = Modifier.height(8.dp))
                     
-                    OutlinedTextField(
-                        value = categoryId,
-                        onValueChange = { newValue -> categoryId = newValue },
-                        label = { Text("Categoría") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
+                    // Dropdown de categorías con nombres
+                    ExposedDropdownMenuBox(
+                        expanded = categoryExpanded,
+                        onExpandedChange = { categoryExpanded = it }
+                    ) {
+                        OutlinedTextField(
+                            value = selectedCategory?.let { "${it.icon} ${it.name}" } ?: "Sin categoría",
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Categoría") },
+                            trailingIcon = {
+                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded)
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor()
+                        )
+                        
+                        ExposedDropdownMenu(
+                            expanded = categoryExpanded,
+                            onDismissRequest = { categoryExpanded = false }
+                        ) {
+                            categories.forEach { category ->
+                                DropdownMenuItem(
+                                    text = { Text("${category.icon} ${category.name}") },
+                                    onClick = {
+                                        selectedCategory = category
+                                        categoryExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
                 } else {
                     Text(
                         text = articulo.name,
@@ -236,10 +270,12 @@ fun ArticuloDetailDialog(
                         )
                     }
                     
-                    if (articulo.categoryId != null) {
+                    // Mostrar nombre de categoría en lugar de ID
+                    val categoryName = categories.find { it.id == articulo.categoryId }
+                    if (categoryName != null) {
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Categoría: ${articulo.categoryId}",
+                            text = "Categoría: ${categoryName.icon} ${categoryName.name}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -261,7 +297,7 @@ fun ArticuloDetailDialog(
                                 unit = unit,
                                 finalPrice = price.toDoubleOrNull()?.toFloat(),
                                 ean = ean.ifBlank { null },
-                                categoryId = categoryId.toLongOrNull() ?: articulo.categoryId,
+                                categoryId = selectedCategory?.id ?: articulo.categoryId,
                                 photoUri = photoUri.ifBlank { null }
                             )
                             onSave(updatedArticulo)
