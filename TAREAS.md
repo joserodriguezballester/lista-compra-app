@@ -165,11 +165,11 @@
 ### ~~Alta (bloquea uso básico)~~ ✅ RESUELTO
 1. ~~**FOREIGN KEY failed** → Crear lista por defecto en DataSeeder~~ ✅
 
-### Media (bugs de UI / funcionalidad)
+### ~~Media (bugs de UI / funcionalidad)~~ ✅ COMPLETADO
 2. **Catálogo - Edición de artículos**: ✅ COMPLETADO
 3. Imagen por defecto en artículos sin foto ✅
 4. Añadir scanner al editar artículo ✅
-5. **Opción vaciar lista completa**
+5. **Opción vaciar lista completa** ✅ COMPLETADO
 
 ### Investigar (estudio previo)
 6. ¿Tenemos historial de compras funcional?
