@@ -176,7 +176,7 @@
 7. Viabilidad de importar lista/ticket
 
 ### Baja (mejoras UX)
-8. Sugerencias de nombre/pasillo al añadir producto
+8. ~~Sugerencias de nombre/pasillo al añadir producto~~ ✅ COMPLETADO
 9. Mover toggle tema al menú
 10. Botón micrófono en TopAppBar
 11. Añadir producto por voz
