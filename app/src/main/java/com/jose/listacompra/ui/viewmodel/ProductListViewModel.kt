@@ -248,4 +248,24 @@ class ProductListViewModel @Inject constructor(
             themeRepository.toggleTheme()
         }
     }
+
+    /**
+     * Vacía todos los productos de la lista actual
+     */
+    fun clearList() {
+        viewModelScope.launch {
+            if (currentListId == 0L) {
+                Log.e(TAG, "Cannot clear list: currentListId is 0")
+                return@launch
+            }
+            
+            try {
+                productRepository.deleteAllProductsFromList(currentListId)
+                Log.d(TAG, "Cleared all products from list $currentListId")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error clearing list", e)
+                _error.value = "Error al vaciar la lista"
+            }
+        }
+    }
 }
