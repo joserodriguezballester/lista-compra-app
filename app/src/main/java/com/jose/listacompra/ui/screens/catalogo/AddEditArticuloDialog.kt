@@ -1,15 +1,20 @@
 package com.jose.listacompra.ui.screens.catalogo
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.AlertDialog
@@ -29,9 +34,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.jose.listacompra.R
 import com.jose.listacompra.domain.model.Articulo
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -41,7 +49,8 @@ fun AddEditArticuloDialog(
     ean: String? = null,
     onDismiss: () -> Unit,
     onSave: (Articulo) -> Unit,
-    onScanBarcode: () -> Unit = {}
+    onScanBarcode: () -> Unit = {},
+    onSelectImage: () -> Unit = {}
 ) {
     var name by remember { mutableStateOf(articulo?.name ?: "") }
     var size by remember { mutableStateOf(articulo?.size?.toString() ?: "") }
@@ -64,30 +73,57 @@ fun AddEditArticuloDialog(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                if (!photoUri.isNullOrEmpty()) {
-                    AsyncImage(
-                        model = photoUri,
-                        contentDescription = name,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(150.dp),
-                        contentScale = ContentScale.Crop
-                    )
-                } else {
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(100.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant,
-                        shape = MaterialTheme.shapes.medium
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                Icons.Default.Image,
-                                contentDescription = null,
-                                modifier = Modifier.size(48.dp),
-                                tint = MaterialTheme.colorScheme.outline
+                // Imagen clicable para cambiar
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(150.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable { onSelectImage() },
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        if (!photoUri.isNullOrEmpty()) {
+                            AsyncImage(
+                                model = photoUri,
+                                contentDescription = name,
+                                modifier = Modifier.fillMaxWidth().height(150.dp),
+                                contentScale = ContentScale.Crop
                             )
+                            // Overlay con icono de cámara
+                            Surface(
+                                modifier = Modifier
+                                    .align(Alignment.BottomEnd)
+                                    .padding(8.dp),
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.AddAPhoto,
+                                    contentDescription = "Cambiar foto",
+                                    modifier = Modifier.padding(8.dp).size(24.dp),
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
+                        } else {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_photo_loading),
+                                    contentDescription = "Sin foto",
+                                    modifier = Modifier.size(64.dp),
+                                    tint = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "Toca para añadir foto",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.outline
+                                )
+                            }
                         }
                     }
                 }

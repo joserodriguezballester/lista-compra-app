@@ -174,20 +174,22 @@ fun CatalogoScreen(
 
     if (showAddDialog) {
         AddEditArticuloDialog(
-            null,
-            scannedEan,
-            { showAddDialog = false; scannedEan = null },
-            { viewModel.addArticulo(it); showAddDialog = false; scannedEan = null },
-            { showAddDialog = false; navController?.navigate(NavScreen.BarcodeScanner.route) }
+            articulo = null,
+            ean = scannedEan,
+            onDismiss = { showAddDialog = false; scannedEan = null },
+            onSave = { viewModel.addArticulo(it); showAddDialog = false; scannedEan = null },
+            onScanBarcode = { showAddDialog = false; navController?.navigate(NavScreen.BarcodeScanner.route) },
+            onSelectImage = { /* TODO: Implementar selector de imagen */ }
         )
     }
 
     selectedArticulo?.let { articulo ->
         ArticuloDetailDialog(
-            articulo,
-            { selectedArticulo = null },
-            { viewModel.updateArticulo(it); selectedArticulo = null },
-            { showDeleteConfirm = articulo; selectedArticulo = null }
+            articulo = articulo,
+            onDismiss = { selectedArticulo = null },
+            onSave = { viewModel.updateArticulo(it); selectedArticulo = null },
+            onDelete = { showDeleteConfirm = articulo; selectedArticulo = null },
+            onSelectImage = { /* TODO: Implementar selector de imagen */ }
         )
     }
 

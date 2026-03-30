@@ -1,5 +1,6 @@
 package com.jose.listacompra.ui.screens.catalogo
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,11 +9,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -31,9 +34,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.jose.listacompra.R
 import com.jose.listacompra.domain.model.Articulo
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -42,7 +48,8 @@ fun ArticuloDetailDialog(
     articulo: Articulo,
     onDismiss: () -> Unit,
     onSave: (Articulo) -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onSelectImage: (String) -> Unit = {}
 ) {
     var name by remember { mutableStateOf(articulo.name) }
     var size by remember { mutableStateOf(articulo.size.toString()) }
@@ -50,6 +57,7 @@ fun ArticuloDetailDialog(
     var price by remember { mutableStateOf(articulo.finalPrice?.toString() ?: "") }
     var ean by remember { mutableStateOf(articulo.ean ?: "") }
     var categoryId by remember { mutableStateOf(articulo.categoryId?.toString() ?: "") }
+    var photoUri by remember { mutableStateOf(articulo.photoUri ?: "") }
     
     var isEditing by remember { mutableStateOf(false) }
     
@@ -64,28 +72,67 @@ fun ArticuloDetailDialog(
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // Imagen clicable en modo edición
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(180.dp),
+                        .height(180.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .then(
+                            if (isEditing) {
+                                Modifier.clickable { /* abrir selector de imagen */ }
+                            } else {
+                                Modifier
+                            }
+                        ),
                     shape = RoundedCornerShape(16.dp),
                     color = MaterialTheme.colorScheme.surfaceVariant
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        if (!articulo.photoUri.isNullOrEmpty()) {
+                        if (!photoUri.isNullOrEmpty()) {
                             AsyncImage(
-                                model = articulo.photoUri,
+                                model = photoUri,
                                 contentDescription = articulo.name,
                                 modifier = Modifier.fillMaxSize(),
                                 contentScale = ContentScale.Crop
                             )
+                            if (isEditing) {
+                                // Overlay con icono de cámara
+                                Surface(
+                                    modifier = Modifier
+                                        .align(Alignment.BottomEnd)
+                                        .padding(8.dp),
+                                    color = MaterialTheme.colorScheme.primaryContainer,
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.AddAPhoto,
+                                        contentDescription = "Cambiar foto",
+                                        modifier = Modifier.padding(8.dp).size(24.dp),
+                                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                }
+                            }
                         } else {
-                            Icon(
-                                imageVector = Icons.Default.Image,
-                                contentDescription = null,
-                                modifier = Modifier.size(64.dp),
-                                tint = MaterialTheme.colorScheme.outline
-                            )
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_photo_loading),
+                                    contentDescription = "Sin foto",
+                                    modifier = Modifier.size(64.dp),
+                                    tint = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                                )
+                                if (isEditing) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = "Toca para añadir foto",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.outline
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -215,6 +262,7 @@ fun ArticuloDetailDialog(
                                 finalPrice = price.toDoubleOrNull()?.toFloat(),
                                 ean = ean.ifBlank { null },
                                 categoryId = categoryId.toLongOrNull() ?: articulo.categoryId,
+                                photoUri = photoUri.ifBlank { null }
                             )
                             onSave(updatedArticulo)
                         }

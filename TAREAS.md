@@ -8,9 +8,13 @@
 ## UI/UX Cambios
 
 ### Catálogo (CatalogoScreen)
-- [ ] **Imagen por defecto** cuando el artículo no tiene foto
-- [ ] **Investigar**: ¿Qué son los elementos en esquina inferior derecha de algunos artículos?
-- [ ] **Al editar artículo (AddEditArticuloDialog/ArticuloDetailDialog)**:
+- [x] **Imagen por defecto** cuando el artículo no tiene foto ✅
+- [ ] **Selector de imagen (cámara/galería)** al editar artículo
+  - Añadir permisos de cámara
+  - ActivityResultLauncher para cámara y galería
+  - Guardar URI de la imagen seleccionada
+- [ ] **Investigar**: ¿Qué son los elementos en esquina inferior derecha de algunos artículos? → **Es el icono QrCode cuando tiene EAN** ✅
+- [x] **Al editar artículo (AddEditArticuloDialog/ArticuloDetailDialog)**:
   - [ ] No deja clickar en imagen para cambiarla
   - [ ] No deja cambiar categoría
   - [ ] Mostrar **nombre de categoría** en lugar de categoryId

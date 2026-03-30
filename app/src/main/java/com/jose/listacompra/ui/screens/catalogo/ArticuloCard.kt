@@ -1,9 +1,7 @@
 package com.jose.listacompra.ui.screens.catalogo
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -28,13 +25,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.jose.listacompra.R
 import com.jose.listacompra.domain.model.Articulo
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ArticuloCard(
     articulo: Articulo,
@@ -82,11 +80,12 @@ fun ArticuloCard(
                         contentScale = ContentScale.Crop
                     )
                 } else {
+                    // Imagen por defecto cuando no hay foto
                     Icon(
-                        imageVector = Icons.Default.Image,
-                        contentDescription = null,
-                        modifier = Modifier.size(40.dp),
-                        tint = MaterialTheme.colorScheme.outline
+                        painter = painterResource(id = R.drawable.ic_photo_loading),
+                        contentDescription = "Sin foto",
+                        modifier = Modifier.size(64.dp),
+                        tint = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
                     )
                 }
                 
