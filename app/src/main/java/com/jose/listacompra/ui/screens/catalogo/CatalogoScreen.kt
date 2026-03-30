@@ -33,6 +33,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -77,9 +78,55 @@ fun CatalogoScreen(
     var showDeleteConfirm by remember { mutableStateOf<Articulo?>(null) }
     var selectedCategory by remember { mutableStateOf<String?>(null) }
     var scannedEan by remember { mutableStateOf<String?>(null) }
+    var scannedName by remember { mutableStateOf<String?>(null) }
+    var scannedImageUrl by remember { mutableStateOf<String?>(null) }
+    var scannedQuantity by remember { mutableStateOf<String?>(null) }
+    var scannedCategoryId by remember { mutableStateOf<String?>(null) }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var showImageSourceDialog by remember { mutableStateOf(false) }
-    var fabExpanded by remember { mutableStateOf(false) }
+
+    // Recibir datos del scanner
+    LaunchedEffect(navController) {
+        navController?.currentBackStackEntry
+            ?.savedStateHandle
+            ?.getLiveData<String>("scannedEan")
+            ?.observeForever { ean ->
+                if (ean != null && showAddDialog.not()) {
+                    scannedEan = ean
+                    scannedName = navController.currentBackStackEntry
+                        ?.savedStateHandle
+                        ?.get<String>("scannedName")
+                    scannedImageUrl = navController.currentBackStackEntry
+                        ?.savedStateHandle
+                        ?.get<String>("scannedImageUrl")
+                    scannedQuantity = navController.currentBackStackEntry
+                        ?.savedStateHandle
+                        ?.get<String>("scannedQuantity")
+                    scannedCategoryId = navController.currentBackStackEntry
+                        ?.savedStateHandle
+                        ?.get<String>("scannedCategoryId")
+                    
+                    showAddDialog = true
+                    
+                    // Limpiar datos del savedStateHandle
+                    navController.currentBackStackEntry
+                        ?.savedStateHandle
+                        ?.remove<String>("scannedEan")
+                    navController.currentBackStackEntry
+                        ?.savedStateHandle
+                        ?.remove<String>("scannedName")
+                    navController.currentBackStackEntry
+                        ?.savedStateHandle
+                        ?.remove<String>("scannedImageUrl")
+                    navController.currentBackStackEntry
+                        ?.savedStateHandle
+                        ?.remove<String>("scannedQuantity")
+                    navController.currentBackStackEntry
+                        ?.savedStateHandle
+                        ?.remove<String>("scannedCategoryId")
+                }
+            }
+    }
 
     val articulosFiltrados = remember(articulos, searchQuery, selectedCategory) {
         var result = articulos
@@ -147,78 +194,26 @@ fun CatalogoScreen(
         },
         floatingActionButton = {
             Column(
-                horizontalAlignment = Alignment.End
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Opciones desplegadas
-                if (fabExpanded) {
-                    Column(
-                        horizontalAlignment = Alignment.End,
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier.padding(bottom = 12.dp)
-                    ) {
-                        // Opción: Escanear
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Text(
-                                text = "Escanear",
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            SmallFloatingActionButton(
-                                onClick = { 
-                                    fabExpanded = false
-                                    navController?.navigate(NavScreen.BarcodeScanner.route) 
-                                },
-                                containerColor = MaterialTheme.colorScheme.primary,
-                                contentColor = MaterialTheme.colorScheme.onPrimary
-                            ) {
-                                Icon(Icons.Default.QrCodeScanner, "Escanear código")
-                            }
-                        }
-                        
-                        // Opción: Manual
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Text(
-                                text = "Manual",
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            SmallFloatingActionButton(
-                                onClick = { 
-                                    fabExpanded = false
-                                    showAddDialog = true 
-                                },
-                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                            ) {
-                                Icon(Icons.Default.Add, "Añadir manual")
-                            }
-                        }
-                    }
-                }
+                // FAB 1: Escanear código (destacado)
+                ExtendedFloatingActionButton(
+                    onClick = { navController?.navigate(NavScreen.BarcodeScanner.route) },
+                    icon = { Icon(Icons.Default.QrCodeScanner, null) },
+                    text = { Text("Escanear") },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
                 
-                // FAB principal (abre/cierra)
-                FloatingActionButton(
-                    onClick = { fabExpanded = !fabExpanded },
-                    containerColor = if (fabExpanded) 
-                        MaterialTheme.colorScheme.error 
-                    else 
-                        MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = if (fabExpanded) 
-                        MaterialTheme.colorScheme.onError 
-                    else 
-                        MaterialTheme.colorScheme.onPrimaryContainer
-                ) {
-                    Icon(
-                        if (fabExpanded) Icons.Default.Close else Icons.Default.Add,
-                        if (fabExpanded) "Cerrar" else "Añadir"
-                    )
-                }
+                // FAB 2: Añadir manualmente
+                ExtendedFloatingActionButton(
+                    onClick = { showAddDialog = true },
+                    icon = { Icon(Icons.Default.Add, null) },
+                    text = { Text("Manual") },
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                )
             }
         }
     ) { paddingValues ->
@@ -273,10 +268,30 @@ fun CatalogoScreen(
         AddEditArticuloDialog(
             articulo = null,
             ean = scannedEan,
-            selectedImageUri = selectedImageUri?.toString(),
+            selectedImageUri = scannedImageUrl ?: selectedImageUri?.toString(),
             categories = categorias,
-            onDismiss = { showAddDialog = false; scannedEan = null; selectedImageUri = null },
-            onSave = { viewModel.addArticulo(it); showAddDialog = false; scannedEan = null; selectedImageUri = null },
+            prefillName = scannedName,
+            prefillQuantity = scannedQuantity,
+            prefillCategoryId = scannedCategoryId,
+            onDismiss = { 
+                showAddDialog = false
+                scannedEan = null
+                scannedName = null
+                scannedImageUrl = null
+                scannedQuantity = null
+                scannedCategoryId = null
+                selectedImageUri = null
+            },
+            onSave = { 
+                viewModel.addArticulo(it)
+                showAddDialog = false
+                scannedEan = null
+                scannedName = null
+                scannedImageUrl = null
+                scannedQuantity = null
+                scannedCategoryId = null
+                selectedImageUri = null
+            },
             onScanBarcode = { 
                 showAddDialog = false
                 navController?.navigate(NavScreen.BarcodeScanner.route) 

@@ -1,14 +1,14 @@
 package com.jose.listacompra.domain.model
 
 /**
- * Datos de producto obtenidos del escaneo
+ * Producto escaneado desde OpenFoodFacts
+ * Usado para autocompletar datos al crear un artículo
  */
 data class ScannedProduct(
     val barcode: String,
     val name: String?,
     val brand: String?,
     val imageUrl: String?,
-    val category: String?,
-    val found: Boolean,
-    val ean: String? = null
+    val quantity: String?,
+    val categoryTag: String?
 )

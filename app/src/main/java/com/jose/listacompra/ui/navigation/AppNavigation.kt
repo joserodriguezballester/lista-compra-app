@@ -83,10 +83,16 @@ fun AppNavigation(
         
         composable(NavScreen.BarcodeScanner.route) {
             BarcodeScannerScreen(
-                onBarcodeScanned = { barcode ->
+                onBarcodeScanned = { ean, name, imageUrl, quantity, categoryId ->
                     navController.previousBackStackEntry
                         ?.savedStateHandle
-                        ?.set("scannedEan", barcode)
+                        ?.apply {
+                            set("scannedEan", ean)
+                            set("scannedName", name)
+                            set("scannedImageUrl", imageUrl)
+                            set("scannedQuantity", quantity)
+                            set("scannedCategoryId", categoryId)
+                        }
                     navController.popBackStack()
                 },
                 onNavigateBack = { navController.popBackStack() }

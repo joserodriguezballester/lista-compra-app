@@ -56,21 +56,34 @@ fun AddEditArticuloDialog(
     ean: String? = null,
     selectedImageUri: String? = null,
     categories: List<Category> = emptyList(),
+    prefillName: String? = null,
+    prefillQuantity: String? = null,
+    prefillCategoryId: String? = null,
     onDismiss: () -> Unit,
     onSave: (Articulo) -> Unit,
     onScanBarcode: () -> Unit = {},
     onSelectImage: () -> Unit = {}
 ) {
-    var name by remember { mutableStateOf(articulo?.name ?: "") }
-    var size by remember { mutableStateOf(articulo?.size?.toString() ?: "") }
+    var name by remember { mutableStateOf(prefillName ?: articulo?.name ?: "") }
+    var size by remember { mutableStateOf("") }
     var unit by remember { mutableStateOf(articulo?.unit ?: "") }
     var price by remember { mutableStateOf(articulo?.finalPrice?.toString() ?: "") }
     var eanValue by remember { mutableStateOf(articulo?.ean ?: ean ?: "") }
     var selectedCategory by remember { mutableStateOf(
-        categories.find { it.id == articulo?.categoryId } ?: categories.firstOrNull()
+        categories.find { it.id.toString() == prefillCategoryId }
+            ?: categories.find { it.id == articulo?.categoryId }
+            ?: categories.firstOrNull()
     ) }
     var photoUri by remember { mutableStateOf(selectedImageUri ?: articulo?.photoUri ?: "") }
     var categoryExpanded by remember { mutableStateOf(false) }
+    
+    // Parsear cantidad si viene del scanner
+    val quantityParts = prefillQuantity?.split(" ")
+    val parsedSize = quantityParts?.firstOrNull()?.toFloatOrNull()
+    val parsedUnit = quantityParts?.drop(1)?.firstOrNull() ?: ""
+    
+    var sizeValue by remember { mutableStateOf(parsedSize?.toString() ?: articulo?.size?.toString() ?: "") }
+    var unitValue by remember { mutableStateOf(parsedUnit.ifBlank { articulo?.unit ?: "" }) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -153,15 +166,15 @@ fun AddEditArticuloDialog(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     OutlinedTextField(
-                        value = size,
-                        onValueChange = { size = it },
+                        value = sizeValue,
+                        onValueChange = { sizeValue = it },
                         label = { Text("Tamaño") },
                         modifier = Modifier.weight(1f),
                         singleLine = true
                     )
                     OutlinedTextField(
-                        value = unit,
-                        onValueChange = { unit = it },
+                        value = unitValue,
+                        onValueChange = { unitValue = it },
                         label = { Text("Unidad") },
                         modifier = Modifier.weight(1f),
                         singleLine = true
@@ -233,8 +246,8 @@ fun AddEditArticuloDialog(
                     val newArticulo = Articulo(
                         id = articulo?.id ?: 0,
                         name = name,
-                        size = size.toDoubleOrNull()?.toFloat() ?: 1.0F,
-                        unit = unit.ifBlank { "ud" },
+                        size = sizeValue.toFloatOrNull() ?: 1.0F,
+                        unit = unitValue.ifBlank { "ud" },
                         finalPrice = price.toFloatOrNull(),
                         ean = eanValue.ifBlank { null },
                         categoryId = selectedCategory?.id ?: 0L,

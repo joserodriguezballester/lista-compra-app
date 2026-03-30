@@ -20,12 +20,14 @@ import com.jose.listacompra.data.repository.AisleRepositoryImpl
 import com.jose.listacompra.data.repository.ArticuloSupermarketDefaultRepository
 import com.jose.listacompra.data.repository.CategoryRepository
 import com.jose.listacompra.data.repository.CategorySupermarketOrderRepository
+import com.jose.listacompra.data.repository.OpenFoodFactsRepositoryImpl
 import com.jose.listacompra.data.repository.ProductRepositoryImpl
 import com.jose.listacompra.data.repository.SupermarketRepository
 import com.jose.listacompra.domain.repository.IAisleRepository
 import com.jose.listacompra.domain.repository.IArticuloSupermarketDefaultRepository
 import com.jose.listacompra.domain.repository.ICategoryRepository
 import com.jose.listacompra.domain.repository.ICategorySupermarketOrderRepository
+import com.jose.listacompra.domain.repository.IOpenFoodFactsRepository
 import com.jose.listacompra.domain.repository.IProductRepository
 import com.jose.listacompra.domain.repository.ISupermarketRepository
 import dagger.Binds
@@ -119,4 +121,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindCategorySupermarketOrderRepository(impl: CategorySupermarketOrderRepository): ICategorySupermarketOrderRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindOpenFoodFactsRepository(impl: OpenFoodFactsRepositoryImpl): IOpenFoodFactsRepository
 }

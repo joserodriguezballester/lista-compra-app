@@ -19,28 +19,32 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.LifecycleOwner
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
+import com.jose.listacompra.ui.viewmodel.ScannerViewModel
 import java.util.concurrent.Executors
 
 /**
  * Pantalla de escaneo de códigos de barras
- * Usa CameraX + ML Kit
+ * Usa CameraX + ML Kit + OpenFoodFacts para autocompletar
  */
 @androidx.annotation.OptIn(ExperimentalGetImage::class)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BarcodeScannerScreen(
-    onBarcodeScanned: (String) -> Unit,
-    onNavigateBack: () -> Unit
+    onBarcodeScanned: (String, String?, String?, String?, String?) -> Unit, // (ean, name, imageUrl, quantity, categoryId)
+    onNavigateBack: () -> Unit,
+    viewModel: ScannerViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     
     var isScanning by remember { mutableStateOf(true) }
+    var isLoading by remember { mutableStateOf(false) }
     
     // Scanner de ML Kit
     val scanner: BarcodeScanner = remember {
@@ -111,7 +115,7 @@ fun BarcodeScannerScreen(
                             .build()
                             .also { analysis ->
                                 analysis.setAnalyzer(executor) { imageProxy ->
-                                    if (!isScanning) {
+                                    if (!isScanning || isLoading) {
                                         imageProxy.close()
                                         return@setAnalyzer
                                     }
@@ -126,9 +130,18 @@ fun BarcodeScannerScreen(
                                         scanner.process(inputImage)
                                             .addOnSuccessListener { barcodes ->
                                                 for (barcode in barcodes) {
-                                                    barcode.rawValue?.let { value ->
+                                                    barcode.rawValue?.let { ean ->
                                                         isScanning = false
-                                                        onBarcodeScanned(value)
+                                                        // Consultar OpenFoodFacts
+                                                        viewModel.searchProduct(ean) { product ->
+                                                            onBarcodeScanned(
+                                                                ean,
+                                                                product?.name,
+                                                                product?.imageUrl,
+                                                                product?.quantity,
+                                                                product?.categoryTag
+                                                            )
+                                                        }
                                                     }
                                                 }
                                             }
@@ -166,11 +179,24 @@ fun BarcodeScannerScreen(
                     .fillMaxWidth(),
                 color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
             ) {
-                Text(
-                    text = "Apunta la cámara al código de barras del producto",
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(16.dp)
-                )
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    if (isLoading) {
+                        CircularProgressIndicator()
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Buscando producto...",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    } else {
+                        Text(
+                            text = "Apunta la cámara al código de barras del producto",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
             }
         }
     }
