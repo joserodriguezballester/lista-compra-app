@@ -95,10 +95,12 @@
 ## Errores Conocidos
 
 ### Críticos (bloquean funcionalidad)
-- [ ] **FOREIGN KEY constraint failed al añadir producto**
-  - Causa: `shoppingListId = 1` pero NO existe lista con id=1
-  - Solución: Crear lista por defecto en DataSeeder
-  - Archivo: `InitialDataSeeder.kt` → añadir `seedShoppingListIfNeeded()`
+- [x] **FOREIGN KEY constraint failed al añadir producto** ✅ RESUELTO
+  - Causa: `shoppingListId = 1` pero NO existía lista con id=1
+  - Solución: 
+    - `InitialDataSeeder.seedShoppingListIfNeeded()` crea lista por defecto
+    - `ProductListViewModel` usa `GetDefaultListUseCase` para obtener ID dinámicamente
+  - Commit: `fix: FOREIGN KEY error - crear lista por defecto`
 
 ### Resueltos
 - ✅ DataSeeder solo cargaba artículos → Ahora usa Initializer
@@ -160,28 +162,24 @@
 
 ## Prioridad
 
-### Alta (bloquea uso básico)
-1. **FOREIGN KEY failed** → Crear lista por defecto en DataSeeder
-2. Verificar que se poblan todas las tablas
+### ~~Alta (bloquea uso básico)~~ ✅ RESUELTO
+1. ~~**FOREIGN KEY failed** → Crear lista por defecto en DataSeeder~~ ✅
 
 ### Media (bugs de UI / funcionalidad)
-3. **Catálogo - Edición de artículos**:
-   - No deja clickar en imagen para cambiarla
-   - No deja cambiar categoría
-   - Mostrar nombre de categoría (no ID)
-4. Imagen por defecto en artículos sin foto
-5. Añadir scanner al editar artículo
-6. **Opción vaciar lista completa**
+2. **Catálogo - Edición de artículos**: ✅ COMPLETADO
+3. Imagen por defecto en artículos sin foto ✅
+4. Añadir scanner al editar artículo ✅
+5. **Opción vaciar lista completa**
 
 ### Investigar (estudio previo)
-7. ¿Tenemos historial de compras funcional?
-8. Viabilidad de importar lista/ticket
+6. ¿Tenemos historial de compras funcional?
+7. Viabilidad de importar lista/ticket
 
 ### Baja (mejoras UX)
-9. Sugerencias de nombre/pasillo al añadir producto
-10. Mover toggle tema al menú
-11. Botón micrófono en TopAppBar
-12. Añadir producto por voz
+8. Sugerencias de nombre/pasillo al añadir producto
+9. Mover toggle tema al menú
+10. Botón micrófono en TopAppBar
+11. Añadir producto por voz
 
 ---
 
