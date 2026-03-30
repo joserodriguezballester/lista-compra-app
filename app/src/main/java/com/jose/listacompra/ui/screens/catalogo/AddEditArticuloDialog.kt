@@ -47,6 +47,7 @@ import com.jose.listacompra.domain.model.Articulo
 fun AddEditArticuloDialog(
     articulo: Articulo? = null,
     ean: String? = null,
+    selectedImageUri: String? = null,
     onDismiss: () -> Unit,
     onSave: (Articulo) -> Unit,
     onScanBarcode: () -> Unit = {},
@@ -58,7 +59,7 @@ fun AddEditArticuloDialog(
     var price by remember { mutableStateOf(articulo?.finalPrice?.toString() ?: "") }
     var eanValue by remember { mutableStateOf(articulo?.ean ?: ean ?: "") }
     var categoryId by remember { mutableStateOf(articulo?.categoryId?.toString() ?: "") }
-    var photoUri by remember { mutableStateOf(articulo?.photoUri ?: "") }
+    var photoUri by remember { mutableStateOf(selectedImageUri ?: articulo?.photoUri ?: "") }
 
     AlertDialog(
         onDismissRequest = onDismiss,

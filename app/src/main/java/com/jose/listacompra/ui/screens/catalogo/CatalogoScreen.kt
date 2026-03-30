@@ -1,5 +1,6 @@
 package com.jose.listacompra.ui.screens.catalogo
 
+import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -40,6 +41,9 @@ import androidx.navigation.NavHostController
 import com.jose.listacompra.domain.model.Articulo
 import com.jose.listacompra.ui.components.CatalogBottomBar
 import com.jose.listacompra.ui.components.CommonTopBar
+import com.jose.listacompra.ui.components.ImagePicker
+import com.jose.listacompra.ui.components.ImageSourceDialog
+import com.jose.listacompra.ui.components.rememberImagePicker
 import com.jose.listacompra.ui.navigation.NavScreen
 import com.jose.listacompra.ui.viewmodel.ArticuloViewModel
 
@@ -66,6 +70,9 @@ fun CatalogoScreen(
     var showDeleteConfirm by remember { mutableStateOf<Articulo?>(null) }
     var selectedCategory by remember { mutableStateOf<String?>(null) }
     var scannedEan by remember { mutableStateOf<String?>(null) }
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+    var showImageSourceDialog by remember { mutableStateOf(false) }
+    var isAddingNewArticulo by remember { mutableStateOf(false) }
 
     val articulosFiltrados = remember(articulos, searchQuery, selectedCategory) {
         var result = articulos
@@ -84,6 +91,13 @@ fun CatalogoScreen(
 
     val categories = remember(articulos) {
         articulos.mapNotNull { it.categoryId?.toString() }.distinct().sorted()
+    }
+
+    // Image picker
+    val imagePicker = rememberImagePicker { uri ->
+        selectedImageUri = uri
+        // Si estamos añadiendo nuevo artículo, actualizar el diálogo
+        // Si estamos editando, actualizar el artículo seleccionado
     }
 
     Scaffold(
@@ -164,7 +178,7 @@ fun CatalogoScreen(
                 items(articulosFiltrados, { it.id }) { articulo ->
                     ArticuloCard(
                         articulo,
-                        { selectedArticulo = articulo },
+                        { selectedArticulo = articulo; selectedImageUri = null },
                         articulo.name.lowercase() in articuloNames
                     )
                 }
@@ -172,24 +186,34 @@ fun CatalogoScreen(
         }
     }
 
+    // Diálogo para elegir origen de imagen
+    if (showImageSourceDialog) {
+        ImageSourceDialog(
+            onDismiss = { showImageSourceDialog = false },
+            onCameraSelected = { imagePicker.openCamera() },
+            onGallerySelected = { imagePicker.openGallery() }
+        )
+    }
+
     if (showAddDialog) {
         AddEditArticuloDialog(
             articulo = null,
             ean = scannedEan,
-            onDismiss = { showAddDialog = false; scannedEan = null },
-            onSave = { viewModel.addArticulo(it); showAddDialog = false; scannedEan = null },
+            selectedImageUri = selectedImageUri?.toString(),
+            onDismiss = { showAddDialog = false; scannedEan = null; selectedImageUri = null },
+            onSave = { viewModel.addArticulo(it); showAddDialog = false; scannedEan = null; selectedImageUri = null },
             onScanBarcode = { showAddDialog = false; navController?.navigate(NavScreen.BarcodeScanner.route) },
-            onSelectImage = { /* TODO: Implementar selector de imagen */ }
+            onSelectImage = { showImageSourceDialog = true; isAddingNewArticulo = true }
         )
     }
 
     selectedArticulo?.let { articulo ->
         ArticuloDetailDialog(
-            articulo = articulo,
-            onDismiss = { selectedArticulo = null },
-            onSave = { viewModel.updateArticulo(it); selectedArticulo = null },
+            articulo = articulo.copy(photoUri = selectedImageUri?.toString() ?: articulo.photoUri),
+            onDismiss = { selectedArticulo = null; selectedImageUri = null },
+            onSave = { viewModel.updateArticulo(it); selectedArticulo = null; selectedImageUri = null },
             onDelete = { showDeleteConfirm = articulo; selectedArticulo = null },
-            onSelectImage = { /* TODO: Implementar selector de imagen */ }
+            onSelectImage = { showImageSourceDialog = true }
         )
     }
 
