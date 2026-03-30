@@ -1,43 +1,61 @@
 package com.jose.listacompra.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.unit.dp
-import com.jose.listacompra.domain.model.Aisle
-import com.jose.listacompra.domain.model.Offer
-import com.jose.listacompra.domain.model.OfferPreviewResult
-import com.jose.listacompra.domain.model.ProductSuggestion
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.jose.listacompra.domain.model.Articulo
+import com.jose.listacompra.ui.viewmodel.AddProductViewModel
 
+/**
+ * Diálogo para añadir productos a la lista de la compra
+ * Con sugerencias de artículos del catálogo
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddProductDialog(
-    aisles: List<Aisle>,
-    offers: List<Offer>,
-    suggestions: List<ProductSuggestion>,
+    listId: Long,
+    supermarketId: Long? = null,
     onDismiss: () -> Unit,
-    onAdd: (name: String, aisleId: Long, quantity: Float, price: Float?, offerId: Long?) -> Unit,
-    onSearchSuggestions: (query: String) -> Unit,
-    onCalculateOffer: (quantity: Float, price: Float?, offerId: Long?) -> OfferPreviewResult?
+    onAdd: (name: String, quantity: Float, aisleId: Long?, price: Float?) -> Unit,
+    viewModel: AddProductViewModel = hiltViewModel()
 ) {
     var name by remember { mutableStateOf("") }
-    var selectedAisle by remember { mutableStateOf(aisles.firstOrNull()) }
     var quantity by remember { mutableStateOf("1") }
     var price by remember { mutableStateOf("") }
-    var selectedOffer by remember { mutableStateOf<Offer?>(null) }
-    var aisleExpanded by remember { mutableStateOf(false) }
-    var offerExpanded by remember { mutableStateOf(false) }
+    var selectedAisleId by remember { mutableStateOf<Long?>(null) }
+    var showSuggestions by remember { mutableStateOf(false) }
     
-    // Calcular preview de oferta en tiempo real
-    val quantityFloat = quantity.toFloatOrNull() ?: 1f
-    val priceFloat = price.toFloatOrNull()
-    val offerPreview = onCalculateOffer(quantityFloat, priceFloat, selectedOffer?.id)
+    val suggestions by viewModel.suggestions.collectAsState()
+    val aisles by viewModel.aisles.collectAsState()
+    
+    // Buscar sugerencias cuando cambia el texto
+    LaunchedEffect(name) {
+        if (name.length >= 2) {
+            viewModel.searchArticulos(name)
+            showSuggestions = true
+        } else {
+            viewModel.clearSuggestions()
+            showSuggestions = false
+        }
+    }
+    
+    // Cargar pasillos al iniciar
+    LaunchedEffect(supermarketId) {
+        viewModel.loadAisles(supermarketId ?: 1L)
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -47,327 +65,127 @@ fun AddProductDialog(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Nombre del producto con sugerencias
-                Column {
+                // Campo de nombre con sugerencias
+                ExposedDropdownMenuBox(
+                    expanded = showSuggestions && suggestions.isNotEmpty(),
+                    onExpandedChange = { }
+                ) {
                     OutlinedTextField(
                         value = name,
-                        onValueChange = { newName ->
-                            name = newName
-                            if (newName.length >= 2) {
-                                onSearchSuggestions(newName)
-                                
-                                // AUTO-APLICAR: Si hay coincidencia exacta, aplicar sugerencia automáticamente
-                                val exactMatch = suggestions.find { 
-                                    it.name.equals(newName.trim(), ignoreCase = true) 
-                                }
-                                if (exactMatch != null) {
-                                    selectedAisle = aisles.find { it.id == exactMatch.aisleId }
-                                    quantity = exactMatch.suggestedQuantity.toInt().toString()
-                                    price = exactMatch.suggestedPrice?.toString() ?: ""
-                                }
-                            }
-                        },
+                        onValueChange = { name = it },
                         label = { Text("Nombre del producto") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor()
+                            .onFocusChanged { focusState ->
+                                showSuggestions = focusState.isFocused && suggestions.isNotEmpty()
+                            },
                         singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    // Mostrar sugerencias si hay (y no hay coincidencia exacta)
-                    val hasExactMatch = suggestions.any { it.name.equals(name.trim(), ignoreCase = true) }
-                    if (suggestions.isNotEmpty() && name.length >= 2 && !hasExactMatch) {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(8.dp)
-                            ) {
-                                Text(
-                                    text = "Sugerencias:",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                suggestions.forEach { suggestion ->
-                                    SuggestionItem(
-                                        suggestion = suggestion,
-                                        aisles = aisles,
-                                        onClick = {
-                                            name = suggestion.name
-                                            selectedAisle = aisles.find { it.id == suggestion.aisleId }
-                                            quantity = suggestion.suggestedQuantity.toInt().toString()
-                                            price = suggestion.suggestedPrice?.toString() ?: ""
-                                            onSearchSuggestions("") // Limpiar sugerencias
-                                        }
-                                    )
+                        leadingIcon = {
+                            Icon(Icons.Default.ShoppingCart, contentDescription = null)
+                        },
+                        trailingIcon = {
+                            if (name.isNotEmpty()) {
+                                IconButton(onClick = { name = "" }) {
+                                    Icon(Icons.Default.Close, "Limpiar")
                                 }
                             }
+                        }
+                    )
+                    
+                    // Lista de sugerencias
+                    ExposedDropdownMenu(
+                        expanded = showSuggestions && suggestions.isNotEmpty(),
+                        onDismissRequest = { showSuggestions = false },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        suggestions.forEach { articulo ->
+                            DropdownMenuItem(
+                                text = {
+                                    Column {
+                                        Text(
+                                            text = articulo.name,
+                                            style = MaterialTheme.typography.bodyLarge
+                                        )
+                                        if (articulo.finalPrice != null) {
+                                            Text(
+                                                text = "${String.format("%.2f", articulo.finalPrice)} €",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.primary
+                                            )
+                                        }
+                                    }
+                                },
+                                onClick = {
+                                    name = articulo.name
+                                    articulo.finalPrice?.let { price = it.toString() }
+                                    selectedAisleId = null // TODO: sugerir pasillo según categoría
+                                    showSuggestions = false
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            )
                         }
                     }
                 }
 
-                // Selector de pasillo
-                ExposedDropdownMenuBox(
-                    expanded = aisleExpanded,
-                    onExpandedChange = { aisleExpanded = it },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    OutlinedTextField(
-                        value = selectedAisle?.let { "${it.emoji} ${it.name}" } ?: "",
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Pasillo") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = aisleExpanded) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .menuAnchor()
-                    )
+                // Cantidad
+                OutlinedTextField(
+                    value = quantity,
+                    onValueChange = { quantity = it },
+                    label = { Text("Cantidad") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
 
-                    ExposedDropdownMenu(
+                // Precio (opcional)
+                OutlinedTextField(
+                    value = price,
+                    onValueChange = { price = it },
+                    label = { Text("Precio (€, opcional)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+
+                // Pasillo (opcional)
+                if (aisles.isNotEmpty()) {
+                    var aisleExpanded by remember { mutableStateOf(false) }
+                    val selectedAisle = aisles.find { it.id == selectedAisleId }
+                    
+                    ExposedDropdownMenuBox(
                         expanded = aisleExpanded,
-                        onDismissRequest = { aisleExpanded = false }
+                        onExpandedChange = { aisleExpanded = it }
                     ) {
-                        aisles.forEach { aisle ->
+                        OutlinedTextField(
+                            value = selectedAisle?.let { "${it.icon} ${it.name}" } ?: "Sin pasillo",
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Pasillo (opcional)") },
+                            trailingIcon = {
+                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = aisleExpanded)
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor()
+                        )
+                        
+                        ExposedDropdownMenu(
+                            expanded = aisleExpanded,
+                            onDismissRequest = { aisleExpanded = false }
+                        ) {
                             DropdownMenuItem(
-                                text = { Text("${aisle.emoji} ${aisle.name}") },
+                                text = { Text("Sin pasillo") },
                                 onClick = {
-                                    selectedAisle = aisle
+                                    selectedAisleId = null
                                     aisleExpanded = false
                                 }
                             )
-                        }
-                    }
-                }
-
-                // OFERTA ANTES DE CANTIDAD (para saber el mínimo requerido)
-                ExposedDropdownMenuBox(
-                    expanded = offerExpanded,
-                    onExpandedChange = { offerExpanded = it },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    OutlinedTextField(
-                        value = selectedOffer?.name ?: "Sin oferta",
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Oferta") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = offerExpanded) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .menuAnchor()
-                    )
-
-                    ExposedDropdownMenu(
-                        expanded = offerExpanded,
-                        onDismissRequest = { offerExpanded = false }
-                    ) {
-                        // Opción "Sin oferta"
-                        DropdownMenuItem(
-                            text = { Text("Sin oferta") },
-                            onClick = {
-                                selectedOffer = null
-                                offerExpanded = false
-                            }
-                        )
-                        Divider()
-                        // Lista de ofertas
-                        offers.forEach { offer ->
-                            DropdownMenuItem(
-                                text = { 
-                                    Column {
-                                        Text(offer.name)
-                                        Text(
-                                            text = offer.description,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                                        )
+                            aisles.forEach { aisle ->
+                                DropdownMenuItem(
+                                    text = { Text("${aisle.icon} ${aisle.name}") },
+                                    onClick = {
+                                        selectedAisleId = aisle.id
+                                        aisleExpanded = false
                                     }
-                                },
-                                onClick = {
-                                    selectedOffer = offer
-                                    offerExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
-                
-                // Indicador de mínimo requerido para la oferta
-                if (selectedOffer != null) {
-                    val minRequired = when (selectedOffer?.code) {
-                        "3x2" -> 3
-                        "2x1", "2nd_50", "2nd_70" -> 2
-                        "4x3" -> 4
-                        else -> 1
-                    }
-                    val meetsMinimum = quantityFloat >= minRequired
-                    
-                    if (!meetsMinimum) {
-                        Text(
-                            text = "⚠️ Oferta ${selectedOffer?.name}: mínimo $minRequired unidades (tienes ${quantityFloat.toInt()})",
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.padding(start = 4.dp)
-                        )
-                    } else {
-                        Text(
-                            text = "✅ Oferta aplicable (${minRequired}+ unidades)",
-                            color = MaterialTheme.colorScheme.primary,
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.padding(start = 4.dp)
-                        )
-                    }
-                }
-                
-                // Cantidad y precio en la misma fila (DESPUÉS de la oferta)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    OutlinedTextField(
-                        value = quantity,
-                        onValueChange = { quantity = it.filter { c -> c.isDigit() } },
-                        label = { Text("Cantidad") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true,
-                        isError = selectedOffer != null && quantityFloat < when (selectedOffer?.code) {
-                            "3x2" -> 3
-                            "2x1", "2nd_50", "2nd_70" -> 2
-                            "4x3" -> 4
-                            else -> 1
-                        },
-                        modifier = Modifier.weight(0.4f)
-                    )
-
-                    OutlinedTextField(
-                        value = price,
-                        onValueChange = {
-                            price = it.filter { c -> c.isDigit() || c == '.' }
-                        },
-                        label = { Text("Precio ud") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        singleLine = true,
-                        modifier = Modifier.weight(0.6f)
-                    )
-                }
-                
-                // Preview de oferta aplicada
-                if (offerPreview != null && priceFloat != null && priceFloat > 0) {
-                    // Verificar si cumple el mínimo para la oferta
-                    val minRequired = when (selectedOffer?.code) {
-                        "3x2" -> 3
-                        "2x1", "2nd_50", "2nd_70" -> 2
-                        "4x3" -> 4
-                        else -> 1
-                    }
-                    val meetsMinimum = selectedOffer == null || quantityFloat >= minRequired
-                    
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = when {
-                                !meetsMinimum -> MaterialTheme.colorScheme.errorContainer
-                                offerPreview.hasOffer && offerPreview.savings > 0 -> MaterialTheme.colorScheme.primaryContainer
-                                else -> MaterialTheme.colorScheme.surfaceVariant
-                            }
-                        )
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(12.dp)
-                        ) {
-                            Text(
-                                text = when {
-                                    !meetsMinimum -> "⚠️ Oferta NO aplicable"
-                                    offerPreview.hasOffer -> "🏷️ Oferta aplicada"
-                                    else -> "Precio calculado"
-                                },
-                                style = MaterialTheme.typography.labelMedium,
-                                color = if (!meetsMinimum) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
-                            )
-                            
-                            Spacer(modifier = Modifier.height(4.dp))
-                            
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Column {
-                                    Text(
-                                        text = "Sin oferta:",
-                                        style = MaterialTheme.typography.bodySmall
-                                    )
-                                    Text(
-                                        text = "%.2f€".format(quantityFloat * priceFloat),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        textDecoration = if (offerPreview.hasOffer) TextDecoration.LineThrough else null
-                                    )
-                                    if (meetsMinimum && offerPreview.hasOffer) {
-                                        Text(
-                                            text = "%.2f€/ud".format(priceFloat),
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                                            textDecoration = TextDecoration.LineThrough
-                                        )
-                                    }
-                                }
-                                
-                                Column(horizontalAlignment = androidx.compose.ui.Alignment.End) {
-                                    Text(
-                                        text = "A pagar:",
-                                        style = MaterialTheme.typography.bodySmall
-                                    )
-                                    Text(
-                                        text = "%.2f€".format(offerPreview.finalPrice),
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        color = if (meetsMinimum) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-                                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-                                    )
-                                    if (meetsMinimum && offerPreview.hasOffer && quantityFloat > 0) {
-                                        val finalPricePerUnit = offerPreview.finalPrice / quantityFloat
-                                        Text(
-                                            text = "%.2f€/ud".format(finalPricePerUnit),
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.primary
-                                        )
-                                    }
-                                }
-                            }
-                            
-                            // Mostrar ahorro si aplica y cumple mínimo
-                            if (meetsMinimum && offerPreview.hasOffer && offerPreview.savings > 0) {
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = "💰 Ahorro total:",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.tertiary
-                                    )
-                                    Text(
-                                        text = "-%.2f€ (%.0f%%)".format(
-                                            offerPreview.savings,
-                                            (offerPreview.savings / (quantityFloat * priceFloat)) * 100
-                                        ),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.tertiary,
-                                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-                                    )
-                                }
-                                // Detalle del ahorro
-                                Text(
-                                    text = when (selectedOffer?.code) {
-                                        "3x2" -> "Llevas ${quantityFloat.toInt()}, pagas ${(quantityFloat.toInt() / 3 * 2 + quantityFloat.toInt() % 3)}"
-                                        "2x1" -> "Llevas ${quantityFloat.toInt()}, pagas ${(quantityFloat.toInt() / 2 + quantityFloat.toInt() % 2)}"
-                                        "2nd_50" -> "2ª unidad al 50%"
-                                        "2nd_70" -> "2ª unidad al 30%"
-                                        "4x3" -> "Llevas ${quantityFloat.toInt()}, pagas ${(quantityFloat.toInt() / 4 * 3 + quantityFloat.toInt() % 4)}"
-                                        else -> ""
-                                    },
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.8f),
-                                    modifier = Modifier.padding(top = 2.dp)
                                 )
                             }
                         }
@@ -376,16 +194,19 @@ fun AddProductDialog(
             }
         },
         confirmButton = {
-            TextButton(
+            Button(
                 onClick = {
-                    if (name.isNotBlank() && selectedAisle != null) {
-                        val qty = quantity.toFloatOrNull() ?: 1f
-                        val prc = price.toFloatOrNull()
-                        onAdd(name.trim(), selectedAisle!!.id, qty, prc, selectedOffer?.id)
-                    }
+                    onAdd(
+                        name,
+                        quantity.toFloatOrNull() ?: 1f,
+                        selectedAisleId,
+                        price.toFloatOrNull()
+                    )
                 },
-                enabled = name.isNotBlank() && selectedAisle != null
+                enabled = name.isNotBlank()
             ) {
+                Icon(Icons.Default.Add, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
                 Text("Añadir")
             }
         },
@@ -395,47 +216,4 @@ fun AddProductDialog(
             }
         }
     )
-}
-
-@Composable
-private fun SuggestionItem(
-    suggestion: ProductSuggestion,
-    aisles: List<Aisle>,
-    onClick: () -> Unit
-) {
-    val aisleName = aisles.find { it.id == suggestion.aisleId }?.let { "${it.emoji} ${it.name}" } ?: "?"
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = suggestion.name,
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Text(
-                text = buildString {
-                    append(aisleName)
-                    if (suggestion.suggestedPrice != null) {
-                        append(" · ")
-                        append("%.2f€".format(suggestion.suggestedPrice))
-                    }
-                    append(" (usado ${suggestion.usageCount}x)")
-                },
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-            )
-        }
-
-        IconButton(onClick = onClick) {
-            Icon(
-                Icons.Default.Check,
-                contentDescription = "Usar sugerencia",
-                tint = MaterialTheme.colorScheme.primary
-            )
-        }
-    }
 }
