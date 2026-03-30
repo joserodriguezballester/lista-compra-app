@@ -6,6 +6,7 @@ import com.jose.listacompra.domain.model.Aisle
 import com.jose.listacompra.domain.repository.IAisleRepository
 import com.jose.listacompra.domain.repository.IArticuloRepository
 import com.jose.listacompra.domain.repository.ICategoryRepository
+import com.jose.listacompra.domain.repository.IShoppingListRepository
 import com.jose.listacompra.domain.repository.ISupermarketRepository
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -21,7 +22,8 @@ class InitialDataSeeder @Inject constructor(
     private val categoryRepository: ICategoryRepository,
     private val supermarketRepository: ISupermarketRepository,
     private val aisleRepository: IAisleRepository,
-    private val articuloRepository: IArticuloRepository
+    private val articuloRepository: IArticuloRepository,
+    private val shoppingListRepository: IShoppingListRepository
 ) {
 
     companion object {
@@ -31,17 +33,15 @@ class InitialDataSeeder @Inject constructor(
     /**
      * Puebla todas las tablas en el orden correcto (padres antes que hijos)
      */
-    suspend fun seedAll(shoppingListRepository: ShoppingListRepository? = null) {
+    suspend fun seedAll() {
         Log.d(TAG, "Starting seedAll...")
         
         // ORDEN CRÍTICO: Primero los padres, luego los hijos
         seedSupermarketsIfNeeded()
         seedCategoriesIfNeeded()
         seedAislesIfNeeded()
+        seedShoppingListIfNeeded()
         seedCatalogIfNeeded()
-        
-        // Historial de productos (opcional)
-        shoppingListRepository?.let { seedHistoryIfNeeded(it) }
         
         Log.d(TAG, "seedAll completed!")
     }
@@ -89,6 +89,21 @@ class InitialDataSeeder @Inject constructor(
     }
 
     /**
+     * Crea lista de la compra por defecto si no existe
+     */
+    suspend fun seedShoppingListIfNeeded() {
+        val existingLists = shoppingListRepository.getAllLists()
+        if (existingLists.isEmpty()) {
+            Log.d(TAG, "Seeding default shopping list...")
+            val listId = shoppingListRepository.createList(
+                name = "Mi Lista",
+                useDefaultAisles = true
+            )
+            Log.d(TAG, "Created default list with id: $listId")
+        }
+    }
+
+    /**
      * Inserta artículos del catálogo si está vacío
      */
     suspend fun seedCatalogIfNeeded() {
@@ -97,25 +112,6 @@ class InitialDataSeeder @Inject constructor(
             val articulos = articulosBase.map { it.toArticulo() }
             articuloRepository.saveAll(articulos)
             Log.d(TAG, "Inserted ${articulos.size} articulos")
-        }
-    }
-
-    /**
-     * Semilla el historial de productos si está vacío
-     */
-    suspend fun seedHistoryIfNeeded(repository: ShoppingListRepository) {
-        val existingHistory = repository.getFrequentProducts()
-        if (existingHistory.isEmpty()) {
-            Log.d(TAG, "Seeding product history...")
-            carrefourProducts.forEach { product ->
-                repository.saveToHistory(
-                    name = product.name,
-                    aisleId = product.aisleId,
-                    quantity = product.quantity,
-                    price = product.price
-                )
-            }
-            Log.d(TAG, "Inserted ${carrefourProducts.size} history items")
         }
     }
 

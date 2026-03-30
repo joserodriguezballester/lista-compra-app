@@ -4,7 +4,8 @@ package com.jose.listacompra.data.local.dataseeder
     SeedArticulo("Leche Entera Carrefour", 15, 1.15f, 1f, "L", "8410100010015",
         "https://jcarrefour.vtexassets.com/arquivos/ids/2202611/8410100010015_01.jpg"),
 
-    SeedArticulo("Huevos Docena L", 3, 2.50f, 12f, "ud", null,
+    // CORREGIDO: Huevos → Lácteos y Huevos (15), no Carnicería (3)
+    SeedArticulo("Huevos Docena L", 15, 2.50f, 12f, "ud", null,
         "https://images.pexels.com/photos/162712/egg-white-food-simple-162712.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"),
 
     SeedArticulo("Pan de Molde Blanco", 14, 1.80f, 1f, "paquete", null,
@@ -22,10 +23,12 @@ package com.jose.listacompra.data.local.dataseeder
     SeedArticulo("Aceite de Oliva Virgen Extra", 9, 9.50f, 1f, "L", "8423456789012",
         "https://images.pexels.com/photos/33783/olive-oil-salad-dressing-cooking-oil.jpg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"),
 
-    SeedArticulo("Detergente Gel Activo", 1, 6.99f, 3f, "L", null,
+    // CORREGIDO: Detergente → Droguería y Limpieza (11), no Higiene (1)
+    SeedArticulo("Detergente Gel Activo", 11, 6.99f, 3f, "L", null,
         "https://via.placeholder.com/300/4F46E5/FFFFFF?text=Detergente"),
 
-    SeedArticulo("Papel Higiénico 12 rollos", 1, 4.50f, 1f, "paquete", null,
+    // CORREGIDO: Papel Higiénico → Papel (10), no Higiene (1)
+    SeedArticulo("Papel Higiénico 12 rollos", 10, 4.50f, 1f, "paquete", null,
         "https://via.placeholder.com/300/F9FAFB/333333?text=Papel+Higienico"),
 
     SeedArticulo("Pechuga de Pollo Bandeja", 3, 5.50f, 1f, "kg", null,
