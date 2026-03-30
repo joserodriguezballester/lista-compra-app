@@ -19,7 +19,8 @@
   - [x] Click en imagen para cambiarla ✅
   - [x] Cambiar categoría ✅ (dropdown con nombres)
   - [x] Mostrar **nombre de categoría** en lugar de categoryId ✅
-  - [ ] Añadir funcionalidad de **scanner** de códigos de barras (verificar si funciona)
+  - [x] Añadir funcionalidad de **scanner** de códigos de barras ✅
+  - [x] Autocompletado desde OpenFoodFacts ✅
 
 ### Modo Claro/Oscuro
 - [ ] Mover toggle de tema de TopAppBar al menú lateral
