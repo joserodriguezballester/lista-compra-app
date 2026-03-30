@@ -28,6 +28,10 @@ class ArticuloRepositoryImpl @Inject constructor(
         return articuloDao.getArticuloById(id)?.toDomain()
     }
 
+    override suspend fun getArticulosCount(): Int {
+        return articuloDao.getArticulosCount()
+    }
+
     override suspend fun searchArticulos(query: String): List<Articulo> {
         // searchArticulosByName en el DAO debería devolver List<ArticuloEntity>
         return articuloDao.searchArticulosByName(query).map { it.toDomain() }
@@ -35,6 +39,11 @@ class ArticuloRepositoryImpl @Inject constructor(
 
     override suspend fun saveArticulo(articulo: Articulo) {
         articuloDao.insertArticulo(articulo.toEntity())
+    }
+
+    override suspend fun saveAll(articulos: List<Articulo>) {
+        val entities = articulos.map { it.toEntity() }
+        entities.forEach { articuloDao.insertArticulo(it) }
     }
 
     override suspend fun deleteArticulo(articulo: Articulo) {

@@ -7,8 +7,10 @@ interface IArticuloRepository {
     fun getAllArticulos(): Flow<List<Articulo>>
     suspend fun getArticuloByEan(ean: String): Articulo?
     suspend fun getArticuloById(id: Long): Articulo?
+    suspend fun getArticulosCount(): Int
     suspend fun searchArticulos(query: String): List<Articulo>
     suspend fun saveArticulo(articulo: Articulo)
+    suspend fun saveAll(articulos: List<Articulo>)
     suspend fun deleteArticulo(articulo: Articulo)
     suspend fun updateArticulo(articulo: Articulo)
 }

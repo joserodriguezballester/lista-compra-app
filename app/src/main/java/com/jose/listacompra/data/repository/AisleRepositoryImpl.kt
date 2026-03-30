@@ -30,6 +30,11 @@ class AisleRepositoryImpl @Inject constructor(
         return aisleDao.insertAisle(AisleEntity.fromDomain(aisle))
     }
 
+    override suspend fun insertAll(aisles: List<Aisle>) {
+        val entities = aisles.map { AisleEntity.fromDomain(it) }
+        aisleDao.insertAll(entities)
+    }
+
     override suspend fun updateAisle(aisle: Aisle) {
         aisleDao.updateAisle(AisleEntity.fromDomain(aisle))
     }
