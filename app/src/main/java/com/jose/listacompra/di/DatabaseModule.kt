@@ -20,7 +20,7 @@ import com.jose.listacompra.data.repository.AisleRepositoryImpl
 import com.jose.listacompra.data.repository.ArticuloSupermarketDefaultRepository
 import com.jose.listacompra.data.repository.CategoryRepository
 import com.jose.listacompra.data.repository.CategorySupermarketOrderRepository
-import com.jose.listacompra.data.repository.ProductRepository
+import com.jose.listacompra.data.repository.ProductRepositoryImpl
 import com.jose.listacompra.data.repository.SupermarketRepository
 import com.jose.listacompra.domain.repository.IAisleRepository
 import com.jose.listacompra.domain.repository.IArticuloSupermarketDefaultRepository
@@ -114,7 +114,7 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
-    abstract fun bindProductRepository(impl: ProductRepository): IProductRepository
+    abstract fun bindProductRepository(impl: ProductRepositoryImpl): IProductRepository
 
     @Binds
     @Singleton
