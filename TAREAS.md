@@ -9,11 +9,12 @@
 
 ### Catálogo (CatalogoScreen)
 - [x] **Imagen por defecto** cuando el artículo no tiene foto ✅
-- [ ] **Selector de imagen (cámara/galería)** al editar artículo
-  - Añadir permisos de cámara
-  - ActivityResultLauncher para cámara y galería
-  - Guardar URI de la imagen seleccionada
-- [ ] **Investigar**: ¿Qué son los elementos en esquina inferior derecha de algunos artículos? → **Es el icono QrCode cuando tiene EAN** ✅
+- [x] **Selector de imagen (cámara/galería)** al editar artículo ✅
+  - Permisos de cámara y almacenamiento añadidos
+  - ImagePicker.kt con soporte completo
+  - FileProvider configurado
+  - Integrado en diálogos de edición
+- [x] **Investigar**: ¿Qué son los elementos en esquina inferior derecha? → **Icono QrCode cuando tiene EAN** ✅
 - [x] **Al editar artículo (AddEditArticuloDialog/ArticuloDetailDialog)**:
   - [ ] No deja clickar en imagen para cambiarla
   - [ ] No deja cambiar categoría
