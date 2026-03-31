@@ -136,6 +136,9 @@ dependencies {
     // Solución para error de SQLite native library en Windows durante Kapt/KSP
     kapt("org.xerial:sqlite-jdbc:3.45.1.0")
 
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+
     // Testing
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")

@@ -2,6 +2,7 @@ package com.jose.listacompra.di
 
 import android.content.Context
 import com.jose.listacompra.data.preferences.ListPreferences
+import com.jose.listacompra.data.preferences.ThemePreferences
 import com.jose.listacompra.data.repository.ArticuloRepositoryImpl
 import com.jose.listacompra.data.repository.OfferRepositoryImpl
 import com.jose.listacompra.data.repository.ShoppingListRepositoryImpl
@@ -25,6 +26,13 @@ object PreferencesModule {
     fun provideListPreferences(@ApplicationContext context: Context): ListPreferences {
         return ListPreferences(context)
     }
+    @Provides
+    @Singleton
+    fun provideThemePreferences(
+        @ApplicationContext context: Context
+    ): ThemePreferences {
+        return ThemePreferences(context)
+    }
 }
 
 @Module
@@ -47,4 +55,7 @@ abstract class PreferencesRepositoryModule {
     abstract fun bindArticuloRepository(
         articuloRepositoryImpl: ArticuloRepositoryImpl
     ): IArticuloRepository
+
+
+
 }

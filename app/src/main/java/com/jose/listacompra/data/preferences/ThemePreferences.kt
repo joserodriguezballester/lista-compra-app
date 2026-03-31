@@ -48,7 +48,8 @@ class ThemePreferences(private val context: Context) {
     }
     
     // ========== TEMA OSCURO/CLARO ==========
-    
+//    val isDarkMode: Flow<Boolean> = context.dataStore.data
+//        .map { preferences -> preferences[DARK_THEME_KEY] ?: false }
     val themeMode: Flow<String> = context.themeDataStore.data.map { preferences ->
         preferences[THEME_MODE_KEY] ?: DEFAULT_MODE
     }

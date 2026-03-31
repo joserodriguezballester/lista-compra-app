@@ -18,7 +18,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -31,7 +30,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -56,7 +54,6 @@ import com.jose.listacompra.domain.model.Product
 import com.jose.listacompra.ui.components.CommonTopBar
 import com.jose.listacompra.ui.components.SupermarketBottomBar
 import com.jose.listacompra.ui.screens.main.components.AisleHeader
-import com.jose.listacompra.ui.screens.main.components.TotalsBar2
 import com.jose.listacompra.ui.viewmodel.ProductListViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -93,16 +90,16 @@ fun ProductListScreen(
         bottomBar = {
             Column {
                 // Totales
-                TotalsBar2(
-                    total = uiState.products.sumOf { it.finalPrice?.toDouble() ?: 0.0 }.toFloat(),
-                    savings = uiState.products.sumOf { it.savings().toDouble() }.toFloat()
-                )
+//                TotalsBar2(
+//                    total = uiState.products.sumOf { it.finalPrice?.toDouble() ?: 0.0 }.toFloat(),
+//                    savings = uiState.products.sumOf { it.savings().toDouble() }.toFloat()
+//                )
 
 
                 // Barra de supermercados
                 SupermarketBottomBar(
                     supermarkets = uiState.supermarkets,
-                    selectedSupermarketId = uiState.selectedSupermarketId,
+                    selectedSupermarketId = uiState.selectedSupermarketId?:0L,
                     onSupermarketSelected = { viewModel.selectSupermarket(it) }
                 )
             }
@@ -126,7 +123,7 @@ fun ProductListScreen(
             ) {
                 CircularProgressIndicator()
             }
-        } else if (uiState.products.isEmpty()) {
+        } else if (uiState.productsByAisle.isEmpty()) {
             // Empty state
             EmptyState(
                 modifier = Modifier
@@ -157,9 +154,9 @@ fun ProductListScreen(
                     items(items = products, key = { it.id }) { product ->
                         ProductListItem(
                             product = product,
-                            onTogglePurchased = { viewModel.togglePurchased(product) },
+                            onTogglePurchased = { viewModel.toggleProductPurchased(product) },
                             onEdit = { productToEdit = product },
-                            onDelete = { viewModel.deleteProduct(product) }
+                            onDelete = { viewModel.removeProduct(product) }
                         )
                     }
                     
@@ -175,11 +172,11 @@ fun ProductListScreen(
     // Diálogo de añadir producto
     if (showAddProductDialog) {
         AddProductDialog(
-            supermarketId = uiState.selectedSupermarketId,
+            supermarketId = uiState.selectedSupermarketId?:0L,
             aisles = uiState.aisles,
             onDismiss = { showAddProductDialog = false },
             onAdd = { product ->
-                viewModel.addProduct(product)
+                viewModel.addProduct(product.name)
                 showAddProductDialog = false
             }
         )
@@ -203,7 +200,7 @@ fun ProductListScreen(
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = false },
             title = { Text("Eliminar comprados") },
-            text = { Text("¿Deseas eliminar ${uiState.purchasedProducts.size} productos comprados?") },
+            text = { Text("¿Deseas eliminar ${uiState.purchasedItems} productos comprados?") },
             confirmButton = {
                 TextButton(
                     onClick = {
