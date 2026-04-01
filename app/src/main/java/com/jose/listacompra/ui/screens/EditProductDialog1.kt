@@ -59,7 +59,7 @@ import java.io.File
 //import android.icu.text.SimpleDateFormat
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditProductDialog(
+fun EditProductDialog1(
     product: Product,
     aisles: List<Aisle>,
     offers: List<Offer>,

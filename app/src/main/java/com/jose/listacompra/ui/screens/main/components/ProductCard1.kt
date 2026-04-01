@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddAPhoto
-import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
@@ -38,7 +37,7 @@ import com.jose.listacompra.domain.model.Product
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun ProductCard(
+fun ProductCard1(
     product: Product,
     offer: Offer?,
     onTogglePurchased: () -> Unit,

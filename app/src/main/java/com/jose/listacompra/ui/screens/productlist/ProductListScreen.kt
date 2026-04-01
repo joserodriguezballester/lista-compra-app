@@ -53,7 +53,10 @@ import com.jose.listacompra.domain.model.Aisle
 import com.jose.listacompra.domain.model.Product
 import com.jose.listacompra.ui.components.CommonTopBar
 import com.jose.listacompra.ui.components.SupermarketBottomBar
+import com.jose.listacompra.ui.screens.main.components.AddProductToListDialog
 import com.jose.listacompra.ui.screens.main.components.AisleHeader
+import com.jose.listacompra.ui.screens.main.components.EditProductDialog
+import com.jose.listacompra.ui.screens.main.components.ProductCard
 import com.jose.listacompra.ui.viewmodel.ProductListViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -69,7 +72,7 @@ fun ProductListScreen(
     viewModel: ProductListViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    
+
     // Estados para diálogos
     var showAddProductDialog by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
@@ -89,17 +92,10 @@ fun ProductListScreen(
         },
         bottomBar = {
             Column {
-                // Totales
-//                TotalsBar2(
-//                    total = uiState.products.sumOf { it.finalPrice?.toDouble() ?: 0.0 }.toFloat(),
-//                    savings = uiState.products.sumOf { it.savings().toDouble() }.toFloat()
-//                )
-
-
                 // Barra de supermercados
                 SupermarketBottomBar(
                     supermarkets = uiState.supermarkets,
-                    selectedSupermarketId = uiState.selectedSupermarketId?:0L,
+                    selectedSupermarketId = uiState.selectedSupermarketId ?: 0L,
                     onSupermarketSelected = { viewModel.selectSupermarket(it) }
                 )
             }
@@ -124,7 +120,6 @@ fun ProductListScreen(
                 CircularProgressIndicator()
             }
         } else if (uiState.productsByAisle.isEmpty()) {
-            // Empty state
             EmptyState(
                 modifier = Modifier
                     .fillMaxSize()
@@ -137,51 +132,58 @@ fun ProductListScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues),
-                contentPadding = PaddingValues(vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                contentPadding = PaddingValues(vertical = 8.dp, horizontal = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 uiState.productsByAisle.forEach { (aisle, products) ->
                     // Header del pasillo
                     item {
                         AisleHeader(
-                            aisle = aisle,
+                            aisleName = aisle.name,
+                            aisleIcon = aisle.emoji,
                             productCount = products.size,
                             purchasedCount = products.count { it.isPurchased }
                         )
                     }
-                    
-                    // Productos del pasillo
+
+                    // Productos del pasillo con ProductCard
                     items(items = products, key = { it.id }) { product ->
-                        ProductListItem(
+                        ProductCard(
                             product = product,
+                            onClick = { productToEdit = product },
                             onTogglePurchased = { viewModel.toggleProductPurchased(product) },
-                            onEdit = { productToEdit = product },
-                            onDelete = { viewModel.removeProduct(product) }
+                            modifier = Modifier.padding(horizontal = 4.dp)
                         )
                     }
-                    
+
                     // Espacio entre pasillos
                     item {
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
             }
         }
     }
-    
+
     // Diálogo de añadir producto
     if (showAddProductDialog) {
-        AddProductDialog(
-            supermarketId = uiState.selectedSupermarketId?:0L,
+        AddProductToListDialog(
             aisles = uiState.aisles,
+            suggestions = uiState.articleSuggestions,
+            onSearch = { query -> viewModel.searchArticles(query) },
             onDismiss = { showAddProductDialog = false },
-            onAdd = { product ->
-                viewModel.addProduct(product.name)
+            onAdd = { name, quantity, aisleId, price ->
+                viewModel.addProduct(
+                    name = name,
+                    quantity = quantity,
+                    aisleId = aisleId,
+                    price = price
+                )
                 showAddProductDialog = false
             }
         )
     }
-    
+
     // Diálogo de editar producto
     productToEdit?.let { product ->
         EditProductDialog(
@@ -194,7 +196,7 @@ fun ProductListScreen(
             }
         )
     }
-    
+
     // Confirmación de eliminar comprados
     if (showDeleteConfirm) {
         AlertDialog(
@@ -236,22 +238,59 @@ private fun EmptyState(
             modifier = Modifier.size(80.dp),
             tint = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
         )
-        
+
         Spacer(modifier = Modifier.height(16.dp))
-        
         Text(
             text = "Tu lista está vacía",
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        
+
         Spacer(modifier = Modifier.height(8.dp))
-        
+
         TextButton(onClick = onNavigateToCatalogo) {
             Text("Ir al catálogo")
         }
     }
 }
+
+
+
+
+
+
+//@Composable
+//private fun EmptyState(
+//    modifier: Modifier = Modifier,
+//    onNavigateToCatalogo: () -> Unit
+//) {
+//    Column(
+//        modifier = modifier,
+//        horizontalAlignment = Alignment.CenterHorizontally,
+//        verticalArrangement = Arrangement.Center
+//    ) {
+//        Icon(
+//            imageVector = Icons.Default.ShoppingCart,
+//            contentDescription = null,
+//            modifier = Modifier.size(80.dp),
+//            tint = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+//        )
+//
+//        Spacer(modifier = Modifier.height(16.dp))
+//
+//        Text(
+//            text = "Tu lista está vacía",
+//            style = MaterialTheme.typography.titleLarge,
+//            color = MaterialTheme.colorScheme.onSurfaceVariant
+//        )
+//
+//        Spacer(modifier = Modifier.height(8.dp))
+//
+//        TextButton(onClick = onNavigateToCatalogo) {
+//            Text("Ir al catálogo")
+//        }
+//    }
+//}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -351,7 +390,7 @@ private fun AddProductDialog(
     var name by remember { mutableStateOf("") }
     var quantity by remember { mutableStateOf("1") }
     var selectedAisleId by remember { mutableStateOf(aisles.firstOrNull()?.id ?: 1L) }
-    
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Añadir producto") },
@@ -364,9 +403,9 @@ private fun AddProductDialog(
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
-                
+
                 Spacer(modifier = Modifier.height(8.dp))
-                
+
                 OutlinedTextField(
                     value = quantity,
                     onValueChange = { quantity = it },
@@ -374,9 +413,9 @@ private fun AddProductDialog(
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
-                
+
                 Spacer(modifier = Modifier.height(8.dp))
-                
+
                 // Selector de pasillo
                 var expanded by remember { mutableStateOf(false) }
                 ExposedDropdownMenuBox(
@@ -393,7 +432,7 @@ private fun AddProductDialog(
                             .fillMaxWidth()
                             .menuAnchor()
                     )
-                    
+
                     ExposedDropdownMenu(
                         expanded = expanded,
                         onDismissRequest = { expanded = false }
@@ -439,107 +478,3 @@ private fun AddProductDialog(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun EditProductDialog(
-    product: Product,
-    aisles: List<Aisle>,
-    onDismiss: () -> Unit,
-    onSave: (Product) -> Unit
-) {
-    var name by remember { mutableStateOf(product.name) }
-    var quantity by remember { mutableStateOf(product.quantity.toString()) }
-    var selectedAisleId by remember { mutableStateOf(product.aisleId) }
-    var notes by remember { mutableStateOf(product.notes) }
-    
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Editar producto") },
-        text = {
-            Column {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Nombre") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                OutlinedTextField(
-                    value = quantity,
-                    onValueChange = { quantity = it },
-                    label = { Text("Cantidad") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                OutlinedTextField(
-                    value = notes,
-                    onValueChange = { notes = it },
-                    label = { Text("Notas") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                // Selector de pasillo
-                var expanded by remember { mutableStateOf(false) }
-                ExposedDropdownMenuBox(
-                    expanded = expanded,
-                    onExpandedChange = { expanded = it }
-                ) {
-                    OutlinedTextField(
-                        value = aisles.find { it.id == selectedAisleId }?.name ?: "Seleccionar pasillo",
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Pasillo") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .menuAnchor()
-                    )
-                    
-                    ExposedDropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }
-                    ) {
-                        aisles.forEach { aisle ->
-                            DropdownMenuItem(
-                                text = { Text("${aisle.emoji} ${aisle.name}") },
-                                onClick = {
-                                    selectedAisleId = aisle.id
-                                    expanded = false
-                                }
-                            )
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    onSave(
-                        product.copy(
-                            name = name,
-                            quantity = quantity.toFloatOrNull() ?: product.quantity,
-                            aisleId = selectedAisleId,
-                            notes = notes
-                        )
-                    )
-                }
-            ) {
-                Text("Guardar")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancelar")
-            }
-        }
-    )
-}

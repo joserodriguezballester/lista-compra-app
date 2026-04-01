@@ -5,10 +5,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jose.listacompra.data.preferences.ThemePreferences
 import com.jose.listacompra.domain.model.Aisle
+import com.jose.listacompra.domain.model.Articulo
 import com.jose.listacompra.domain.model.Category
 import com.jose.listacompra.domain.model.Product
 import com.jose.listacompra.domain.model.Supermarket
 import com.jose.listacompra.domain.repository.IAisleRepository
+import com.jose.listacompra.domain.repository.IArticuloRepository
 import com.jose.listacompra.domain.repository.ICategoryRepository
 import com.jose.listacompra.domain.repository.IProductRepository
 import com.jose.listacompra.domain.repository.ISupermarketRepository
@@ -33,7 +35,8 @@ data class ProductListUiState(
     val supermarkets: List<Supermarket> = emptyList(),
     val selectedSupermarketId: Long? = null,
     val aisles: List<Aisle> = emptyList(),
-    val categories: List<Category> = emptyList()
+    val categories: List<Category> = emptyList(),
+    val articleSuggestions: List<Articulo> = emptyList()
 )
 
 @HiltViewModel
@@ -43,9 +46,13 @@ class ProductListViewModel @Inject constructor(
     private val aisleRepository: IAisleRepository,
     private val categoryRepository: ICategoryRepository,
     private val themePreferences: ThemePreferences,
-    private val getDefaultListUseCase: GetDefaultListUseCase
-) : ViewModel() {
+    private val getDefaultListUseCase: GetDefaultListUseCase,
+    private val articuloRepository: IArticuloRepository,
 
+    ) : ViewModel() {
+    // Sugerencias de artículos
+    private val _articleSuggestions = MutableStateFlow<List<Articulo>>(emptyList())
+    val articleSuggestions: StateFlow<List<Articulo>> = _articleSuggestions.asStateFlow()
     private val TAG = "ProductListViewModel"
 
     // ID de la lista actual
@@ -93,23 +100,7 @@ class ProductListViewModel @Inject constructor(
         }
     }
 
-//    private suspend fun loadSupermarkets() {
-//        try {
-//            val supermarketList = supermarketRepository.getAllSupermarkets()
-//            _uiState.update { it.copy(supermarkets = supermarketList) }
-//        } catch (e: Exception) {
-//            Log.e(TAG, "Error loading supermarkets", e)
-//            _uiState.update { it.copy(error = "Error al cargar supermercados") }
-//        }
-//    }
-//
-//    private suspend fun loadCategories() {
-//        try {
-//            val categoryList = categoryRepository.getAllCategories()
-//            _uiState.update { it.copy(categories = categoryList) }
-//        } catch (e: Exception) {Log.e(TAG, "Error loading categories", e)
-//        }
-//    }
+
 private suspend fun loadSupermarkets() {
     try {
         supermarketRepository.getAllSupermarkets().collect { supermarketList ->
@@ -304,7 +295,20 @@ private suspend fun loadSupermarkets() {
         }
     }
 
+    fun searchArticles(query: String) {
+        viewModelScope.launch {
+            try {
+                val results = articuloRepository.searchArticulos(query)
+                _articleSuggestions.value = results
+            } catch (e: Exception) {
+                Log.e(TAG, "Error searching articles", e)
+            }
+        }
+    }
 
+    fun clearSuggestions() {
+        _articleSuggestions.value = emptyList()
+    }
 
 
 }
