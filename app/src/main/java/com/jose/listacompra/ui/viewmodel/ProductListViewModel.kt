@@ -7,11 +7,13 @@ import com.jose.listacompra.data.preferences.ThemePreferences
 import com.jose.listacompra.domain.model.Aisle
 import com.jose.listacompra.domain.model.Articulo
 import com.jose.listacompra.domain.model.Category
+import com.jose.listacompra.domain.model.Offer
 import com.jose.listacompra.domain.model.Product
 import com.jose.listacompra.domain.model.Supermarket
 import com.jose.listacompra.domain.repository.IAisleRepository
 import com.jose.listacompra.domain.repository.IArticuloRepository
 import com.jose.listacompra.domain.repository.ICategoryRepository
+import com.jose.listacompra.domain.repository.IOfferRepository
 import com.jose.listacompra.domain.repository.IProductRepository
 import com.jose.listacompra.domain.repository.ISupermarketRepository
 import com.jose.listacompra.domain.usecase.list.GetDefaultListUseCase
@@ -36,6 +38,7 @@ data class ProductListUiState(
     val selectedSupermarketId: Long? = null,
     val aisles: List<Aisle> = emptyList(),
     val categories: List<Category> = emptyList(),
+    val offers: List<Offer> = emptyList(),
     val articleSuggestions: List<Articulo> = emptyList()
 )
 
@@ -45,14 +48,12 @@ class ProductListViewModel @Inject constructor(
     private val supermarketRepository: ISupermarketRepository,
     private val aisleRepository: IAisleRepository,
     private val categoryRepository: ICategoryRepository,
+    private val offerRepository: IOfferRepository,
     private val themePreferences: ThemePreferences,
     private val getDefaultListUseCase: GetDefaultListUseCase,
-    private val articuloRepository: IArticuloRepository,
+    private val articuloRepository: IArticuloRepository
+) : ViewModel() {
 
-    ) : ViewModel() {
-    // Sugerencias de artículos
-    private val _articleSuggestions = MutableStateFlow<List<Articulo>>(emptyList())
-    val articleSuggestions: StateFlow<List<Articulo>> = _articleSuggestions.asStateFlow()
     private val TAG = "ProductListViewModel"
 
     // ID de la lista actual
@@ -63,11 +64,6 @@ class ProductListViewModel @Inject constructor(
     val uiState: StateFlow<ProductListUiState> = _uiState.asStateFlow()
 
     // Tema
-//    val isDarkTheme: StateFlow<Boolean> = themePreferences.isDarkTheme.stateIn(
-//        viewModelScope,
-//        SharingStarted.WhileSubscribed(5000),
-//        false
-//    )
     val isDarkTheme: StateFlow<Boolean> = themePreferences.themeMode.stateIn(
         viewModelScope,
         SharingStarted.WhileSubscribed(5000),
@@ -83,6 +79,7 @@ class ProductListViewModel @Inject constructor(
             // Cargar datos iniciales
             loadSupermarkets()
             loadCategories()
+            loadOffers()
 
             // Seleccionar supermercado por defecto
             val defaultSupermarket = _uiState.value.supermarkets.find { it.isDefault }
@@ -100,17 +97,16 @@ class ProductListViewModel @Inject constructor(
         }
     }
 
-
-private suspend fun loadSupermarkets() {
-    try {
-        supermarketRepository.getAllSupermarkets().collect { supermarketList ->
-            _uiState.update { it.copy(supermarkets = supermarketList) }
+    private suspend fun loadSupermarkets() {
+        try {
+            supermarketRepository.getAllSupermarkets().collect { supermarketList ->
+                _uiState.update { it.copy(supermarkets = supermarketList) }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error loading supermarkets", e)
+            _uiState.update { it.copy(error = "Error al cargar supermercados") }
         }
-    } catch (e: Exception) {
-        Log.e(TAG, "Error loading supermarkets", e)
-        _uiState.update { it.copy(error = "Error al cargar supermercados") }
     }
-}
 
     private suspend fun loadCategories() {
         try {
@@ -119,6 +115,15 @@ private suspend fun loadSupermarkets() {
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error loading categories", e)
+        }
+    }
+
+    private suspend fun loadOffers() {
+        try {
+            val offerList = offerRepository.getAllOffers()
+            _uiState.update { it.copy(offers = offerList) }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error loading offers", e)
         }
     }
 
@@ -203,7 +208,8 @@ private suspend fun loadSupermarkets() {
         name: String,
         quantity: Float = 1f,
         aisleId: Long? = null,
-        price: Float? = null
+        price: Float? = null,
+        offerId: Long? = null
     ) {
         viewModelScope.launch {
             if (currentListId == 0L) {
@@ -212,16 +218,20 @@ private suspend fun loadSupermarkets() {
                 return@launch
             }
 
-            try {val product = Product(
-                shoppingListId = currentListId,
-                name = name,
-                quantity = quantity,
-               // aisleId = aisleId ?: _uiState.value.aisles.firstOrNull()?.id,
-                aisleId = aisleId ?: _uiState.value.aisles.firstOrNull()?.id ?: 0L,
-                supermarketId = _uiState.value.selectedSupermarketId ?: 1L,
-                finalPrice = price,
-                isPurchased = false
-            )
+            try {
+                val finalPrice = calculateFinalPrice(quantity, price, offerId)
+                
+                val product = Product(
+                    shoppingListId = currentListId,
+                    name = name,
+                    quantity = quantity,
+                    aisleId = aisleId ?: _uiState.value.aisles.firstOrNull()?.id ?: 0L,
+                    supermarketId = _uiState.value.selectedSupermarketId ?: 1L,
+                    estimatedPrice = price,
+                    finalPrice = finalPrice,
+                    offerId = offerId,
+                    isPurchased = false
+                )
                 productRepository.insertProduct(product)
             } catch (e: Exception) {
                 Log.e(TAG, "Error adding product", e)
@@ -271,13 +281,18 @@ private suspend fun loadSupermarkets() {
     fun updateProduct(product: Product) {
         viewModelScope.launch {
             try {
-                productRepository.updateProduct(product)
+                // Recalcular precio final si cambió la oferta o cantidad
+                val finalPrice = calculateFinalPrice(product.quantity, product.estimatedPrice, product.offerId)
+                val updatedProduct = product.copy(finalPrice = finalPrice)
+                
+                productRepository.updateProduct(updatedProduct)
             } catch (e: Exception) {
                 Log.e(TAG, "Error updating product", e)
                 _uiState.update { it.copy(error = "Error al actualizar producto") }
             }
         }
     }
+
     fun deletePurchasedProducts() {
         viewModelScope.launch {
             if (currentListId == 0L) {
@@ -299,7 +314,7 @@ private suspend fun loadSupermarkets() {
         viewModelScope.launch {
             try {
                 val results = articuloRepository.searchArticulos(query)
-                _articleSuggestions.value = results
+                _uiState.update { it.copy(articleSuggestions = results) }
             } catch (e: Exception) {
                 Log.e(TAG, "Error searching articles", e)
             }
@@ -307,8 +322,50 @@ private suspend fun loadSupermarkets() {
     }
 
     fun clearSuggestions() {
-        _articleSuggestions.value = emptyList()
+        _uiState.update { it.copy(articleSuggestions = emptyList()) }
     }
 
+    /**
+     * Calcula el precio final según la oferta aplicada
+     */
+    private fun calculateFinalPrice(
+        quantity: Float,
+        unitPrice: Float?,
+        offerId: Long?
+    ): Float? {
+        if (unitPrice == null) return null
+        if (offerId == null) return unitPrice * quantity
 
+        val offer = _uiState.value.offers.find { it.id == offerId } ?: return unitPrice * quantity
+        val qty = quantity.toInt()
+
+        return when (offer.code) {
+            "3x2" -> {
+                val groups = qty / 3
+                val remainder = qty % 3
+                (groups * 2 + remainder) * unitPrice
+            }
+            "2x1" -> {
+                val groups = qty / 2
+                val remainder = qty % 2
+                (groups + remainder) * unitPrice
+            }
+            "2nd_50" -> {
+                val pairs = qty / 2
+                val remainder = qty % 2
+                pairs * (unitPrice * 1.5f) + remainder * unitPrice
+            }
+            "2nd_70" -> {
+                val pairs = qty / 2
+                val remainder = qty % 2
+                pairs * (unitPrice * 1.3f) + remainder * unitPrice
+            }
+            "4x3" -> {
+                val groups = qty / 4
+                val remainder = qty % 4
+                (groups * 3 + remainder) * unitPrice
+            }
+            else -> unitPrice * quantity
+        }
+    }
 }

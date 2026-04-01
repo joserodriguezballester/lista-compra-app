@@ -125,4 +125,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindOpenFoodFactsRepository(impl: OpenFoodFactsRepositoryImpl): IOpenFoodFactsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindOfferRepository(impl: com.jose.listacompra.data.repository.OfferRepositoryImpl): com.jose.listacompra.domain.repository.IOfferRepository
 }
