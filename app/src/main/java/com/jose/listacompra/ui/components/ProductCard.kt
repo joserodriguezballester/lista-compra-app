@@ -1,4 +1,4 @@
-package com.jose.listacompra.ui.screens.main.components
+package com.jose.listacompra.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*

@@ -15,8 +15,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.jose.listacompra.domain.model.Product
 import com.jose.listacompra.ui.components.CommonTopBar
 import com.jose.listacompra.ui.components.SupermarketBottomBar
-import com.jose.listacompra.ui.screens.main.components.AisleHeader
-import com.jose.listacompra.ui.screens.main.components.ProductCard
+import com.jose.listacompra.ui.components.ProductCard
+import com.jose.listacompra.ui.components.AisleHeader
 import com.jose.listacompra.ui.viewmodel.ProductListViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
