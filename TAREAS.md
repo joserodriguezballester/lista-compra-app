@@ -1,186 +1,78 @@
-# Tareas Pendientes - Lista Compra App
+# 📋 TAREAS - Lista Compra App
 
-**Fecha:** 2026-03-30
-**Rama:** `feature/supermarket-refactor`
-
----
-
-## UI/UX Cambios
-
-### Catálogo (CatalogoScreen)
-- [x] **Imagen por defecto** cuando el artículo no tiene foto ✅
-- [x] **Selector de imagen (cámara/galería)** al editar artículo ✅
-  - Permisos de cámara y almacenamiento añadidos
-  - ImagePicker.kt con soporte completo
-  - FileProvider configurado
-  - Integrado en diálogos de edición
-- [x] **Investigar**: ¿Qué son los elementos en esquina inferior derecha? → **Icono QrCode cuando tiene EAN** ✅
-- [x] **Al editar artículo (AddEditArticuloDialog/ArticuloDetailDialog)**:
-  - [x] Click en imagen para cambiarla ✅
-  - [x] Cambiar categoría ✅ (dropdown con nombres)
-  - [x] Mostrar **nombre de categoría** en lugar de categoryId ✅
-  - [x] Añadir funcionalidad de **scanner** de códigos de barras ✅
-  - [x] Autocompletado desde OpenFoodFacts ✅
-
-### Modo Claro/Oscuro
-- [ ] Mover toggle de tema de TopAppBar al menú lateral
-- [ ] En su lugar (TopAppBar) poner botón de micrófono para añadir productos por voz
-
-### TopAppBar
-- [ ] Reemplazar botón de tema por botón de micrófono
-- [ ] Micrófono abre input de voz para añadir producto
+**Última actualización:** 2026-04-01
 
 ---
 
-## Funcionalidad
+## 🔴 Prioridad Alta
 
-### Lista de la Compra (ProductListScreen)
-- [ ] **Opción de vaciar lista** completa
-  - Añadir botón/acción en menú o toolbar
-  - Confirmación antes de vaciar
-
-### Historial de Compras
-- [ ] **Investigar**: ¿Ya tenemos historial de compras?
-  - Tabla `purchase_history`
-  - Tabla `product_history`
-  - ¿Se está usando?
-
-### Importar Lista/Ticket
-- [ ] **Estudiar viabilidad**:
-  - Importar lista de texto
-  - Escanear ticket (OCR)
-  - Importar desde archivo
-
-### Añadir Producto - Autocompletado/Sugerencias
-- [ ] Sugerir nombres de productos mientras se escribe
-  - Fuente: catálogo de `articulos`
-  - Buscar por nombre parcial
-- [ ] Sugerir pasillo según:
-  - Artículo seleccionado del catálogo
-  - Historial: `articulo_supermarket_defaults` (dónde se puso antes)
-  - Categoría del artículo → mapeo a pasillo por supermercado
-- [ ] Orden de sugerencias:
-  1. Coincidencia exacta en catálogo
-  2. Historial del usuario en ese supermercado
-  3. Por categoría
-
-### Añadir Producto por Voz
-- [ ] Botón micrófono en TopAppBar
-- [ ] Reconocimiento de voz → texto
-- [ ] Parsear texto para extraer:
-  - Nombre del producto
-  - Cantidad (opcional)
-  - Categoría (opcional, por inferencia)
-- [ ] Añadir producto a la lista actual
+| # | Tarea | Pantalla | Notas |
+|---|------|----------|-------|
+| 1 | Probar en móvil real | Todas | Verificar que funciona correctamente |
+| 2 | Revisar cards de productos | ProductListScreen | Deben parecerse a las del catálogo |
+| 3 | Pasillos destacados | ProductListScreen | Diferenciar claramente cada pasillo |
 
 ---
 
-## Base de Datos
+## 🟠 Prioridad Media
 
-### Estado actual
-- ✅ Supermercados (5)
-- ✅ Categorías (19)
-- ✅ Pasillos Carrefour (19) + genéricos otros supermercados
-- ✅ Artículos (15)
-- ❌ **ShoppingList por defecto** (falta, causa FOREIGN KEY error)
-- ⚠️ **Ordenación de pasillos por supermercado** → ¿Implementada?
-
-### Verificar
-- [ ] ¿Está implementada la ordenación de pasillos por supermercado?
-- [ ] Tabla `category_supermarket_orders` → ¿Se usa?
-- [ ] ¿Cómo se ordenan los productos en la lista según el pasillo?
+| # | Tarea | Pantalla | Notas |
+|---|------|----------|-------|
+| 4 | Editar precio/oferta | EditProductDialog | Añadir campos de precio y oferta |
+| 5 | Sugerencias al escribir | AddProductDialog | Autocompletar desde catálogo |
+| 6 | Eliminar código backup | Varios | `*1.kt` son backups innecesarios |
 
 ---
 
-## Errores Conocidos
+## 🔵 Prioridad Baja
 
-### Críticos (bloquean funcionalidad)
-- [x] **FOREIGN KEY constraint failed al añadir producto** ✅ RESUELTO
-  - Causa: `shoppingListId = 1` pero NO existía lista con id=1
-  - Solución: 
-    - `InitialDataSeeder.seedShoppingListIfNeeded()` crea lista por defecto
-    - `ProductListViewModel` usa `GetDefaultListUseCase` para obtener ID dinámicamente
-  - Commit: `fix: FOREIGN KEY error - crear lista por defecto`
-
-### Resueltos
-- ✅ DataSeeder solo cargaba artículos → Ahora usa Initializer
-- ✅ RepositoryModule duplicado → Renombrado
-- ✅ IProductRepository/ProductRepositoryImpl desincronizados → Sincronizados
-
-### Pendientes de verificar
-- [ ] ¿Se poblan todas las tablas correctamente?
-- [ ] ¿Los pasillos de Carrefour son correctos?
-- [ ] ¿Las categorías coinciden con los artículos?
+| # | Tarea | Pantalla | Notas |
+|---|------|----------|-------|
+| 7 | Mover toggle tema | TopBar → Menú lateral | Liberar espacio para micrófono |
+| 8 | Botón micrófono | TopBar | Añadir productos por voz |
+| 9 | Historial compras | Nueva pantalla | Estadísticas y gráficos |
 
 ---
 
-## Notas
+## 📝 Notas de Prueba
 
-- Los pasillos de Carrefour son importantes, no tocarlos
-- Usar `applicationIdSuffix = ".dev"` para versión debug (no sobrescribir original)
-- Repositorio: `https://github.com/joserodriguezballester/lista-compra-app.git`
+*Usa esta sección para anotar errores/mejoras mientras pruebas:*
 
----
+### Home
+-
 
-## Commits Importantes
+### Lista de Compra
+-
 
-| Hash | Descripción |
-|------|-------------|
-| `ab27ed2` | Cargar Datos (fix errores) |
-| `f9476f5` | DatabaseSeedInitializer |
-| `c212de2` | DataSeeder usa repositorios |
+### Catálogo
+-
 
----
-
-## Auditoría / Refactorización
-
-### Clean Architecture
-- [ ] Revisar que los ViewModels NO accedan directamente a repositorios
-- [ ] Verificar que UseCases encapsulan lógica de negocio
-- [ ] Comprobar que entidades de dominio NO dependen de framework Android
-
-### Código Duplicado
-- [ ] Buscar pantallas/componentes duplicados
-- [ ] Revisar ViewModels con lógica similar
-- [ ] Unificar UseCases que hacen lo mismo
-
-### Código Inservible / Obsoleto
-- [ ] Buscar clases/métodos no usados
-- [ ] Eliminar imports no usados
-- [ ] Revisar si hay código comentado que se puede borrar
-
-### Organización de Paquetes
-- [ ] Verificar estructura por capas (data/domain/presentation)
-- [ ] Nombres de paquetes consistentes (¿`catalogo` vs `catalog`?)
-- [ ] Archivos en ubicación correcta
-
-### Dependencias
-- [ ] Revisar dependencias no usadas en `build.gradle.kts`
-- [ ] Versiones desactualizadas
+### Supermercados
+-
 
 ---
 
-## Prioridad
+## 🗑️ Archivos a Eliminar
 
-### ~~Alta (bloquea uso básico)~~ ✅ RESUELTO
-1. ~~**FOREIGN KEY failed** → Crear lista por defecto en DataSeeder~~ ✅
-
-### ~~Media (bugs de UI / funcionalidad)~~ ✅ COMPLETADO
-2. **Catálogo - Edición de artículos**: ✅ COMPLETADO
-3. Imagen por defecto en artículos sin foto ✅
-4. Añadir scanner al editar artículo ✅
-5. **Opción vaciar lista completa** ✅ COMPLETADO
-
-### Investigar (estudio previo)
-6. ¿Tenemos historial de compras funcional?
-7. Viabilidad de importar lista/ticket
-
-### Baja (mejoras UX)
-8. ~~Sugerencias de nombre/pasillo al añadir producto~~ ✅ COMPLETADO
-9. Mover toggle tema al menú
-10. Botón micrófono en TopAppBar
-11. Añadir producto por voz
+- [ ] `EditProductDialog1.kt` (backup)
+- [ ] `ProductCard1.kt` (backup)
+- [ ] `CONTEXTO-PAUSA.md` (obsoleto)
+- [ ] `MEJORAS-PENDIENTES.md` (migrado a DOCUMENTACION.md)
+- [ ] `PLAN-REFACTO-2026-03-27.md` (migrado a DOCUMENTACION.md)
+- [ ] `AUDITORIA.md` (migrado a DOCUMENTACION.md)
+- [ ] `DISENO_TECNICO_FOTO_PRODUCTOS.md` (obsoleto)
+- [ ] `DOCUMENTACION-FASE2-RED.md` (obsoleto)
 
 ---
 
-*Actualizar este archivo según avance*
+## ✅ Completado
+
+| Fecha | Tarea |
+|-------|-------|
+| 2026-04-01 | Merge feature/supermarket-refactor a main |
+| 2026-04-01 | applicationIdSuffix .dev para versión debug |
+| 2026-03-31 | Cards de productos con imagen |
+| 2026-03-31 | Header de pasillos destacado |
+| 2026-03-30 | Selector de imagen (cámara/galería) |
+| 2026-03-30 | Scanner de códigos de barras |
+| 2026-03-27 | Soporte múltiples supermercados |
