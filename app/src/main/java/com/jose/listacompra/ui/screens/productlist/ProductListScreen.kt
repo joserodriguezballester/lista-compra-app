@@ -1,8 +1,9 @@
 package com.jose.listacompra.ui.screens.productlist
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ShoppingCart
@@ -87,40 +88,50 @@ fun ProductListScreen(
                 onNavigateToCatalogo = onNavigateToCatalogo
             )
         } else {
-            // Lista de productos agrupados por pasillo
-            LazyColumn(
+            // Grid de productos agrupados por pasillo
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues),
-                contentPadding = PaddingValues(vertical = 8.dp, horizontal = 8.dp),
+                contentPadding = PaddingValues(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 uiState.productsByAisle.forEach { (aisle, products) ->
-                    // Header del pasillo
-                    item {
+                    // Header del pasillo (ocupa 2 columnas)
+                    item(
+                        key = "header_${aisle.id}",
+                        contentType = "header",
+                        span = { androidx.compose.foundation.lazy.grid.GridItemSpan(2) }
+                    ) {
                         AisleHeader(
                             aisleName = aisle.name,
                             aisleIcon = aisle.emoji,
                             productCount = products.size,
-                            purchasedCount = products.count { it.isPurchased }
+                            purchasedCount = products.count { it.isPurchased },
+                            isCollapsed = aisle.id in uiState.collapsedAisles,
+                            onToggle = { viewModel.toggleAisleCollapse(aisle.id) },
+                            modifier = Modifier.fillMaxWidth()
                         )
                     }
 
-                    // Productos del pasillo con ProductCard
-                    items(items = products, key = { it.id }) { product ->
-                        val offer = uiState.offers.find { it.id == product.offerId }
-                        ProductCard(
-                            product = product,
-                            offer = offer,
-                            onClick = { productToEdit = product },
-                            onTogglePurchased = { viewModel.toggleProductPurchased(product) },
-                            modifier = Modifier.padding(horizontal = 4.dp)
-                        )
-                    }
-
-                    // Espacio entre pasillos
-                    item {
-                        Spacer(modifier = Modifier.height(16.dp))
+                    // Productos del pasillo (solo si NO está colapsado)
+                    if (aisle.id !in uiState.collapsedAisles) {
+                        items(
+                            items = products,
+                            key = { "product_${it.id}" },
+                            contentType = { "product" }
+                        ) { product ->
+                            val offer = uiState.offers.find { it.id == product.offerId }
+                            ProductCard(
+                                product = product,
+                                offer = offer,
+                                onClick = { productToEdit = product },
+                                onTogglePurchased = { viewModel.toggleProductPurchased(product) },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
                     }
                 }
             }
