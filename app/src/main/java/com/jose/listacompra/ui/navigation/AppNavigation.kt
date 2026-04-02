@@ -24,8 +24,6 @@ fun AppNavigation(
     isDarkMode: Boolean = false,
     onToggleTheme: () -> Unit = {},
     onChangeColor: () -> Unit = {},
-    onOpenLists: () -> Unit = {},
-    onOpenImport: () -> Unit = {},
 ) {
     NavHost(
         navController = navController,
@@ -48,11 +46,7 @@ fun AppNavigation(
                 onNavigateToList = { navController.navigate(NavScreen.ShoppingList.route) },
                 onNavigateToCatalogo = { navController.navigate(NavScreen.Catalogo.route) },
                 onNavigateToSupermarkets = { navController.navigate(NavScreen.Supermarkets.route) },
-                isDarkMode = isDarkMode,
-                onToggleDarkMode = { onToggleTheme() },
-                onChangeColor = onChangeColor,
-                onOpenLists = onOpenLists,
-                onOpenImport = onOpenImport
+                onChangeColor = onChangeColor
             )
         }
         
@@ -60,11 +54,10 @@ fun AppNavigation(
             ProductListScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToCatalogo = { navController.navigate(NavScreen.Catalogo.route) },
+                onNavigateToOffers = { /* TODO */ },
+                onNavigateToSupermarkets = { navController.navigate(NavScreen.Supermarkets.route) },
                 isDarkMode = isDarkMode,
-                onToggleDarkMode = { onToggleTheme() },
-                onChangeColor = onChangeColor,
-                onOpenLists = onOpenLists,
-                onOpenImport = onOpenImport
+                onToggleDarkMode = { onToggleTheme() }
             )
         }
         
@@ -72,12 +65,7 @@ fun AppNavigation(
             CatalogoScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToList = { navController.navigate(NavScreen.ShoppingList.route) },
-                navController = navController,
-                isDarkMode = isDarkMode,
-                onToggleDarkMode = { onToggleTheme() },
-                onChangeColor = onChangeColor,
-                onOpenLists = onOpenLists,
-                onOpenImport = onOpenImport
+                navController = navController
             )
         }
         
@@ -104,12 +92,7 @@ fun AppNavigation(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToAisles = { supermarketId ->
                     navController.navigate(NavScreen.SupermarketAisles.createRoute(supermarketId))
-                },
-                isDarkMode = isDarkMode,
-                onToggleDarkMode = { onToggleTheme() },
-                onChangeColor = onChangeColor,
-                onOpenLists = onOpenLists,
-                onOpenImport = onOpenImport
+                }
             )
         }
         
@@ -122,12 +105,7 @@ fun AppNavigation(
             val supermarketId = backStackEntry.arguments?.getLong("supermarketId") ?: 1L
             SupermarketAislesScreen(
                 supermarketId = supermarketId,
-                onNavigateBack = { navController.popBackStack() },
-                isDarkMode = isDarkMode,
-                onToggleDarkMode = { onToggleTheme() },
-                onChangeColor = onChangeColor,
-                onOpenLists = onOpenLists,
-                onOpenImport = onOpenImport
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }

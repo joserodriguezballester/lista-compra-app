@@ -20,22 +20,13 @@ fun HomeScreen(
     onNavigateToList: () -> Unit = {},
     onNavigateToCatalogo: () -> Unit = {},
     onNavigateToSupermarkets: () -> Unit = {},
-    isDarkMode: Boolean = false,
-    onToggleDarkMode: (Boolean) -> Unit = {},
-    onOpenLists: () -> Unit = {},
     onChangeColor: () -> Unit = {},
-    onOpenImport: () -> Unit = {},
 ) {
     Scaffold(
         topBar = {
             CommonTopBar(
                 title = "Lista Compra",
-                onNavigateBack = null,
-                isDarkMode = isDarkMode,
-                onToggleDarkMode = onToggleDarkMode,
-                onOpenLists = onOpenLists,
-                onChangeColor = onChangeColor,
-                onOpenImport = onOpenImport
+                onChangeColor = onChangeColor
             )
         }
     ) { paddingValues ->

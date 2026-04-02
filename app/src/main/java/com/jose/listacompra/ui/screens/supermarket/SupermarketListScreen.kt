@@ -20,11 +20,6 @@ import com.jose.listacompra.ui.components.CommonTopBar
 fun SupermarketListScreen(
     onNavigateBack: () -> Unit,
     onNavigateToAisles: (Long) -> Unit,
-    isDarkMode: Boolean = false,
-    onToggleDarkMode: (Boolean) -> Unit = {},
-    onOpenLists: () -> Unit = {},
-    onChangeColor: () -> Unit = {},
-    onOpenImport: () -> Unit = {},
     viewModel: SupermarketListViewModel = hiltViewModel()
 ) {
     val supermarkets by viewModel.supermarkets.collectAsState()
@@ -36,12 +31,7 @@ fun SupermarketListScreen(
         topBar = {
             CommonTopBar(
                 title = "Supermercados",
-                onNavigateBack = onNavigateBack,
-                isDarkMode = isDarkMode,
-                onToggleDarkMode = onToggleDarkMode,
-                onOpenLists = onOpenLists,
-                onChangeColor = onChangeColor,
-                onOpenImport = onOpenImport
+                onNavigateBack = onNavigateBack
             )
         },
         floatingActionButton = {

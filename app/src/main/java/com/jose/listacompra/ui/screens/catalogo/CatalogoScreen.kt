@@ -60,11 +60,6 @@ fun CatalogoScreen(
     onNavigateBack: () -> Unit = {},
     onNavigateToList: () -> Unit = {},
     navController: NavHostController? = null,
-    isDarkMode: Boolean = false,
-    onToggleDarkMode: (Boolean) -> Unit = {},
-    onOpenLists: () -> Unit = {},
-    onChangeColor: () -> Unit = {},
-    onOpenImport: () -> Unit = {},
     viewModel: ArticuloViewModel = hiltViewModel(),
 ) {
     val articulos by viewModel.listaArticulos.collectAsState()
@@ -176,12 +171,7 @@ fun CatalogoScreen(
             } else {
                 CommonTopBar(
                     title = "Catálogo de Artículos",
-                    onNavigateBack = onNavigateBack,
-                    isDarkMode = isDarkMode,
-                    onToggleDarkMode = onToggleDarkMode,
-                    onOpenLists = onOpenLists,
-                    onChangeColor = onChangeColor,
-                    onOpenImport = onOpenImport
+                    onNavigateBack = onNavigateBack
                 )
             }
         },

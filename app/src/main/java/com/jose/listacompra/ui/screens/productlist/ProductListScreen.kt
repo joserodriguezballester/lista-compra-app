@@ -17,189 +17,167 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.jose.listacompra.domain.model.Product
-import com.jose.listacompra.ui.components.CommonTopBar
-import com.jose.listacompra.ui.components.SupermarketBottomBar
-import com.jose.listacompra.ui.components.ProductCard
-import com.jose.listacompra.ui.components.AisleHeader
+import com.jose.listacompra.ui.components.*
 import com.jose.listacompra.ui.viewmodel.ProductListViewModel
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductListScreen(
     onNavigateBack: () -> Unit = {},
     onNavigateToCatalogo: () -> Unit = {},
+    onNavigateToOffers: () -> Unit = {},
+    onNavigateToSupermarkets: () -> Unit = {},
     isDarkMode: Boolean = false,
     onToggleDarkMode: (Boolean) -> Unit = {},
-    onOpenLists: () -> Unit = {},
-    onChangeColor: () -> Unit = {},
-    onOpenImport: () -> Unit = {},
     viewModel: ProductListViewModel = hiltViewModel()
 ) {
+    val scope = rememberCoroutineScope()
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val uiState by viewModel.uiState.collectAsState()
 
     // Estados para diálogos
     var showAddProductDialog by remember { mutableStateOf(false) }
-    var showDeleteConfirm by remember { mutableStateOf(false) }
     var productToEdit by remember { mutableStateOf<Product?>(null) }
 
-    Scaffold(
-        topBar = {
-            CommonTopBar(
-                title = "Mi Lista de la Compra",
-                onNavigateBack = onNavigateBack,
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        gesturesEnabled = drawerState.isOpen,
+        drawerContent = {
+            AppDrawer(
                 isDarkMode = isDarkMode,
-                onToggleDarkMode = onToggleDarkMode,
-                onOpenLists = onOpenLists,
-                onChangeColor = onChangeColor,
-                onOpenImport = onOpenImport
+                onToggleDarkMode = { newMode ->
+                    onToggleDarkMode(newMode)
+                    scope.launch { drawerState.close() }
+                },
+                onNavigateToOffers = {
+                    scope.launch { drawerState.close() }
+                    onNavigateToOffers()
+                },
+                onNavigateToSupermarkets = {
+                    scope.launch { drawerState.close() }
+                    onNavigateToSupermarkets()
+                },
+                onNavigateToCatalogo = {
+                    scope.launch { drawerState.close() }
+                    onNavigateToCatalogo()
+                },
+                onClose = { scope.launch { drawerState.close() } }
             )
-        },
-        bottomBar = {
-            Column {
-                // Barra de supermercados
+        }
+    ) {
+        Scaffold(
+            topBar = {
+                CommonTopBar(
+                    title = "Mi Lista de la Compra",
+                    onOpenDrawer = { scope.launch { drawerState.open() } },
+                    onMicrophoneClick = { /* TODO: Voice input */ }
+                )
+            },
+            bottomBar = {
                 SupermarketBottomBar(
                     supermarkets = uiState.supermarkets,
                     selectedSupermarketId = uiState.selectedSupermarketId ?: 0L,
                     onSupermarketSelected = { viewModel.selectSupermarket(it) }
                 )
+            },
+            floatingActionButton = {
+                ExtendedFloatingActionButton(
+                    onClick = { showAddProductDialog = true },
+                    icon = { Icon(Icons.Default.Add, contentDescription = "Añadir") },
+                    text = { Text("Añadir producto") },
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                )
             }
-        },
-        floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = { showAddProductDialog = true },
-                icon = { Icon(Icons.Default.Add, contentDescription = "Añadir") },
-                text = { Text("Añadir producto") },
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-        }
-    ) { paddingValues ->
-        if (uiState.isLoading) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
-        } else if (uiState.productsByAisle.isEmpty()) {
-            EmptyState(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                onNavigateToCatalogo = onNavigateToCatalogo
-            )
-        } else {
-            // Grid de productos agrupados por pasillo
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentPadding = PaddingValues(8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                uiState.productsByAisle.forEach { (aisle, products) ->
-                    // Header del pasillo (ocupa 2 columnas)
-                    item(
-                        key = "header_${aisle.id}",
-                        contentType = "header",
-                        span = { androidx.compose.foundation.lazy.grid.GridItemSpan(2) }
-                    ) {
-                        AisleHeader(
-                            aisleName = aisle.name,
-                            aisleIcon = aisle.emoji,
-                            productCount = products.size,
-                            purchasedCount = products.count { it.isPurchased },
-                            isCollapsed = aisle.id in uiState.collapsedAisles,
-                            onToggle = { viewModel.toggleAisleCollapse(aisle.id) },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-
-                    // Productos del pasillo (solo si NO está colapsado)
-                    if (aisle.id !in uiState.collapsedAisles) {
-                        items(
-                            items = products,
-                            key = { "product_${it.id}" },
-                            contentType = { "product" }
-                        ) { product ->
-                            val offer = uiState.offers.find { it.id == product.offerId }
-                            SwipeableProductCard(
-                                product = product,
-                                offer = offer,
-                                onClick = { productToEdit = product },
-                                onTogglePurchased = { viewModel.toggleProductPurchased(product) },
-                                onRemove = { viewModel.removeProduct(product) },
+        ) { paddingValues ->
+            if (uiState.isLoading) {
+                Box(
+                    modifier = Modifier.fillMaxSize().padding(paddingValues),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            } else if (uiState.productsByAisle.isEmpty()) {
+                EmptyState(
+                    modifier = Modifier.fillMaxSize().padding(paddingValues),
+                    onNavigateToCatalogo = onNavigateToCatalogo
+                )
+            } else {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    modifier = Modifier.fillMaxSize().padding(paddingValues),
+                    contentPadding = PaddingValues(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    uiState.productsByAisle.forEach { (aisle, products) ->
+                        item(
+                            key = "header_${aisle.id}",
+                            contentType = "header",
+                            span = { androidx.compose.foundation.lazy.grid.GridItemSpan(2) }
+                        ) {
+                            AisleHeader(
+                                aisleName = aisle.name,
+                                aisleIcon = aisle.emoji,
+                                productCount = products.size,
+                                purchasedCount = products.count { it.isPurchased },
+                                isCollapsed = aisle.id in uiState.collapsedAisles,
+                                onToggle = { viewModel.toggleAisleCollapse(aisle.id) },
                                 modifier = Modifier.fillMaxWidth()
                             )
+                        }
+
+                        if (aisle.id !in uiState.collapsedAisles) {
+                            items(
+                                items = products,
+                                key = { "product_${it.id}" },
+                                contentType = { "product" }
+                            ) { product ->
+                                val offer = uiState.offers.find { it.id == product.offerId }
+                                SwipeableProductCard(
+                                    product = product,
+                                    offer = offer,
+                                    onClick = { productToEdit = product },
+                                    onTogglePurchased = { viewModel.toggleProductPurchased(product) },
+                                    onRemove = { viewModel.removeProduct(product) },
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
                         }
                     }
                 }
             }
         }
-    }
 
-    // Diálogo de añadir producto
-    if (showAddProductDialog) {
-        AddProductToListDialog(
-            aisles = uiState.aisles,
-            offers = uiState.offers,
-            suggestions = uiState.articleSuggestions,
-            onSearch = { query -> viewModel.searchArticles(query) },
-            onDismiss = { showAddProductDialog = false },
-            onAdd = { name, quantity, aisleId, price, offerId, notes ->
-                viewModel.addProduct(
-                    name = name,
-                    quantity = quantity,
-                    aisleId = aisleId,
-                    price = price,
-                    offerId = offerId,
-                    notes = notes
-                )
-                showAddProductDialog = false
-            }
-        )
-    }
-
-    // Diálogo de editar producto
-    productToEdit?.let { product ->
-        EditProductDialog(
-            product = product,
-            aisles = uiState.aisles,
-            offers = uiState.offers,
-            onDismiss = { productToEdit = null },
-            onSave = { updatedProduct ->
-                viewModel.updateProduct(updatedProduct)
-                productToEdit = null
-            }
-        )
-    }
-
-    // Confirmación de eliminar comprados
-    if (showDeleteConfirm) {
-        AlertDialog(
-            onDismissRequest = { showDeleteConfirm = false },
-            title = { Text("Eliminar comprados") },
-            text = { Text("¿Deseas eliminar ${uiState.purchasedItems} productos comprados?") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.deletePurchasedProducts()
-                        showDeleteConfirm = false
-                    }
-                ) {
-                    Text("Eliminar")
+        // Diálogo de añadir producto
+        if (showAddProductDialog) {
+            AddProductToListDialog(
+                aisles = uiState.aisles,
+                offers = uiState.offers,
+                suggestions = uiState.articleSuggestions,
+                onSearch = { query -> viewModel.searchArticles(query) },
+                onDismiss = { showAddProductDialog = false },
+                onAdd = { name, quantity, aisleId, price, offerId, notes ->
+                    viewModel.addProduct(name, quantity, aisleId, price, offerId, notes)
+                    showAddProductDialog = false
                 }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteConfirm = false }) {
-                    Text("Cancelar")
+            )
+        }
+
+        // Diálogo de editar producto
+        productToEdit?.let { product ->
+            EditProductDialog(
+                product = product,
+                aisles = uiState.aisles,
+                offers = uiState.offers,
+                onDismiss = { productToEdit = null },
+                onSave = { updatedProduct ->
+                    viewModel.updateProduct(updatedProduct)
+                    productToEdit = null
                 }
-            }
-        )
+            )
+        }
     }
 }
 
@@ -219,26 +197,19 @@ private fun EmptyState(
             modifier = Modifier.size(80.dp),
             tint = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
         )
-
         Spacer(modifier = Modifier.height(16.dp))
-
         Text(
             text = "Tu lista está vacía",
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-
         Spacer(modifier = Modifier.height(8.dp))
-
         TextButton(onClick = onNavigateToCatalogo) {
             Text("Ir al catálogo")
         }
     }
 }
 
-/**
- * Card de producto con swipe para eliminar
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SwipeableProductCard(
@@ -255,9 +226,7 @@ private fun SwipeableProductCard(
             if (newValue == SwipeToDismissBoxValue.EndToStart) {
                 onRemove()
                 true
-            } else {
-                false
-            }
+            } else false
         },
         positionalThreshold = { it * 0.5f }
     )
@@ -269,30 +238,16 @@ private fun SwipeableProductCard(
         enableDismissFromEndToStart = true,
         backgroundContent = {
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        color = MaterialTheme.colorScheme.errorContainer,
-                        shape = MaterialTheme.shapes.medium
-                    )
+                modifier = Modifier.fillMaxSize()
+                    .background(MaterialTheme.colorScheme.errorContainer, MaterialTheme.shapes.medium)
                     .padding(horizontal = 16.dp),
                 contentAlignment = Alignment.CenterEnd
             ) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Eliminar",
-                    tint = MaterialTheme.colorScheme.onErrorContainer
-                )
+                Icon(Icons.Default.Delete, "Eliminar", tint = MaterialTheme.colorScheme.onErrorContainer)
             }
         },
         content = {
-            ProductCard(
-                product = product,
-                offer = offer,
-                onClick = onClick,
-                onTogglePurchased = onTogglePurchased,
-                modifier = Modifier.fillMaxWidth()
-            )
+            ProductCard(product, offer, onClick, onTogglePurchased, Modifier.fillMaxWidth())
         }
     )
 }
