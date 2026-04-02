@@ -1,6 +1,7 @@
-package com.jose.listacompra.ui.screens.main.components
+package com.jose.listacompra.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,6 +12,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -30,6 +35,8 @@ fun AisleHeader(
     aisleIcon: String,
     productCount: Int,
     purchasedCount: Int,
+    isCollapsed: Boolean = false,
+    onToggle: () -> Unit = {},
     modifier: Modifier = Modifier,
     accentColor: Color = MaterialTheme.colorScheme.primary
 ) {
@@ -38,9 +45,10 @@ fun AisleHeader(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
+            .clip(RoundedCornerShape(12.dp))
+            .clickable { onToggle() },
         color = accentColor.copy(alpha = 0.1f),
-        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
+        shape = RoundedCornerShape(12.dp)
     ) {
         Box(
             modifier = Modifier
@@ -53,16 +61,16 @@ fun AisleHeader(
                         )
                     )
                 )
-                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .padding(horizontal = 12.dp, vertical = 10.dp)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 // Icono del pasillo
                 Surface(
-                    modifier = Modifier.size(44.dp),
-                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.size(40.dp),
+                    shape = RoundedCornerShape(10.dp),
                     color = accentColor.copy(alpha = 0.2f)
                 ) {
                     Box(
@@ -84,30 +92,40 @@ fun AisleHeader(
                         color = MaterialTheme.colorScheme.onSurface
                     )
 
-                    Spacer(modifier = Modifier.height(4.dp))
+                    if (!isCollapsed) {
+                        Spacer(modifier = Modifier.height(4.dp))
 
-                    // Barra de progreso
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        LinearProgressIndicator(
-                            progress = { progress },
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(6.dp)
-                                .clip(RoundedCornerShape(3.dp)),
-                            color = accentColor,
-                            trackColor = accentColor.copy(alpha = 0.2f)
-                        )
+                        // Barra de progreso
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            LinearProgressIndicator(
+                                progress = { progress },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(6.dp)
+                                    .clip(RoundedCornerShape(3.dp)),
+                                color = accentColor,
+                                trackColor = accentColor.copy(alpha = 0.2f)
+                            )
 
-                        Text(
-                            text = "$purchasedCount/$productCount",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                            Text(
+                                text = "$purchasedCount/$productCount",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
+
+                // Icono expandir/colapsar
+                Icon(
+                    imageVector = if (isCollapsed) Icons.Default.ExpandMore else Icons.Default.ExpandLess,
+                    contentDescription = if (isCollapsed) "Expandir" else "Colapsar",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(24.dp)
+                )
             }
         }
     }

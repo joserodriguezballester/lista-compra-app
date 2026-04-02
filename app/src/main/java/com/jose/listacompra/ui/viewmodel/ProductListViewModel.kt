@@ -39,7 +39,8 @@ data class ProductListUiState(
     val aisles: List<Aisle> = emptyList(),
     val categories: List<Category> = emptyList(),
     val offers: List<Offer> = emptyList(),
-    val articleSuggestions: List<Articulo> = emptyList()
+    val articleSuggestions: List<Articulo> = emptyList(),
+    val collapsedAisles: Set<Long> = emptySet()
 )
 
 @HiltViewModel
@@ -366,6 +367,20 @@ class ProductListViewModel @Inject constructor(
                 (groups * 3 + remainder) * unitPrice
             }
             else -> unitPrice * quantity
+        }
+    }
+
+    /**
+     * Alterna el estado de colapso de un pasillo
+     */
+    fun toggleAisleCollapse(aisleId: Long) {
+        _uiState.update { currentState ->
+            val newCollapsedAisles = if (aisleId in currentState.collapsedAisles) {
+                currentState.collapsedAisles - aisleId
+            } else {
+                currentState.collapsedAisles + aisleId
+            }
+            currentState.copy(collapsedAisles = newCollapsedAisles)
         }
     }
 }
