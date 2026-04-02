@@ -2,7 +2,6 @@ package com.jose.listacompra.ui.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -19,6 +18,7 @@ fun AppDrawer(
     onNavigateToOffers: () -> Unit,
     onNavigateToSupermarkets: () -> Unit,
     onNavigateToCatalogo: () -> Unit,
+    onChangeColor: () -> Unit,
     onClose: () -> Unit
 ) {
     ModalDrawerSheet {
@@ -44,7 +44,7 @@ fun AppDrawer(
             }
         }
 
-        Divider()
+        HorizontalDivider()
 
         // Navigation items
         Column(modifier = Modifier.padding(vertical = 8.dp)) {
@@ -74,7 +74,7 @@ fun AppDrawer(
             )
         }
 
-        Divider(modifier = Modifier.padding(vertical = 8.dp))
+        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
         // Settings section
         Text(
@@ -111,12 +111,12 @@ fun AppDrawer(
             icon = { Icon(Icons.Default.Palette, contentDescription = null) },
             label = { Text("Cambiar color") },
             selected = false,
-            onClick = { /* TODO */ }
+            onClick = onChangeColor
         )
 
         // Footer
         Spacer(modifier = Modifier.weight(1f))
-        Divider()
+        HorizontalDivider()
         Text(
             text = "v1.0.0 • Jose Rodríguez",
             modifier = Modifier

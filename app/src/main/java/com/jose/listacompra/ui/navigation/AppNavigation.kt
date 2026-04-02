@@ -56,6 +56,7 @@ fun AppNavigation(
                 onNavigateToCatalogo = { navController.navigate(NavScreen.Catalogo.route) },
                 onNavigateToOffers = { /* TODO */ },
                 onNavigateToSupermarkets = { navController.navigate(NavScreen.Supermarkets.route) },
+                onNavigateToScanner = { navController.navigate(NavScreen.BarcodeScanner.route) },
                 isDarkMode = isDarkMode,
                 onToggleDarkMode = { onToggleTheme() }
             )

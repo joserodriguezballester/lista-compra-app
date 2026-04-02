@@ -65,6 +65,9 @@ class ProductListViewModel @Inject constructor(
     // UI State combinado
     private val _uiState = MutableStateFlow(ProductListUiState())
     val uiState: StateFlow<ProductListUiState> = _uiState.asStateFlow()
+    
+    // Color primario del tema
+    val primaryColor: Flow<Int> = themePreferences.primaryColor
 
     // Tema
     val isDarkTheme: StateFlow<Boolean> = themePreferences.themeMode.stateIn(
@@ -379,6 +382,15 @@ class ProductListViewModel @Inject constructor(
                 currentState.collapsedAisles + aisleId
             }
             currentState.copy(collapsedAisles = newCollapsedAisles)
+        }
+    }
+    
+    /**
+     * Cambia el color primario del tema
+     */
+    fun setPrimaryColor(color: Int) {
+        viewModelScope.launch {
+            themePreferences.setPrimaryColor(color)
         }
     }
 }

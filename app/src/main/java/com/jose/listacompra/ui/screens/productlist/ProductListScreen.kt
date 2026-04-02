@@ -19,6 +19,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.jose.listacompra.domain.model.Product
 import com.jose.listacompra.ui.components.*
 import com.jose.listacompra.ui.viewmodel.ProductListViewModel
+import com.jose.listacompra.ui.screens.ColorSettingsDialog
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -28,6 +29,7 @@ fun ProductListScreen(
     onNavigateToCatalogo: () -> Unit = {},
     onNavigateToOffers: () -> Unit = {},
     onNavigateToSupermarkets: () -> Unit = {},
+    onNavigateToScanner: () -> Unit = {},
     isDarkMode: Boolean = false,
     onToggleDarkMode: (Boolean) -> Unit = {},
     viewModel: ProductListViewModel = hiltViewModel()
@@ -39,6 +41,10 @@ fun ProductListScreen(
     // Estados para diálogos
     var showAddProductDialog by remember { mutableStateOf(false) }
     var productToEdit by remember { mutableStateOf<Product?>(null) }
+    var showColorDialog by remember { mutableStateOf(false) }
+    
+    // Color actual
+    val currentColor by viewModel.primaryColor.collectAsState()
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -61,6 +67,10 @@ fun ProductListScreen(
                 onNavigateToCatalogo = {
                     scope.launch { drawerState.close() }
                     onNavigateToCatalogo()
+                },
+                onChangeColor = {
+                    scope.launch { drawerState.close() }
+                    showColorDialog = true
                 },
                 onClose = { scope.launch { drawerState.close() } }
             )
@@ -150,7 +160,7 @@ fun ProductListScreen(
             }
         }
 
-        // Diálogo de añadir producto
+        // Diálogo añadir
         if (showAddProductDialog) {
             AddProductToListDialog(
                 aisles = uiState.aisles,
@@ -158,7 +168,7 @@ fun ProductListScreen(
                 suggestions = uiState.articleSuggestions,
                 initialName = null,
                 onSearch = { query -> viewModel.searchArticles(query) },
-                onOpenScanner = { /* TODO: Navigate to scanner */ },
+                onOpenScanner = onNavigateToScanner,
                 onDismiss = { showAddProductDialog = false },
                 onAdd = { name, quantity, aisleId, price, offerId, notes, photoUri ->
                     viewModel.addProduct(name, quantity, aisleId, price, offerId, notes, photoUri)
@@ -167,17 +177,23 @@ fun ProductListScreen(
             )
         }
 
-        // Diálogo de editar producto
+        // Diálogo editar
         productToEdit?.let { product ->
             EditProductDialog(
                 product = product,
                 aisles = uiState.aisles,
                 offers = uiState.offers,
                 onDismiss = { productToEdit = null },
-                onSave = { updatedProduct ->
-                    viewModel.updateProduct(updatedProduct)
-                    productToEdit = null
-                }
+                onSave = { viewModel.updateProduct(it); productToEdit = null }
+            )
+        }
+
+        // Diálogo cambiar color
+        if (showColorDialog) {
+            ColorSettingsDialog(
+                currentColor = currentColor,
+                onDismiss = { showColorDialog = false },
+                onColorSelected = { color -> viewModel.setPrimaryColor(color) }
             )
         }
     }
