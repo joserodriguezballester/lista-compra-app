@@ -295,3 +295,63 @@ Diálogo: "¿Guardar en tu catálogo?"
 | 2026-04-02 | Semilla 20 productos | `feature/seed` |
 | 2026-04-02 | Micrófono TopBar + voz | `feature/microphone` |
 | 2026-04-02 | Toggle tema en drawer | `feature/theme-toggle-drawer` |
+
+---
+
+## 🐛 BUGS ENCONTRADOS (Testing 2026-04-02)
+
+### 🔴 Alta Prioridad
+
+| # | Bug | Pantalla | Notas |
+|---|-----|----------|-------|
+| B1 | **Botón scanner no actúa** | AddProductToListDialog | No navega al scanner |
+| B2 | **No se ven las ofertas** | ProductCard | No se muestra badge/etiqueta |
+| B3 | **Cambiar color no funciona** | Navigation + TopBar | Dejar para usuarios o eliminar |
+| B4 | **Falta botón scanner en Editar** | EditProductDialog | Añadir igual que en añadir |
+
+### 🟠 Media Prioridad
+
+| # | Bug | Pantalla | Notas |
+|---|-----|----------|-------|
+| B5 | **ProductCard layout** | ProductCard | Reorganizar: imagen + checkbox arriba, texto abajo |
+| B6 | **No se ven imágenes** | ProductCard | ¿No hay en BD o no las carga? |
+| B7 | **No hay opción de añadir imagen** | Add/EditDialog | Falta campo/selección de imagen |
+| B8 | **Etiquetas supermercados sin delimitación** | SupermarketBottomBar | Añadir líneas/divider entre pestañas |
+
+### 📝 Tareas de datos
+
+| # | Tarea | Descripción |
+|---|-------|-------------|
+| D1 | **Semilla con ofertas** | Añadir productos que cumplan/no cumplan requisitos de oferta |
+
+---
+
+## 📋 QUÉ QUEDA POR PROBAR
+
+| Pantalla/Feature | Estado | Notas |
+|------------------|--------|-------|
+| Grid 2 columnas | ✅ OK | Funciona |
+| Pestañas supermercados | ✅ OK | Visibles |
+| Colapso pasillos | ❓ Pendiente | Probar click en header |
+| Swipe eliminar | ❓ Pendiente | Probar swipe izquierda |
+| Logos en cards | ❓ Pendiente | ¿Se ven? |
+| Micrófono TopBar | ❓ Pendiente | ¿Funciona? ¿Permisos? |
+| Drawer lateral | ❓ Pendiente | ¿Se abre con ☰? |
+| Toggle tema drawer | ❓ Pendiente | ¿Cambia modo oscuro? |
+| Autocompletado | ❓ Pendiente | Escribir y ver sugerencias |
+| Campo notas | ❓ Pendiente | ¿Se guarda? |
+| Selector ofertas | ❓ Pendiente | ¿Se ve el dropdown? |
+| Scanner diálogo añadir | ❌ NO VA | Bug B1 |
+| Editar producto | ❓ Pendiente | Probar click en card |
+| Añadir producto | ❓ Pendiente | Probar FAB |
+
+---
+
+## 🔧 PRÓXIMOS PASOS
+
+1. **Arreglar ProductCard** (B5, B6) - Layout imagen/checkbox arriba
+2. **Arreglar scanner** (B1, B4) - Conectar botón con navegación
+3. **Verificar ofertas** (B2) - Comprobar si se muestran
+4. **Semilla con ofertas** (D1) - Productos de ejemplo con 3x2, 2x1...
+5. **Líneas en pestañas** (B8) - Divider visual entre supermercados
+6. **Decidir "cambiar color"** (B3) - Eliminar o dejar para usuarios
