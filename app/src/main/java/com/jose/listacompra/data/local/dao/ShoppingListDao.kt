@@ -36,4 +36,7 @@ interface ShoppingListDao {
 
     @Query("UPDATE shopping_lists SET estado = 'ACTIVA' WHERE id = :listId")
     suspend fun unarchiveList(listId: Long)
+
+    @Query("SELECT * FROM shopping_lists WHERE estado = 'ACTIVA' ORDER BY fechaCreacion ASC LIMIT 1")
+    suspend fun getDefaultList(): ShoppingListEntity?
 }

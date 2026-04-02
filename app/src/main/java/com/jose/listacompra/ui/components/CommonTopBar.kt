@@ -2,8 +2,8 @@ package com.jose.listacompra.ui.components
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.DarkMode
-import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material3.*
@@ -15,11 +15,9 @@ import androidx.compose.ui.text.font.FontWeight
 fun CommonTopBar(
     title: String,
     onNavigateBack: (() -> Unit)? = null,
-    isDarkMode: Boolean = false,
-    onToggleDarkMode: (Boolean) -> Unit = {},
-    onOpenLists: () -> Unit = {},
-    onChangeColor: () -> Unit = {},
-    onOpenImport: () -> Unit = {}
+    onOpenDrawer: () -> Unit = {},
+    onMicrophoneClick: (() -> Unit)? = null,
+    onChangeColor: () -> Unit = {}
 ) {
     var showMenu by remember { mutableStateOf(false) }
 
@@ -35,15 +33,18 @@ fun CommonTopBar(
                 IconButton(onClick = onNavigateBack) {
                     Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
                 }
+            } else {
+                IconButton(onClick = onOpenDrawer) {
+                    Icon(Icons.Default.Menu, contentDescription = "Menú")
+                }
             }
         },
         actions = {
-            // Toggle tema claro/oscuro
-            IconButton(onClick = { onToggleDarkMode(!isDarkMode) }) {
-                Icon(
-                    if (isDarkMode) Icons.Default.LightMode else Icons.Default.DarkMode,
-                    contentDescription = if (isDarkMode) "Modo claro" else "Modo oscuro"
-                )
+            // Micrófono (si está disponible)
+            if (onMicrophoneClick != null) {
+                IconButton(onClick = onMicrophoneClick) {
+                    Icon(Icons.Default.Mic, contentDescription = "Añadir por voz")
+                }
             }
             
             // Menú opciones

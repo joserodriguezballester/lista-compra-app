@@ -59,4 +59,7 @@ class ShoppingListRepositoryImpl @Inject constructor(
         shoppingListDao.unarchiveList(listId)
     }
 
-  }
+    override suspend fun getDefaultList(): ShoppingList? {
+        return shoppingListDao.getDefaultList()?.toDomain()
+    }
+}

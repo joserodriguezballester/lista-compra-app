@@ -12,7 +12,5 @@ interface IShoppingListRepository {
     suspend fun archiveList(listId: Long)
     suspend fun unarchiveList(listId: Long)
     suspend fun getAllLists(): List<ShoppingList>
-
-
-
+    suspend fun getDefaultList(): ShoppingList?
 }
