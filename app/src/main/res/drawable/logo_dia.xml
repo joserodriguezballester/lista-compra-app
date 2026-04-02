@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <!-- Círculo rojo Dia -->
+    <path
+        android:fillColor="#E30613"
+        android:pathData="M24,24m-22,0a22,22 0,1 1,44 0a22,22 0,1 1,-44 0"/>
+    <!-- Letra D -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M14,12V36H24Q34,36 34,24Q34,12 24,12H14M20,18H24Q28,18 28,24Q28,30 24,30H20"/>
+</vector>

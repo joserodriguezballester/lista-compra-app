@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <!-- Círculo amarillo Lidl -->
+    <path
+        android:fillColor="#FFE000"
+        android:pathData="M24,24m-22,0a22,22 0,1 1,44 0a22,22 0,1 1,-44 0"/>
+    <!-- Letra L -->
+    <path
+        android:fillColor="#0050AA"
+        android:pathData="M18,12V36H32V30H24V12"/>
+</vector>
