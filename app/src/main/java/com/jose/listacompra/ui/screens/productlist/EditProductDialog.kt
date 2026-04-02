@@ -6,6 +6,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Euro
 import androidx.compose.material.icons.filled.LocalOffer
+import androidx.compose.material.icons.filled.Notes
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -169,9 +170,13 @@ fun EditProductDialog(
                     value = notes,
                     onValueChange = { notes = it },
                     label = { Text("Notas") },
+                    placeholder = { Text("Ej: del Mercadona, marca Hacendado...") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = false,
-                    maxLines = 3
+                    maxLines = 2,
+                    leadingIcon = {
+                        Icon(Icons.Default.Notes, contentDescription = null)
+                    }
                 )
             }
         },

@@ -1,5 +1,6 @@
 package com.jose.listacompra.ui.screens.productlist
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -21,19 +22,41 @@ fun AddProductToListDialog(
     aisles: List<Aisle>,
     offers: List<Offer> = emptyList(),
     suggestions: List<Articulo> = emptyList(),
+    scannedName: String? = null,
+    scannedPrice: String? = null,
+    scannedImageUrl: String? = null,
     onSearch: (String) -> Unit = {},
+    onOpenScanner: () -> Unit = {},
     onDismiss: () -> Unit,
-    onAdd: (name: String, quantity: Float, aisleId: Long?, price: Float?, offerId: Long?) -> Unit
+    onAdd: (name: String, quantity: Float, aisleId: Long?, price: Float?, offerId: Long?, notes: String?) -> Unit
 ) {
+    val TAG = "AddProductDialog"
+    
     var name by remember { mutableStateOf("") }
     var quantity by remember { mutableStateOf("1") }
     var price by remember { mutableStateOf("") }
+    var notes by remember { mutableStateOf("") }
     var selectedAisleId by remember { mutableStateOf<Long?>(null) }
     var selectedOfferId by remember { mutableStateOf<Long?>(null) }
     
     var aisleExpanded by remember { mutableStateOf(false) }
     var offerExpanded by remember { mutableStateOf(false) }
     var showSuggestions by remember { mutableStateOf(false) }
+
+    // Rellenar con datos del scanner
+    LaunchedEffect(scannedName, scannedPrice) {
+        if (scannedName != null) {
+            name = scannedName
+            Log.d(TAG, "Scanner - Nombre: $scannedName")
+        }
+        if (scannedPrice != null) {
+            price = scannedPrice
+            Log.d(TAG, "Scanner - Precio: $scannedPrice")
+        }
+        if (scannedImageUrl != null) {
+            Log.d(TAG, "Scanner - Imagen: $scannedImageUrl")
+        }
+    }
 
     // Debounce para búsqueda
     LaunchedEffect(name) {
@@ -56,7 +79,7 @@ fun AddProductToListDialog(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Nombre con sugerencias
+                // Nombre con sugerencias y botón scanner
                 ExposedDropdownMenuBox(
                     expanded = showSuggestions && suggestions.isNotEmpty(),
                     onExpandedChange = { }
@@ -76,9 +99,19 @@ fun AddProductToListDialog(
                             Icon(Icons.Default.ShoppingCart, contentDescription = null)
                         },
                         trailingIcon = {
-                            if (name.isNotEmpty()) {
-                                IconButton(onClick = { name = "" }) {
-                                    Icon(Icons.Default.Close, "Limpiar")
+                            Row {
+                                // Botón scanner
+                                IconButton(onClick = {
+                                    Log.d(TAG, "Abriendo scanner...")
+                                    onOpenScanner()
+                                }) {
+                                    Icon(Icons.Default.QrCodeScanner, "Escanear código")
+                                }
+                                // Botón limpiar
+                                if (name.isNotEmpty()) {
+                                    IconButton(onClick = { name = "" }) {
+                                        Icon(Icons.Default.Close, "Limpiar")
+                                    }
                                 }
                             }
                         }
@@ -110,6 +143,7 @@ fun AddProductToListDialog(
                                 onClick = {
                                     name = articulo.name
                                     articulo.finalPrice?.let { price = it.toString() }
+                                    Log.d(TAG, "Sugerencia seleccionada: ${articulo.name}")
                                     showSuggestions = false
                                 }
                             )
@@ -233,17 +267,33 @@ fun AddProductToListDialog(
                         }
                     }
                 }
+
+                // Notas
+                OutlinedTextField(
+                    value = notes,
+                    onValueChange = { notes = it },
+                    label = { Text("Notas") },
+                    placeholder = { Text("Ej: del Mercadona, marca Hacendado...") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = false,
+                    maxLines = 2,
+                    leadingIcon = {
+                        Icon(Icons.Default.Notes, contentDescription = null)
+                    }
+                )
             }
         },
         confirmButton = {
             Button(
                 onClick = {
+                    Log.d(TAG, "Añadiendo producto: name=$name, qty=$quantity, aisle=$selectedAisleId, price=$price, offer=$selectedOfferId, notes=$notes")
                     onAdd(
                         name,
                         quantity.toFloatOrNull() ?: 1f,
                         selectedAisleId,
                         price.toFloatOrNull(),
-                        selectedOfferId
+                        selectedOfferId,
+                        notes.ifBlank { null }
                     )
                 },
                 enabled = name.isNotBlank()

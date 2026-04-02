@@ -210,7 +210,8 @@ class ProductListViewModel @Inject constructor(
         quantity: Float = 1f,
         aisleId: Long? = null,
         price: Float? = null,
-        offerId: Long? = null
+        offerId: Long? = null,
+        notes: String? = null
     ) {
         viewModelScope.launch {
             if (currentListId == 0L) {
@@ -231,9 +232,11 @@ class ProductListViewModel @Inject constructor(
                     estimatedPrice = price,
                     finalPrice = finalPrice,
                     offerId = offerId,
+                    notes = notes ?: "",
                     isPurchased = false
                 )
                 productRepository.insertProduct(product)
+                Log.d(TAG, "Product added: $name")
             } catch (e: Exception) {
                 Log.e(TAG, "Error adding product", e)
                 _uiState.update { it.copy(error = "Error al añadir producto: ${e.message}") }
