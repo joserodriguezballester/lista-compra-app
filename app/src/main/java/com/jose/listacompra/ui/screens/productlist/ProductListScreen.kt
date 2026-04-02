@@ -156,10 +156,12 @@ fun ProductListScreen(
                 aisles = uiState.aisles,
                 offers = uiState.offers,
                 suggestions = uiState.articleSuggestions,
+                initialName = null,
                 onSearch = { query -> viewModel.searchArticles(query) },
+                onOpenScanner = { /* TODO: Navigate to scanner */ },
                 onDismiss = { showAddProductDialog = false },
-                onAdd = { name, quantity, aisleId, price, offerId, notes ->
-                    viewModel.addProduct(name, quantity, aisleId, price, offerId, notes)
+                onAdd = { name, quantity, aisleId, price, offerId, notes, photoUri ->
+                    viewModel.addProduct(name, quantity, aisleId, price, offerId, notes, photoUri)
                     showAddProductDialog = false
                 }
             )

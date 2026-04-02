@@ -230,7 +230,8 @@ class ProductListViewModel @Inject constructor(
         aisleId: Long? = null,
         price: Float? = null,
         offerId: Long? = null,
-        notes: String? = null
+        notes: String? = null,
+        photoUri: String? = null
     ) {
         viewModelScope.launch {
             if (currentListId == 0L) {
@@ -252,6 +253,7 @@ class ProductListViewModel @Inject constructor(
                     finalPrice = finalPrice,
                     offerId = offerId,
                     notes = notes ?: "",
+                    photoUri = photoUri,
                     isPurchased = false
                 )
                 productRepository.insertProduct(product)

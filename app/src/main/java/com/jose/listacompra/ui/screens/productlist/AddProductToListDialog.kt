@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -18,45 +19,49 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
-import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
 import com.jose.listacompra.domain.model.Aisle
-import com.jose.listacompra.domain.model.Product
+import com.jose.listacompra.domain.model.Articulo
 import com.jose.listacompra.domain.model.Offer
 import com.jose.listacompra.ui.utils.getCategoryEmoji
-import com.jose.listacompra.ui.utils.calculateOfferStatus
+import kotlinx.coroutines.delay
 import android.util.Log
 import android.widget.Toast
-import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditProductDialog(
-    product: Product,
+fun AddProductToListDialog(
     aisles: List<Aisle>,
     offers: List<Offer> = emptyList(),
+    suggestions: List<Articulo> = emptyList(),
+    initialName: String? = null,
+    onSearch: (String) -> Unit = {},
+    onOpenScanner: () -> Unit = {},
+    onImageSelected: (Uri?) -> Unit = {},
     onDismiss: () -> Unit,
-    onSave: (Product) -> Unit
+    onAdd: (name: String, quantity: Float, aisleId: Long?, price: Float?, offerId: Long?, notes: String?, photoUri: String?) -> Unit
 ) {
-    val TAG = "EditProductDialog"
+    val TAG = "AddProductDialog"
     val context = LocalContext.current
     
-    var name by remember { mutableStateOf(product.name) }
-    var quantity by remember { mutableStateOf(product.quantity.toString()) }
-    var estimatedPrice by remember { mutableStateOf(product.estimatedPrice?.toString() ?: "") }
-    var selectedAisleId by remember { mutableStateOf(product.aisleId) }
-    var selectedOfferId by remember { mutableStateOf(product.offerId) }
-    var notes by remember { mutableStateOf(product.notes) }
-    var photoUri by remember { mutableStateOf(product.photoUri?.let { Uri.parse(it) }) }
+    var name by remember { mutableStateOf(initialName ?: "") }
+    var quantity by remember { mutableStateOf("1") }
+    var price by remember { mutableStateOf("") }
+    var notes by remember { mutableStateOf("") }
+    var selectedAisleId by remember { mutableStateOf<Long?>(null) }
+    var selectedOfferId by remember { mutableStateOf<Long?>(null) }
+    var photoUri by remember { mutableStateOf<Uri?>(null) }
     
     var aisleExpanded by remember { mutableStateOf(false) }
     var offerExpanded by remember { mutableStateOf(false) }
+    var showSuggestions by remember { mutableStateOf(false) }
     var showImagePicker by remember { mutableStateOf(false) }
 
     // Launcher para cámara
@@ -81,12 +86,12 @@ fun EditProductDialog(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
-            val photoFile = File.createTempFile(
+            val photoFile = java.io.File.createTempFile(
                 "product_${System.currentTimeMillis()}",
                 ".jpg",
                 context.cacheDir
             )
-            photoUri = FileProvider.getUriForFile(
+            photoUri = androidx.core.content.FileProvider.getUriForFile(
                 context,
                 "${context.packageName}.fileprovider",
                 photoFile
@@ -97,9 +102,20 @@ fun EditProductDialog(
         }
     }
 
+    // Debounce para búsqueda
+    LaunchedEffect(name) {
+        if (name.length >= 2) {
+            delay(300)
+            onSearch(name)
+            showSuggestions = true
+        } else {
+            showSuggestions = false
+        }
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Editar producto") },
+        title = { Text("Añadir producto") },
         text = {
             Column(
                 modifier = Modifier
@@ -131,12 +147,14 @@ fun EditProductDialog(
                             )
                         } else {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    text = getCategoryEmoji(product.name),
-                                    fontSize = 28.sp
+                                Icon(
+                                    Icons.Default.AddAPhoto,
+                                    contentDescription = "Añadir foto",
+                                    modifier = Modifier.size(32.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                                 )
                                 Text(
-                                    "Cambiar",
+                                    "Añadir foto",
                                     fontSize = 10.sp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                                 )
@@ -146,17 +164,27 @@ fun EditProductDialog(
 
                     // Botones de acción
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        // Scanner
+                        OutlinedButton(
+                            onClick = onOpenScanner,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Default.QrCodeScanner, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Escanear", fontSize = 12.sp)
+                        }
+                        
                         // Cámara
                         OutlinedButton(
                             onClick = {
                                 val permission = Manifest.permission.CAMERA
                                 if (ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED) {
-                                    val photoFile = File.createTempFile(
+                                    val photoFile = java.io.File.createTempFile(
                                         "product_${System.currentTimeMillis()}",
                                         ".jpg",
                                         context.cacheDir
                                     )
-                                    photoUri = FileProvider.getUriForFile(
+                                    photoUri = androidx.core.content.FileProvider.getUriForFile(
                                         context,
                                         "${context.packageName}.fileprovider",
                                         photoFile
@@ -172,30 +200,71 @@ fun EditProductDialog(
                             Spacer(modifier = Modifier.width(4.dp))
                             Text("Cámara", fontSize = 12.sp)
                         }
-                        
-                        // Galería
-                        OutlinedButton(
-                            onClick = { galleryLauncher.launch("image/*") },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(Icons.Default.PhotoLibrary, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Galería", fontSize = 12.sp)
-                        }
                     }
                 }
 
-                // Nombre
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Nombre") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    leadingIcon = {
-                        Icon(Icons.Default.ShoppingCart, contentDescription = null)
+                // Nombre con sugerencias
+                ExposedDropdownMenuBox(
+                    expanded = showSuggestions && suggestions.isNotEmpty(),
+                    onExpandedChange = { }
+                ) {
+                    OutlinedTextField(
+                        value = name,
+                        onValueChange = { name = it },
+                        label = { Text("Nombre del producto") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor()
+                            .onFocusChanged { focusState ->
+                                showSuggestions = focusState.isFocused && suggestions.isNotEmpty()
+                            },
+                        singleLine = true,
+                        leadingIcon = {
+                            Icon(Icons.Default.ShoppingCart, contentDescription = null)
+                        },
+                        trailingIcon = {
+                            if (name.isNotEmpty()) {
+                                IconButton(onClick = { name = "" }) {
+                                    Icon(Icons.Default.Close, "Limpiar")
+                                }
+                            }
+                        }
+                    )
+
+                    ExposedDropdownMenu(
+                        expanded = showSuggestions && suggestions.isNotEmpty(),
+                        onDismissRequest = { showSuggestions = false }
+                    ) {
+                        suggestions.forEach { articulo ->
+                            DropdownMenuItem(
+                                text = {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = getCategoryEmoji(articulo.name),
+                                            fontSize = 20.sp
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Column {
+                                            Text(articulo.name, fontWeight = FontWeight.Medium)
+                                            articulo.finalPrice?.let {
+                                                Text(
+                                                    "${String.format("%.2f", it)} €",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.primary
+                                                )
+                                            }
+                                        }
+                                    }
+                                },
+                                onClick = {
+                                    name = articulo.name
+                                    articulo.finalPrice?.let { price = it.toString() }
+                                    showSuggestions = false
+                                }
+                            )
+                        }
                     }
-                )
+                }
 
                 // Cantidad
                 OutlinedTextField(
@@ -208,8 +277,8 @@ fun EditProductDialog(
 
                 // Precio unitario
                 OutlinedTextField(
-                    value = estimatedPrice,
-                    onValueChange = { estimatedPrice = it },
+                    value = price,
+                    onValueChange = { price = it },
                     label = { Text("Precio unitario (€)") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
@@ -307,26 +376,22 @@ fun EditProductDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    val qty = quantity.toFloatOrNull() ?: product.quantity
-                    val price = estimatedPrice.toFloatOrNull()
-                    
-                    val updatedProduct = product.copy(
-                        name = name,
-                        quantity = qty,
-                        estimatedPrice = price,
-                        aisleId = selectedAisleId,
-                        notes = notes,
-                        offerId = selectedOfferId,
-                        photoUri = photoUri?.toString()
+                    Log.d(TAG, "Añadiendo: name=$name, qty=$quantity, photoUri=$photoUri")
+                    onAdd(
+                        name,
+                        quantity.toFloatOrNull() ?: 1f,
+                        selectedAisleId,
+                        price.toFloatOrNull(),
+                        selectedOfferId,
+                        notes.ifBlank { null },
+                        photoUri?.toString()
                     )
-                    Log.d(TAG, "Guardando: name=$name, photoUri=$photoUri")
-                    onSave(updatedProduct)
                 },
                 enabled = name.isNotBlank()
             ) {
-                Icon(Icons.Default.Save, contentDescription = null)
+                Icon(Icons.Default.Add, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Guardar")
+                Text("Añadir")
             }
         },
         dismissButton = {
@@ -340,7 +405,7 @@ fun EditProductDialog(
     if (showImagePicker) {
         AlertDialog(
             onDismissRequest = { showImagePicker = false },
-            title = { Text("Cambiar imagen") },
+            title = { Text("Seleccionar imagen") },
             text = {
                 Column {
                     Row(
@@ -364,12 +429,12 @@ fun EditProductDialog(
                                 showImagePicker = false
                                 val permission = Manifest.permission.CAMERA
                                 if (ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED) {
-                                    val photoFile = File.createTempFile(
+                                    val photoFile = java.io.File.createTempFile(
                                         "product_${System.currentTimeMillis()}",
                                         ".jpg",
                                         context.cacheDir
                                     )
-                                    photoUri = FileProvider.getUriForFile(
+                                    photoUri = androidx.core.content.FileProvider.getUriForFile(
                                         context,
                                         "${context.packageName}.fileprovider",
                                         photoFile
@@ -385,24 +450,6 @@ fun EditProductDialog(
                         Icon(Icons.Default.PhotoCamera, contentDescription = null)
                         Spacer(modifier = Modifier.width(12.dp))
                         Text("Cámara")
-                    }
-                    // Opción para eliminar
-                    if (photoUri != null) {
-                        HorizontalDivider()
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    showImagePicker = false
-                                    photoUri = null
-                                }
-                                .padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(Icons.Default.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error)
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Text("Eliminar foto", color = MaterialTheme.colorScheme.error)
-                        }
                     }
                 }
             },
