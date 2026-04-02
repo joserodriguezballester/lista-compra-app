@@ -13,6 +13,7 @@
 | `feature/product-card-enhanced` | Grid + logos + oferta + swipe | ✅ Listo |
 | `feature/supermarket-tabs` | Pestañas supermercados | ✅ Listo |
 | `feature/seed` | 20 productos de ejemplo | ✅ Listo |
+| `feature/microphone` | Micrófono en TopBar + voz | ✅ Listo |
 
 ---
 
@@ -288,3 +289,4 @@ Diálogo: "¿Guardar en tu catálogo?"
 | 2026-04-02 | Swipe para eliminar | `feature/product-card-enhanced` |
 | 2026-04-02 | Supermercados como pestañas | `feature/supermarket-tabs` |
 | 2026-04-02 | Semilla 20 productos | `feature/seed` |
+| 2026-04-02 | Micrófono TopBar + voz | `feature/microphone` |
