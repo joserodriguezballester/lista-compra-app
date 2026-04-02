@@ -290,3 +290,4 @@ Diálogo: "¿Guardar en tu catálogo?"
 | 2026-04-02 | Supermercados como pestañas | `feature/supermarket-tabs` |
 | 2026-04-02 | Semilla 20 productos | `feature/seed` |
 | 2026-04-02 | Micrófono TopBar + voz | `feature/microphone` |
+| 2026-04-02 | Toggle tema en drawer | `feature/theme-toggle-drawer` |
