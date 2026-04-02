@@ -1,6 +1,18 @@
 # 📋 TAREAS - Lista Compra App
 
-**Última actualización:** 2026-04-02 03:30
+**Última actualización:** 2026-04-02 05:55
+
+---
+
+## 🌿 Ramas disponibles para probar
+
+| Rama | Contenido | Estado |
+|------|-----------|--------|
+| `feature/grid-collapse` | Grid 2 columnas + colapso pasillos | ✅ Listo |
+| `feature/dialogs-enhanced` | Grid + notas + scanner | ✅ Listo |
+| `feature/product-card-enhanced` | Grid + logos + oferta + swipe | ✅ Listo |
+| `feature/supermarket-tabs` | Pestañas supermercados | ✅ Listo |
+| `feature/seed` | 20 productos de ejemplo | ✅ Listo |
 
 ---
 
@@ -264,12 +276,15 @@ Diálogo: "¿Guardar en tu catálogo?"
 
 ## ✅ Completado
 
-| Fecha | Tarea |
-|-------|-------|
-| 2026-04-02 | Fix binding duplicado IOfferRepository |
-| 2026-04-02 | Reorganizar componentes en ui/components/ |
-| 2026-04-01 | Cards de productos con imagen 48dp y checkbox |
-| 2026-04-01 | Selector de oferta en añadir/editar producto |
-| 2026-04-01 | Pantalla de ofertas (rama feature/offers-screen) |
-| 2026-04-01 | Merge feature/supermarket-refactor a main |
-| 2026-04-01 | applicationIdSuffix .dev para versión debug |
+| Fecha | Tarea | Rama |
+|-------|-------|------|
+| 2026-04-02 | Grid 2 columnas | `feature/grid-collapse` |
+| 2026-04-02 | Colapso de pasillos | `feature/grid-collapse` |
+| 2026-04-02 | Campo notas en formularios | `feature/dialogs-enhanced` |
+| 2026-04-02 | Scanner en diálogo añadir | `feature/dialogs-enhanced` |
+| 2026-04-02 | Logos supermercados (6) | `feature/product-card-enhanced` |
+| 2026-04-02 | Cumplimiento de oferta | `feature/product-card-enhanced` |
+| 2026-04-02 | Supermercado preferido en card | `feature/product-card-enhanced` |
+| 2026-04-02 | Swipe para eliminar | `feature/product-card-enhanced` |
+| 2026-04-02 | Supermercados como pestañas | `feature/supermarket-tabs` |
+| 2026-04-02 | Semilla 20 productos | `feature/seed` |
