@@ -6,6 +6,7 @@ import com.jose.listacompra.domain.model.Aisle
 import com.jose.listacompra.domain.repository.IAisleRepository
 import com.jose.listacompra.domain.repository.IArticuloRepository
 import com.jose.listacompra.domain.repository.ICategoryRepository
+import com.jose.listacompra.domain.repository.IProductRepository
 import com.jose.listacompra.domain.repository.IShoppingListRepository
 import com.jose.listacompra.domain.repository.ISupermarketRepository
 import javax.inject.Inject
@@ -23,7 +24,8 @@ class InitialDataSeeder @Inject constructor(
     private val supermarketRepository: ISupermarketRepository,
     private val aisleRepository: IAisleRepository,
     private val articuloRepository: IArticuloRepository,
-    private val shoppingListRepository: IShoppingListRepository
+    private val shoppingListRepository: IShoppingListRepository,
+    private val productRepository: IProductRepository
 ) {
 
     companion object {
@@ -42,6 +44,7 @@ class InitialDataSeeder @Inject constructor(
         seedAislesIfNeeded()
         seedShoppingListIfNeeded()
         seedCatalogIfNeeded()
+        seedProductsIfNeeded()
         
         Log.d(TAG, "seedAll completed!")
     }
@@ -112,6 +115,42 @@ class InitialDataSeeder @Inject constructor(
             val articulos = articulosBase.map { it.toArticulo() }
             articuloRepository.saveAll(articulos)
             Log.d(TAG, "Inserted ${articulos.size} articulos")
+        }
+    }
+
+    /**
+     * Inserta productos de ejemplo en la lista de la compra
+     */
+    suspend fun seedProductsIfNeeded() {
+        val defaultList = shoppingListRepository.getDefaultList()
+        if (defaultList != null) {
+            val existingProducts = productRepository.getProductsByList(defaultList.id)
+            if (existingProducts.isEmpty()) {
+                Log.d(TAG, "Seeding initial products...")
+                
+                val defaultSupermarket = supermarketRepository.getDefaultSupermarket()
+                val supermarketId = defaultSupermarket?.id ?: 1L
+                
+                val products = initialProducts.map { seedProduct ->
+                    com.jose.listacompra.domain.model.Product(
+                        name = seedProduct.name,
+                        aisleId = seedProduct.aisleId,
+                        shoppingListId = defaultList.id,
+                        supermarketId = supermarketId,
+                        quantity = seedProduct.quantity,
+                        estimatedPrice = seedProduct.price,
+                        finalPrice = seedProduct.price,
+                        notes = seedProduct.notes ?: "",
+                        isPurchased = false
+                    )
+                }
+                
+                products.forEach { product ->
+                    productRepository.insertProduct(product)
+                }
+                
+                Log.d(TAG, "Inserted ${products.size} products to default list")
+            }
         }
     }
 
