@@ -14,6 +14,10 @@
 | `feature/supermarket-tabs` | Pestañas supermercados | ✅ Listo |
 | `feature/seed` | 20 productos de ejemplo | ✅ Listo |
 | `feature/microphone` | Micrófono en TopBar + voz | ✅ Listo |
+| `feature/theme-toggle-drawer` | Toggle tema en drawer | ✅ Listo |
+| `feature/all-ui-complete` | **INTEGRACIÓN** (microphone + drawer) | ✅ Listo |
+
+> **Nota:** `main` ya tiene mergeadas: grid-collapse, supermarket-tabs, seed, dialogs-enhanced, product-card-enhanced
 
 ---
 
