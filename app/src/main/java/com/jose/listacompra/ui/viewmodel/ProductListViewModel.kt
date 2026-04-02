@@ -123,8 +123,25 @@ class ProductListViewModel @Inject constructor(
 
     private suspend fun loadOffers() {
         try {
-            val offerList = offerRepository.getAllOffers()
+            var offerList = offerRepository.getAllOffers()
+            
+            // Si no hay ofertas, crear las predefinidas
+            if (offerList.isEmpty()) {
+                Log.w(TAG, "No offers found, seeding default offers...")
+                val defaultOffers = listOf(
+                    com.jose.listacompra.domain.model.Offer(1, "3x2", "3x2", "Compra 3 y paga 2", true, "price * 2 / 3"),
+                    com.jose.listacompra.domain.model.Offer(2, "2x1", "2x1", "Compra 2 y paga 1", true, "price / 2"),
+                    com.jose.listacompra.domain.model.Offer(3, "2nd_50", "2ª -50%", "Segunda unidad al 50%", true, "price * 1.5"),
+                    com.jose.listacompra.domain.model.Offer(4, "2nd_70", "2ª -70%", "Segunda unidad al 30%", true, "price * 1.3"),
+                    com.jose.listacompra.domain.model.Offer(5, "4x3", "4x3", "Compra 4 y paga 3", true, "price * 3 / 4")
+                )
+                offerRepository.insertAll(defaultOffers)
+                offerList = defaultOffers
+                Log.d(TAG, "Inserted ${defaultOffers.size} default offers")
+            }
+            
             _uiState.update { it.copy(offers = offerList) }
+            Log.d(TAG, "Loaded ${offerList.size} offers")
         } catch (e: Exception) {
             Log.e(TAG, "Error loading offers", e)
         }

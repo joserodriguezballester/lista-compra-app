@@ -49,7 +49,7 @@ import com.jose.listacompra.data.local.entities.SupermarketEntity
         ArticuloSupermarketDefaultEntity::class,
         CategorySupermarketOrderEntity::class  // NUEVA
     ],
-    version = 12,  // Incrementado
+    version = 13,  // Subido para forzar recreación con ofertas
     exportSchema = false
 )
 @TypeConverters(Converters::class)
