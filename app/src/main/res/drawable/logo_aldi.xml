@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Aldi Logo - A estilizada naranja -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <!-- Fondo circular -->
+    <path
+        android:fillColor="#F7941D"
+        android:pathData="M24,24m-22,0a22,22 0,1 1,44 0a22,22 0,1 1,-44 0"/>
+    <!-- A estilizada -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M24,10L14,38H20L22,32H26L28,38H34L24,10"/>
+    <!-- Línea horizontal de la A -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M20,26H28L26,20H22Z"/>
+</vector>

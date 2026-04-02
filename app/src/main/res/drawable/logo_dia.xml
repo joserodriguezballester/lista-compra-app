@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dia Logo - D estilizada roja -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <!-- Fondo circular -->
+    <path
+        android:fillColor="#E30613"
+        android:pathData="M24,24m-22,0a22,22 0,1 1,44 0a22,22 0,1 1,-44 0"/>
+    <!-- D estilizada (gota/círculo) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M24,10C18,10 14,16 14,24C14,32 18,38 24,38C30,38 34,32 34,24C34,16 30,10 24,10"/>
+    <!-- Interior -->
+    <path
+        android:fillColor="#E30613"
+        android:pathData="M24,14C20,14 18,18 18,24C18,30 20,34 24,34C28,34 30,30 30,24C30,18 28,14 24,14"/>
+</vector>

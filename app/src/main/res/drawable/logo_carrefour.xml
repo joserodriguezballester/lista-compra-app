@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Carrefour Logo - C con diamante interior (simplificado) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <!-- Fondo circular -->
+    <path
+        android:fillColor="#004E9A"
+        android:pathData="M24,24m-22,0a22,22 0,1 1,44 0a22,22 0,1 1,-44 0"/>
+    <!-- C con forma de flechas/diamante (logo característico) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M24,8C14,8 8,14 8,24C8,34 14,40 24,40C34,40 40,34 40,28H32C32,32 28,34 24,34C18,34 14,30 14,24C14,18 18,14 24,14C28,14 32,16 32,20H40C40,14 34,8 24,8"/>
+    <!-- Diamante interior (elemento distintivo) -->
+    <path
+        android:fillColor="#E30613"
+        android:pathData="M24,20L28,24L24,28L20,24Z"/>
+</vector>

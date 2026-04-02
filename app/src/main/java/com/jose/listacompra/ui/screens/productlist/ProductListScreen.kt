@@ -1,16 +1,19 @@
 package com.jose.listacompra.ui.screens.productlist
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.jose.listacompra.domain.model.Product
@@ -124,11 +127,12 @@ fun ProductListScreen(
                             contentType = { "product" }
                         ) { product ->
                             val offer = uiState.offers.find { it.id == product.offerId }
-                            ProductCard(
+                            SwipeableProductCard(
                                 product = product,
                                 offer = offer,
                                 onClick = { productToEdit = product },
                                 onTogglePurchased = { viewModel.toggleProductPurchased(product) },
+                                onRemove = { viewModel.removeProduct(product) },
                                 modifier = Modifier.fillMaxWidth()
                             )
                         }
@@ -146,13 +150,14 @@ fun ProductListScreen(
             suggestions = uiState.articleSuggestions,
             onSearch = { query -> viewModel.searchArticles(query) },
             onDismiss = { showAddProductDialog = false },
-            onAdd = { name, quantity, aisleId, price, offerId ->
+            onAdd = { name, quantity, aisleId, price, offerId, notes ->
                 viewModel.addProduct(
                     name = name,
                     quantity = quantity,
                     aisleId = aisleId,
                     price = price,
-                    offerId = offerId
+                    offerId = offerId,
+                    notes = notes
                 )
                 showAddProductDialog = false
             }
@@ -229,4 +234,65 @@ private fun EmptyState(
             Text("Ir al catálogo")
         }
     }
+}
+
+/**
+ * Card de producto con swipe para eliminar
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SwipeableProductCard(
+    product: Product,
+    offer: com.jose.listacompra.domain.model.Offer?,
+    onClick: () -> Unit,
+    onTogglePurchased: () -> Unit,
+    onRemove: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val dismissState = rememberSwipeToDismissBoxState(
+        initialValue = SwipeToDismissBoxValue.Settled,
+        confirmValueChange = { newValue ->
+            if (newValue == SwipeToDismissBoxValue.EndToStart) {
+                onRemove()
+                true
+            } else {
+                false
+            }
+        },
+        positionalThreshold = { it * 0.5f }
+    )
+
+    SwipeToDismissBox(
+        state = dismissState,
+        modifier = modifier,
+        enableDismissFromStartToEnd = false,
+        enableDismissFromEndToStart = true,
+        backgroundContent = {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        color = MaterialTheme.colorScheme.errorContainer,
+                        shape = MaterialTheme.shapes.medium
+                    )
+                    .padding(horizontal = 16.dp),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Eliminar",
+                    tint = MaterialTheme.colorScheme.onErrorContainer
+                )
+            }
+        },
+        content = {
+            ProductCard(
+                product = product,
+                offer = offer,
+                onClick = onClick,
+                onTogglePurchased = onTogglePurchased,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    )
 }

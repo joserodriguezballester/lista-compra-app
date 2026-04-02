@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Lidl Logo - Círculo amarillo con barras azules -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <!-- Fondo circular amarillo -->
+    <path
+        android:fillColor="#FFE000"
+        android:pathData="M24,24m-22,0a22,22 0,1 1,44 0a22,22 0,1 1,-44 0"/>
+    <!-- Barras azules horizontales (patrón Lidl) -->
+    <path
+        android:fillColor="#0050AA"
+        android:pathData="M10,14H38V16H10Z"/>
+    <path
+        android:fillColor="#0050AA"
+        android:pathData="M10,18H38V20H10Z"/>
+    <path
+        android:fillColor="#0050AA"
+        android:pathData="M10,22H38V24H10Z"/>
+    <path
+        android:fillColor="#0050AA"
+        android:pathData="M10,26H38V28H10Z"/>
+    <path
+        android:fillColor="#0050AA"
+        android:pathData="M10,30H38V32H10Z"/>
+</vector>
