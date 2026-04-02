@@ -1,17 +1,9 @@
 package com.jose.listacompra.ui.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.jose.listacompra.domain.model.Supermarket
@@ -23,73 +15,44 @@ fun SupermarketBottomBar(
     onSupermarketSelected: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val selectedIndex = supermarkets.indexOfFirst { it.id == selectedSupermarketId }.coerceAtLeast(0)
+
     Surface(
         modifier = modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.surface,
         tonalElevation = 3.dp
     ) {
-        Row(
-            modifier = Modifier
-                .horizontalScroll(rememberScrollState())
-                .padding(horizontal = 8.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        PrimaryScrollableTabRow(
+            selectedTabIndex = selectedIndex,
+            modifier = Modifier.fillMaxWidth(),
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            edgePadding = 8.dp,
+            indicator = { tabPositions ->
+                if (selectedIndex < tabPositions.size) {
+                    TabRowDefaults.PrimaryIndicator(
+                        modifier = Modifier.tabIndicatorOffset(tabPositions[selectedIndex]),
+                        height = 3.dp,
+                        shape = MaterialTheme.shapes.small
+                    )
+                }
+            }
         ) {
             supermarkets.forEach { supermarket ->
-                SupermarketChip(
-                    supermarket = supermarket,
-                    isSelected = supermarket.id == selectedSupermarketId,
-                    onClick = { onSupermarketSelected(supermarket.id) }
+                Tab(
+                    selected = supermarket.id == selectedSupermarketId,
+                    onClick = { onSupermarketSelected(supermarket.id) },
+                    text = {
+                        Text(
+                            text = "${supermarket.emoji} ${supermarket.name}",
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    },
+                    selectedContentColor = MaterialTheme.colorScheme.primary,
+                    unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-        }
-    }
-}
-
-@Composable
-private fun SupermarketChip(
-    supermarket: Supermarket,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    val containerColor = if (isSelected) {
-        MaterialTheme.colorScheme.primaryContainer
-    } else {
-        MaterialTheme.colorScheme.surfaceVariant
-    }
-    
-    val contentColor = if (isSelected) {
-        MaterialTheme.colorScheme.onPrimaryContainer
-    } else {
-        MaterialTheme.colorScheme.onSurfaceVariant
-    }
-    
-    Surface(
-        modifier = Modifier
-            .clip(RoundedCornerShape(20.dp))
-            .selectable(
-                selected = isSelected,
-                onClick = onClick
-            ),
-        color = containerColor,
-        shape = RoundedCornerShape(20.dp)
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(
-                text = supermarket.emoji,
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Text(
-                text = supermarket.name,
-                style = MaterialTheme.typography.labelLarge,
-                color = contentColor,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
         }
     }
 }
