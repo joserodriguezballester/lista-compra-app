@@ -387,3 +387,14 @@ Diálogo: "¿Guardar en tu catálogo?"
 | B12 | **Editar sin autocompletado** | Diálogo editar no sugiere nombres |
 | B13 | **Selector ofertas NO VA** | Dropdown de ofertas no funciona |
 | B14 | **Cambiar color en drawer** | Se queda en navigation drawer, no hace nada |
+| B15 | **Logos PNG movidos** | Copiar capturas/ a drawable/ |
+
+---
+
+## 📝 NOTAS DEL USUARIO
+
+- "Diseño card ok, pero dejar checkbox siempre como si hubiera logo de supermercado (se muestra o no)"
+- "El total no lo calcula bien, pero en la precarga no los hace bien"
+- "No muestra la oferta (que tal ponerla donde va el logo, si hay logo este arriba y la oferta abajo con triangulo rojo si no cumple)"
+- "En editar no cumple sugerencia de nombre"
+- "Esta getSupermarketLogo que seguramente lo utilizaras en más sitios después (entre otros pestañas supermercados)"
