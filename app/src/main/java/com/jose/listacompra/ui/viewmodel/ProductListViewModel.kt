@@ -17,6 +17,7 @@ import com.jose.listacompra.domain.repository.IOfferRepository
 import com.jose.listacompra.domain.repository.IProductRepository
 import com.jose.listacompra.domain.repository.ISupermarketRepository
 import com.jose.listacompra.domain.usecase.list.GetDefaultListUseCase
+import com.jose.listacompra.domain.usecase.offers.CalculatePriceUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -52,7 +53,8 @@ class ProductListViewModel @Inject constructor(
     private val offerRepository: IOfferRepository,
     private val themePreferences: ThemePreferences,
     private val getDefaultListUseCase: GetDefaultListUseCase,
-    private val articuloRepository: IArticuloRepository
+    private val articuloRepository: IArticuloRepository,
+    private val calculatePriceUseCase: CalculatePriceUseCase
 ) : ViewModel() {
 
     private val TAG = "ProductListViewModel"
@@ -330,7 +332,7 @@ class ProductListViewModel @Inject constructor(
     }
 
     /**
-     * Calcula el precio final según la oferta aplicada
+     * Calcula el precio final usando CalculatePriceUseCase (Clean Architecture)
      */
     private fun calculateFinalPrice(
         quantity: Float,
@@ -338,39 +340,13 @@ class ProductListViewModel @Inject constructor(
         offerId: Long?
     ): Float? {
         if (unitPrice == null) return null
-        if (offerId == null) return unitPrice * quantity
-
-        val offer = _uiState.value.offers.find { it.id == offerId } ?: return unitPrice * quantity
-        val qty = quantity.toInt()
-
-        return when (offer.code) {
-            "3x2" -> {
-                val groups = qty / 3
-                val remainder = qty % 3
-                (groups * 2 + remainder) * unitPrice
-            }
-            "2x1" -> {
-                val groups = qty / 2
-                val remainder = qty % 2
-                (groups + remainder) * unitPrice
-            }
-            "2nd_50" -> {
-                val pairs = qty / 2
-                val remainder = qty % 2
-                pairs * (unitPrice * 1.5f) + remainder * unitPrice
-            }
-            "2nd_70" -> {
-                val pairs = qty / 2
-                val remainder = qty % 2
-                pairs * (unitPrice * 1.3f) + remainder * unitPrice
-            }
-            "4x3" -> {
-                val groups = qty / 4
-                val remainder = qty % 4
-                (groups * 3 + remainder) * unitPrice
-            }
-            else -> unitPrice * quantity
-        }
+        
+        val offerCode = if (offerId != null) {
+            _uiState.value.offers.find { it.id == offerId }?.code
+        } else null
+        
+        val result = calculatePriceUseCase(quantity, unitPrice, offerCode)
+        return result.finalPrice
     }
 
     /**

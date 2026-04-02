@@ -349,12 +349,31 @@ Diálogo: "¿Guardar en tu catálogo?"
 
 ## 🔧 PRÓXIMOS PASOS
 
-1. **Arreglar ProductCard** (B5, B6) - Layout imagen/checkbox arriba
+1. ~~**Arreglar ProductCard** (B5, B6)~~ ✅ Layout corregido
 2. **Arreglar scanner** (B1, B4) - Conectar botón con navegación
-3. **Verificar ofertas** (B2) - Comprobar si se muestran
-4. **Semilla con ofertas** (D1) - Productos de ejemplo con 3x2, 2x1...
+3. **Verificar ofertas** (B2) - Revisar por qué no se muestran
+4. ~~**Semilla con ofertas** (D1)~~ ✅ Hecho
 5. **Líneas en pestañas** (B8) - Divider visual entre supermercados
 6. **Decidir "cambiar color"** (B3) - Eliminar o dejar para usuarios
+
+---
+
+## 🏗️ REFACTORIZACIÓN ARQUITECTURA (2026-04-02)
+
+**Problema detectado:** Lógica duplicada de cálculo de precios.
+
+| Antes | Después |
+|-------|---------|
+| `calculateFinalPrice()` en ViewModel duplicaba lógica | Usa `CalculatePriceUseCase` |
+| `calculateTotal()` en ProductCard | ProductCard solo muestra datos del ViewModel |
+| `getSupermarketLogo()` en ProductCard | Movido a `SupermarketUtils.kt` |
+| `getCategoryEmoji()` en ProductCard | Movido a `OfferUtils.kt` |
+
+**Archivos nuevos creados:**
+- `ui/utils/SupermarketUtils.kt` - Funciones reutilizables de supermercados
+- `ui/utils/OfferUtils.kt` - Funciones de ofertas y categorías
+
+**Principio aplicado:** Clean Architecture - Una lógica, un lugar.
 
 ---
 

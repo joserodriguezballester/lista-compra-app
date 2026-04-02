@@ -20,6 +20,9 @@ import coil.compose.AsyncImage
 import com.jose.listacompra.R
 import com.jose.listacompra.domain.model.Product
 import com.jose.listacompra.domain.model.Offer
+import com.jose.listacompra.ui.utils.getSupermarketLogoRes
+import com.jose.listacompra.ui.utils.calculateOfferStatus
+import com.jose.listacompra.ui.utils.getCategoryEmoji
 
 @Composable
 fun ProductCard(
@@ -35,14 +38,9 @@ fun ProductCard(
         MaterialTheme.colorScheme.surface
     }
 
-    // Obtener logo de supermercado desde notas
-    val supermarketLogoRes = getSupermarketLogo(product.notes)
-
-    // Calcular si se cumple la oferta
+    val supermarketLogoRes = getSupermarketLogoRes(product.notes)
     val offerStatus = calculateOfferStatus(product.quantity, offer)
-
-    // Calcular total con oferta si aplica
-    val total = calculateTotal(product, offer, offerStatus)
+    val emoji = getCategoryEmoji(product.name)
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -56,7 +54,7 @@ fun ProductCard(
                 .fillMaxWidth()
                 .padding(8.dp)
         ) {
-            // FILA SUPERIOR: Imagen + Checkbox + (Logo u Oferta)
+            // FILA SUPERIOR: Imagen + Checkbox + (Logo/Oferta)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -78,21 +76,18 @@ fun ProductCard(
                             contentScale = ContentScale.Crop
                         )
                     } else {
-                        Text(
-                            text = getCategoryEmoji(product.name),
-                            fontSize = 28.sp
-                        )
+                        Text(text = emoji, fontSize = 28.sp)
                     }
                 }
 
-                // Checkbox (siempre visible y centrado)
+                // Checkbox (siempre visible)
                 Checkbox(
                     checked = product.isPurchased,
                     onCheckedChange = { onTogglePurchased() },
                     modifier = Modifier.size(36.dp)
                 )
 
-                // Columna derecha: Logo (si hay) + Oferta (si hay)
+                // Columna derecha: Logo + Oferta
                 Column(
                     horizontalAlignment = Alignment.End,
                     verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -123,13 +118,13 @@ fun ProductCard(
                         }
                     }
 
-                    // Oferta (si hay)
-                    if (offer != null && !product.isPurchased) {
+                    // Oferta (si hay) - SIEMPRE mostrar si offer != null
+                    if (offer != null) {
                         Surface(
                             shape = RoundedCornerShape(6.dp),
-                            color = if (offerStatus.needsMore) 
+                            color = if (offerStatus.needsMore && !product.isPurchased)
                                 MaterialTheme.colorScheme.errorContainer
-                            else 
+                            else
                                 MaterialTheme.colorScheme.primaryContainer
                         ) {
                             Row(
@@ -140,18 +135,25 @@ fun ProductCard(
                                     text = offer.name,
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (offerStatus.needsMore)
+                                    color = if (offerStatus.needsMore && !product.isPurchased)
                                         MaterialTheme.colorScheme.onErrorContainer
                                     else
                                         MaterialTheme.colorScheme.onPrimaryContainer
                                 )
-                                
-                                if (offerStatus.needsMore) {
+
+                                if (offerStatus.needsMore && !product.isPurchased) {
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Text(
                                         text = "⚠️+${offerStatus.remaining}",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.onErrorContainer
+                                    )
+                                } else if (!product.isPurchased) {
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = "✅",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
                                     )
                                 }
                             }
@@ -162,7 +164,6 @@ fun ProductCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // SECCIÓN DE TEXTO (abajo)
             // Nombre
             Text(
                 text = product.name,
@@ -185,9 +186,7 @@ fun ProductCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Cantidad y precio unitario
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
                         text = "${product.quantity.toInt()} uds",
                         style = MaterialTheme.typography.bodySmall,
@@ -203,11 +202,12 @@ fun ProductCard(
                     }
                 }
 
-                // Total (con descuento si oferta cumplida)
+                // Total - usar finalPrice del producto (ya calculado en ViewModel)
+                val total = product.finalPrice
                 if (total != null) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        // Si hay oferta cumplida, mostrar precio tachado
-                        if (offer != null && !offerStatus.needsMore && product.estimatedPrice != null) {
+                        // Si hay oferta cumplida, mostrar precio original tachado
+                        if (offer != null && !offerStatus.needsMore && product.estimatedPrice != null && !product.isPurchased) {
                             val originalTotal = product.estimatedPrice * product.quantity
                             if (originalTotal != total) {
                                 Text(
@@ -219,7 +219,7 @@ fun ProductCard(
                                 Spacer(modifier = Modifier.width(6.dp))
                             }
                         }
-                        
+
                         Text(
                             text = "${String.format("%.2f", total)} €",
                             style = MaterialTheme.typography.titleMedium,
@@ -230,106 +230,5 @@ fun ProductCard(
                 }
             }
         }
-    }
-}
-
-/**
- * Calcula el total aplicando la oferta si corresponde
- */
-private fun calculateTotal(product: Product, offer: Offer?, offerStatus: OfferStatus): Float? {
-    val unitPrice = product.estimatedPrice ?: return null
-    val qty = product.quantity.toInt()
-    
-    // Si ya tiene precio final guardado, usarlo
-    product.finalPrice?.let { return it }
-    
-    // Si no hay oferta o no se cumple, precio normal
-    if (offer == null || offerStatus.needsMore) {
-        return unitPrice * qty
-    }
-    
-    // Aplicar oferta
-    return when (offer.code) {
-        "3x2" -> unitPrice * 2 * (qty / 3) + unitPrice * (qty % 3)  // 3x2: paga 2 de cada 3
-        "2x1" -> unitPrice * (qty / 2) + unitPrice * (qty % 2)      // 2x1: paga 1 de cada 2
-        "2nd_50" -> unitPrice + (unitPrice * 0.5f * (qty - 1))       // 2ª al 50%
-        "2nd_70" -> unitPrice + (unitPrice * 0.3f * (qty - 1))       // 2ª al 30%
-        "4x3" -> unitPrice * 3 * (qty / 4) + unitPrice * (qty % 4)  // 4x3: paga 3 de cada 4
-        else -> unitPrice * qty
-    }
-}
-
-/**
- * Obtiene emoji según el nombre del producto
- */
-private fun getCategoryEmoji(name: String): String {
-    val lower = name.lowercase()
-    return when {
-        lower.contains("leche") -> "🥛"
-        lower.contains("pan") -> "🍞"
-        lower.contains("huevo") -> "🥚"
-        lower.contains("yogur") -> "🥛"
-        lower.contains("queso") -> "🧀"
-        lower.contains("tomate") -> "🍅"
-        lower.contains("platano", "plátano") -> "🍌"
-        lower.contains("manzana") -> "🍎"
-        lower.contains("naranja") -> "🍊"
-        lower.contains("pollo") -> "🍗"
-        lower.contains("carne") -> "🥩"
-        lower.contains("pescado") -> "🐟"
-        lower.contains("galleta") -> "🍪"
-        lower.contains("café") -> "☕"
-        lower.contains("aceite") -> "🫒"
-        lower.contains("agua") -> "💧"
-        lower.contains("cerveza") -> "🍺"
-        lower.contains("vino") -> "🍷"
-        lower.contains("detergente") -> "🧴"
-        lower.contains("papel") -> "🧻"
-        lower.contains("jabón") -> "🧼"
-        else -> "📦"
-    }
-}
-
-/**
- * Calcula el estado de cumplimiento de una oferta
- */
-private fun calculateOfferStatus(quantity: Float, offer: Offer?): OfferStatus {
-    if (offer == null) return OfferStatus(needsMore = false, remaining = 0)
-    
-    val qty = quantity.toInt()
-    val minQty = when (offer.code) {
-        "3x2" -> 3
-        "2x1" -> 2
-        "2nd_50" -> 2
-        "2nd_70" -> 2
-        "4x3" -> 4
-        else -> 1
-    }
-    
-    val needsMore = qty < minQty
-    val remaining = if (needsMore) minQty - qty else 0
-    
-    return OfferStatus(needsMore = needsMore, remaining = remaining)
-}
-
-private data class OfferStatus(
-    val needsMore: Boolean,
-    val remaining: Int
-)
-
-/**
- * Obtiene el recurso del logo según el texto en notas
- */
-@Composable
-private fun getSupermarketLogo(notes: String): Int? {
-    val lowerNotes = notes.lowercase()
-    return when {
-        lowerNotes.contains("mercadona") -> R.drawable.logo_mercadona
-        lowerNotes.contains("carrefour") -> R.drawable.logo_carrefour
-        lowerNotes.contains("lidl") -> R.drawable.logo_lidl
-        lowerNotes.contains("aldi") -> R.drawable.logo_aldi
-        lowerNotes.contains("dia") -> R.drawable.logo_dia
-        lowerNotes.contains("consum") -> R.drawable.logo_consum
-        else -> null
     }
 }
