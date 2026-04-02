@@ -48,164 +48,206 @@ fun ProductCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         onClick = onClick
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(8.dp)
         ) {
-            // 1. Imagen (48.dp)
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
-                contentAlignment = Alignment.Center
+            // FILA SUPERIOR: Imagen + Checkbox + Logo
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                if (!product.photoUri.isNullOrEmpty()) {
-                    AsyncImage(
-                        model = product.photoUri,
-                        contentDescription = product.name,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                } else {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_photo_loading),
-                        contentDescription = "Sin foto",
-                        modifier = Modifier.size(24.dp),
-                        tint = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            // 2. Checkbox cuadrado
-            Checkbox(
-                checked = product.isPurchased,
-                onCheckedChange = { onTogglePurchased() },
-                modifier = Modifier.size(32.dp)
-            )
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            // 3. Info del producto
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.Center
-            ) {
-                // Nombre en negrita
-                Text(
-                    text = product.name,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    textDecoration = if (product.isPurchased) TextDecoration.LineThrough else null,
-                    color = if (product.isPurchased)
-                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                    else
-                        MaterialTheme.colorScheme.onSurface
-                )
-
-                // Oferta (si hay)
-                if (offer != null && !product.isPurchased) {
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Text(
-                            text = "🏷️ ${offer.name}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Medium
+                // Imagen del producto (64dp)
+                Box(
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (!product.photoUri.isNullOrEmpty()) {
+                        AsyncImage(
+                            model = product.photoUri,
+                            contentDescription = product.name,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
                         )
-                        
-                        // Estado de cumplimiento
-                        if (offerStatus.needsMore) {
-                            Text(
-                                text = "⚠️ +${offerStatus.remaining}",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.error
-                            )
-                        } else {
-                            Text(
-                                text = "✅",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
+                    } else {
+                        // Placeholder con emoji según categoría
+                        Text(
+                            text = getCategoryEmoji(product.name),
+                            fontSize = 28.sp
+                        )
                     }
                 }
 
-                // Cantidad | Precio | Total
+                // Checkbox (centrado)
+                Checkbox(
+                    checked = product.isPurchased,
+                    onCheckedChange = { onTogglePurchased() },
+                    modifier = Modifier.size(36.dp)
+                )
+
+                // Logo supermercado (si hay)
+                if (supermarketLogoRes != null) {
+                    Surface(
+                        modifier = Modifier.size(32.dp),
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.surface
+                    ) {
+                        Icon(
+                            painter = painterResource(id = supermarketLogoRes),
+                            contentDescription = "Supermercado",
+                            modifier = Modifier.padding(4.dp),
+                            tint = androidx.compose.ui.graphics.Color.Unspecified
+                        )
+                    }
+                } else if (product.notes.isNotBlank()) {
+                    // Si no hay logo pero hay notas, mostrar indicador
+                    Surface(
+                        modifier = Modifier.size(32.dp),
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text("📝", fontSize = 14.sp)
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // SECCIÓN DE TEXTO (abajo)
+            // Nombre
+            Text(
+                text = product.name,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                textDecoration = if (product.isPurchased) TextDecoration.LineThrough else null,
+                color = if (product.isPurchased)
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                else
+                    MaterialTheme.colorScheme.onSurface
+            )
+
+            // Oferta (si hay)
+            if (offer != null && !product.isPurchased) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    // Cantidad
+                    // Badge de oferta
+                    Surface(
+                        shape = RoundedCornerShape(4.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer
+                    ) {
+                        Text(
+                            text = "🏷️ ${offer.name}",
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+
+                    // Estado de cumplimiento
+                    if (offerStatus.needsMore) {
+                        Surface(
+                            shape = RoundedCornerShape(4.dp),
+                            color = MaterialTheme.colorScheme.errorContainer
+                        ) {
+                            Text(
+                                text = "⚠️ Necesitas +${offerStatus.remaining}",
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                        }
+                    } else {
+                        Text(
+                            text = "✅ Oferta aplicada",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            }
+
+            // Precio y cantidad
+            Spacer(modifier = Modifier.height(6.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Cantidad y precio unitario
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     Text(
                         text = "${product.quantity.toInt()} uds",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
-                    // Precio unitario
-                    val unitPrice = product.estimatedPrice
-                    if (unitPrice != null) {
+                    product.estimatedPrice?.let { price ->
                         Text(
-                            text = "${String.format("%.2f", unitPrice)} €/ud",
+                            text = "${String.format("%.2f", price)} €/ud",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-
-                    // Total
-                    val total = product.finalPrice ?: (product.estimatedPrice?.let { it * product.quantity })
-                    if (total != null) {
-                        Text(
-                            text = "${String.format("%.2f", total)} €",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
                 }
-                
-                // Notas (si hay y contiene info de supermercado)
-                if (product.notes.isNotBlank() && supermarketLogoRes == null) {
-                    Spacer(modifier = Modifier.height(2.dp))
+
+                // Total
+                val total = product.finalPrice ?: (product.estimatedPrice?.let { it * product.quantity })
+                if (total != null) {
                     Text(
-                        text = product.notes,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-            }
-
-            // Logo de supermercado preferido
-            if (supermarketLogoRes != null) {
-                Surface(
-                    modifier = Modifier.size(28.dp),
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.surface
-                ) {
-                    Icon(
-                        painter = painterResource(id = supermarketLogoRes),
-                        contentDescription = "Supermercado preferido",
-                        modifier = Modifier
-                            .padding(4.dp)
-                            .size(20.dp),
-                        tint = androidx.compose.ui.graphics.Color.Unspecified
+                        text = "${String.format("%.2f", total)} €",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
         }
+    }
+}
+
+/**
+ * Obtiene emoji según el nombre del producto
+ */
+private fun getCategoryEmoji(name: String): String {
+    val lower = name.lowercase()
+    return when {
+        lower.contains("leche") -> "🥛"
+        lower.contains("pan") -> "🍞"
+        lower.contains("huevo") -> "🥚"
+        lower.contains("yogur") -> "🥛"
+        lower.contains("queso") -> "🧀"
+        lower.contains("tomate") -> "🍅"
+        lower.contains("platano", "plátano") -> "🍌"
+        lower.contains("manzana") -> "🍎"
+        lower.contains("naranja") -> "🍊"
+        lower.contains("pollo") -> "🍗"
+        lower.contains("carne") -> "🥩"
+        lower.contains("pescado") -> "🐟"
+        lower.contains("galleta") -> "🍪"
+        lower.contains("café") -> "☕"
+        lower.contains("aceite") -> "🫒"
+        lower.contains("agua") -> "💧"
+        lower.contains("cerveza") -> "🍺"
+        lower.contains("vino") -> "🍷"
+        lower.contains("detergente") -> "🧴"
+        lower.contains("papel") -> "🧻"
+        lower.contains("jabón") -> "🧼"
+        else -> "📦"
     }
 }
 

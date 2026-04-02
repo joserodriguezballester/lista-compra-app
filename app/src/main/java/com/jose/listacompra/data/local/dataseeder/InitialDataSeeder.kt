@@ -3,9 +3,11 @@ package com.jose.listacompra.data.local.dataseeder
 import android.util.Log
 import com.jose.listacompra.data.repository.ShoppingListRepository
 import com.jose.listacompra.domain.model.Aisle
+import com.jose.listacompra.domain.model.Offer
 import com.jose.listacompra.domain.repository.IAisleRepository
 import com.jose.listacompra.domain.repository.IArticuloRepository
 import com.jose.listacompra.domain.repository.ICategoryRepository
+import com.jose.listacompra.domain.repository.IOfferRepository
 import com.jose.listacompra.domain.repository.IProductRepository
 import com.jose.listacompra.domain.repository.IShoppingListRepository
 import com.jose.listacompra.domain.repository.ISupermarketRepository
@@ -25,7 +27,8 @@ class InitialDataSeeder @Inject constructor(
     private val aisleRepository: IAisleRepository,
     private val articuloRepository: IArticuloRepository,
     private val shoppingListRepository: IShoppingListRepository,
-    private val productRepository: IProductRepository
+    private val productRepository: IProductRepository,
+    private val offerRepository: IOfferRepository
 ) {
 
     companion object {
@@ -41,6 +44,7 @@ class InitialDataSeeder @Inject constructor(
         // ORDEN CRÍTICO: Primero los padres, luego los hijos
         seedSupermarketsIfNeeded()
         seedCategoriesIfNeeded()
+        seedOffersIfNeeded()
         seedAislesIfNeeded()
         seedShoppingListIfNeeded()
         seedCatalogIfNeeded()
@@ -70,6 +74,24 @@ class InitialDataSeeder @Inject constructor(
             val categoryList = categories.map { it.toDomain() }
             categoryRepository.insertAll(categoryList)
             Log.d(TAG, "Inserted ${categoryList.size} categories")
+        }
+    }
+
+    /**
+     * Inserta ofertas predefinidas si la tabla está vacía
+     */
+    suspend fun seedOffersIfNeeded() {
+        if (offerRepository.getOfferCount() == 0) {
+            Log.d(TAG, "Seeding default offers...")
+            val defaultOffers = listOf(
+                Offer(1, "3x2", "3x2", "Compra 3 y paga 2", true, "price * 2 / 3"),
+                Offer(2, "2x1", "2x1", "Compra 2 y paga 1", true, "price / 2"),
+                Offer(3, "2nd_50", "2ª -50%", "Segunda unidad al 50%", true, "price * 1.5"),
+                Offer(4, "2nd_70", "2ª -70%", "Segunda unidad al 30%", true, "price * 1.3"),
+                Offer(5, "4x3", "4x3", "Compra 4 y paga 3", true, "price * 3 / 4")
+            )
+            offerRepository.insertAll(defaultOffers)
+            Log.d(TAG, "Inserted ${defaultOffers.size} default offers")
         }
     }
 
@@ -141,6 +163,7 @@ class InitialDataSeeder @Inject constructor(
                         estimatedPrice = seedProduct.price,
                         finalPrice = seedProduct.price,
                         notes = seedProduct.notes ?: "",
+                        offerId = seedProduct.offerId,
                         isPurchased = false
                     )
                 }
