@@ -355,3 +355,16 @@ Diálogo: "¿Guardar en tu catálogo?"
 4. **Semilla con ofertas** (D1) - Productos de ejemplo con 3x2, 2x1...
 5. **Líneas en pestañas** (B8) - Divider visual entre supermercados
 6. **Decidir "cambiar color"** (B3) - Eliminar o dejar para usuarios
+
+---
+
+## 🐛 NUEVOS BUGS (Testing 15:46)
+
+| # | Bug | Descripción |
+|---|-----|-------------|
+| B9 | **Checkbox posición** | Dejar siempre en misma posición (como si hubiera logo) |
+| B10 | **Total mal calculado** | No calcula correctamente el precio total |
+| B11 | **Oferta no se muestra** | Poner donde va logo: logo arriba, oferta abajo con ⚠️ si no cumple |
+| B12 | **Editar sin autocompletado** | Diálogo editar no sugiere nombres |
+| B13 | **Selector ofertas NO VA** | Dropdown de ofertas no funciona |
+| B14 | **Cambiar color en drawer** | Se queda en navigation drawer, no hace nada |
