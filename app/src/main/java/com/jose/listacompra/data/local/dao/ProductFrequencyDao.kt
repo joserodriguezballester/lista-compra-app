@@ -28,4 +28,8 @@ interface ProductFrequencyDao {
 
     @Query("DELETE FROM product_frequency WHERE productName = :name")
     suspend fun deleteFrequency(name: String)
+    
+    // Métodos adicionales para historial
+    @Query("SELECT * FROM product_frequency WHERE productName LIKE '%' || :query || '%' ORDER BY timesPurchased DESC LIMIT 10")
+    suspend fun findSuggestions(query: String): List<ProductFrequencyEntity>
 }

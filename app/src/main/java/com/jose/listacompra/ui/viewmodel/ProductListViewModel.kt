@@ -268,7 +268,7 @@ class ProductListViewModel @Inject constructor(
     fun toggleProductPurchased(product: Product) {
         viewModelScope.launch {
             try {
-                toggleProductPurchasedUseCase(product.id, !product.isPurchased)
+                toggleProductPurchasedUseCase(product)
             } catch (e: Exception) {
                 Log.e(TAG, "Error toggling purchased", e)
             }

@@ -14,7 +14,7 @@ fun getCategoryEmoji(name: String): String {
         lower.contains("yogur") -> "🥛"
         lower.contains("queso") -> "🧀"
         lower.contains("tomate") -> "🍅"
-        lower.contains("platano", "plátano") -> "🍌"
+        lower.contains("platano") || lower.contains("plátano") -> "🍌"
         lower.contains("manzana") -> "🍎"
         lower.contains("naranja") -> "🍊"
         lower.contains("pollo") -> "🍗"

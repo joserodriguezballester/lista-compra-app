@@ -1,10 +1,8 @@
 package com.jose.listacompra.ui.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
@@ -22,7 +20,6 @@ fun SupermarketBottomBar(
 ) {
     val selectedIndex = supermarkets.indexOfFirst { it.id == selectedSupermarketId }.coerceAtLeast(0)
     
-    // Extraer colores fuera del drawBehind
     val dividerColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
     val surfaceColor = MaterialTheme.colorScheme.surface
     val primaryColor = MaterialTheme.colorScheme.primary
@@ -75,7 +72,6 @@ fun SupermarketBottomBar(
                     selectedContentColor = primaryColor,
                     unselectedContentColor = onSurfaceVariantColor,
                     modifier = Modifier.drawBehind {
-                        // Línea divisoria vertical entre tabs
                         if (index < supermarkets.size - 1) {
                             val strokeWidth = 1.dp.toPx()
                             drawLine(

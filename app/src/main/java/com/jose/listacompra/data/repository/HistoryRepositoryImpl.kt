@@ -9,7 +9,6 @@ import com.jose.listacompra.data.local.dao.PurchaseHistoryDao
 import com.jose.listacompra.data.local.entities.ProductFrequencyEntity
 import com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity
 import com.jose.listacompra.data.local.entities.PurchaseHistoryEntity
-import com.jose.listacompra.domain.model.Purchase
 import com.jose.listacompra.domain.model.SpendingStats
 import com.jose.listacompra.domain.repository.IHistoryRepository
 import javax.inject.Inject
@@ -24,43 +23,16 @@ class HistoryRepositoryImpl @Inject constructor(
     private val aisleDao: AisleDao
 ) : IHistoryRepository {
 
-    override suspend fun savePurchaseTransaction(purchase: Purchase): Long {
-        // Guardar la compra principal
-        val purchaseEntity = PurchaseHistoryEntity(
-            supermarket = purchase.supermarket,
-            fecha = purchase.fecha.time,
-            total = purchase.total
-        )
-        val purchaseId = purchaseHistoryDao.insertPurchaseHistory(purchaseEntity)
-
-        // Guardar cada producto con su precio
-        purchase.products.forEach { product ->
-            if (product.finalPrice != null) {
-                val priceHistory = ProductPriceHistoryEntity(
-                    purchaseId = purchaseId,
-                    productName = product.name.lowercase(),
-                    price = product.finalPrice!!,
-                    quantity = product.quantity.toInt(),
-                    aisle = null,
-                    fecha = purchase.fecha.time
-                )
-                priceHistoryDao.insertPriceHistory(priceHistory)
-            }
-        }
-
-        return purchaseId
-    }
-
     override suspend fun getFrequency(productName: String): ProductFrequencyEntity? {
-        return frequencyDao.getFrequency(productName)
+        return frequencyDao.getFrequencyForProduct(productName)
     }
 
     override suspend fun updateFrequency(entity: ProductFrequencyEntity) {
-        frequencyDao.insertFrequency(entity)
+        frequencyDao.insertOrUpdateFrequency(entity)
     }
 
     override suspend fun insertFrequency(entity: ProductFrequencyEntity) {
-        frequencyDao.insertFrequency(entity)
+        frequencyDao.insertOrUpdateFrequency(entity)
     }
 
     override suspend fun getPriceHistory(productName: String): List<ProductPriceHistoryEntity> {
@@ -82,10 +54,9 @@ class HistoryRepositoryImpl @Inject constructor(
     override suspend fun getSpendingStats(): SpendingStats {
         // TODO: Implementar estadísticas de gasto
         return SpendingStats(
+            averagePerPurchase = 0f,
             totalSpent = 0f,
-            averagePerTrip = 0f,
-            mostFrequentProducts = emptyList(),
-            monthlySpending = emptyMap()
+            totalPurchasesCount = 0
         )
     }
 }
