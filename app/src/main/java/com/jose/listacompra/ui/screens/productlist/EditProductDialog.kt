@@ -314,7 +314,7 @@ fun EditProductDialog(
                         name = name,
                         quantity = qty,
                         estimatedPrice = price,
-                        aisleId = selectedAisleId,
+                        aisleId = selectedAisleId ?: 0L,
                         notes = notes,
                         offerId = selectedOfferId,
                         photoUri = photoUri?.toString()
