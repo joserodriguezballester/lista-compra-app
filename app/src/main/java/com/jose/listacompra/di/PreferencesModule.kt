@@ -52,8 +52,4 @@ abstract class PreferencesRepositoryModule {
         articuloRepositoryImpl: ArticuloRepositoryImpl
     ): IArticuloRepository
 
-    @Binds
-    @Singleton
-    abstract fun bindHistoryRepository(impl: com.jose.listacompra.data.repository.HistoryRepositoryImpl): com.jose.listacompra.domain.repository.IHistoryRepository
-
 }
