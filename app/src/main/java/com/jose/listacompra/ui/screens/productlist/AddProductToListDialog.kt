@@ -104,6 +104,21 @@ fun AddProductToListDialog(
             showSuggestions = false
         }
     }
+    
+    // Auto-seleccionar pasillo del historial si coincide exactamente
+    LaunchedEffect(historySuggestions, name) {
+        val normalizedName = name.lowercase().trim()
+        val matchingHistory = historySuggestions.find { 
+            it.productName.equals(normalizedName, ignoreCase = true) 
+        }
+        
+        matchingHistory?.let { h ->
+            if (h.lastAisleId > 0 && selectedAisleId == null) {
+                selectedAisleId = h.lastAisleId
+                Log.d(TAG, "Auto-seleccionado pasillo ${h.lastAisleId} para '$name'")
+            }
+        }
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
