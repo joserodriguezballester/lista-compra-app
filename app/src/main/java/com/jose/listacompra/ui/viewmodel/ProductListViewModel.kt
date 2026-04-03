@@ -32,7 +32,7 @@ data class ProductListUiState(
     val totalPrice: Float = 0f,
     val totalItems: Int = 0,
     val purchasedItems: Int = 0,
-    val isLoading: Boolean = false,
+    val isLoading: Boolean = true,
     val error: String? = null,
     val supermarkets: List<Supermarket> = emptyList(),
     val selectedSupermarketId: Long? = null,
@@ -80,18 +80,53 @@ class ProductListViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     init {
+        loadInitialData()
+    }
+
+    private fun loadInitialData() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            
             try {
                 currentListId = getDefaultListUseCase()
                 Log.d(TAG, "Using list id: $currentListId")
-
-                loadSupermarkets()
-                loadCategories()
-                loadOffers()
                 
-                _uiState.update { it.copy(isLoading = false) }
+                // Cargar supermercados
+                getAllSupermarketsFlowUseCase()
+                    .catch { e -> Log.e(TAG, "Error loading supermarkets", e) }
+                    .collect { supermarketList ->
+                        _uiState.update { state ->
+                            state.copy(
+                                supermarkets = supermarketList,
+                                selectedSupermarketId = state.selectedSupermarketId ?: supermarketList.firstOrNull()?.id,
+                                isLoading = false
+                            )
+                        }
+                        
+                        // Cargar pasillos del primer supermercado
+                        supermarketList.firstOrNull()?.id?.let { supermarketId ->
+                            loadAislesAndProducts(supermarketId)
+                        }
+                    }
+                
+                // Cargar categorías en paralelo
+                launch {
+                    getAllCategoriesFlowUseCase()
+                        .catch { e -> Log.e(TAG, "Error loading categories", e) }
+                        .collect { categoryList ->
+                            _uiState.update { it.copy(categories = categoryList) }
+                        }
+                }
+                
+                // Cargar ofertas
+                launch {
+                    try {
+                        val offerList = getAllOffersUseCase()
+                        _uiState.update { it.copy(offers = offerList) }
+                        Log.d(TAG, "Loaded ${offerList.size} offers")
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error loading offers", e)
+                    }
+                }
+                
             } catch (e: Exception) {
                 Log.e(TAG, "Error initializing", e)
                 _uiState.update { it.copy(isLoading = false, error = e.message) }
@@ -99,85 +134,41 @@ class ProductListViewModel @Inject constructor(
         }
     }
 
-    private suspend fun loadSupermarkets() {
-        try {
-            getAllSupermarketsFlowUseCase().collect { supermarketList ->
-                _uiState.update { 
-                    it.copy(
-                        supermarkets = supermarketList,
-                        selectedSupermarketId = it.selectedSupermarketId ?: supermarketList.firstOrNull()?.id
-                    )
-                }
-                
-                supermarketList.firstOrNull()?.id?.let { supermarketId ->
-                    loadAisles(supermarketId)
-                    loadProductsForSupermarket(supermarketId)
-                }
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error loading supermarkets", e)
-        }
-    }
-
-    private suspend fun loadCategories() {
-        try {
-            getAllCategoriesFlowUseCase().collect { categoryList ->
-                _uiState.update { it.copy(categories = categoryList) }
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error loading categories", e)
-        }
-    }
-
-    private suspend fun loadOffers() {
-        try {
-            val offerList = getAllOffersUseCase()
-            _uiState.update { it.copy(offers = offerList) }
-            Log.d(TAG, "Loaded ${offerList.size} offers")
-        } catch (e: Exception) {
-            Log.e(TAG, "Error loading offers", e)
-        }
-    }
-
-    private suspend fun loadAisles(supermarketId: Long) {
+    private suspend fun loadAislesAndProducts(supermarketId: Long) {
         try {
             val aisleList = getAislesBySupermarketUseCase(supermarketId)
             _uiState.update { it.copy(aisles = aisleList) }
-            Log.d(TAG, "Loaded ${aisleList.size} aisles")
-        } catch (e: Exception) {
-            Log.e(TAG, "Error loading aisles", e)
-        }
-    }
-
-    private fun loadProductsForSupermarket(supermarketId: Long) {
-        viewModelScope.launch {
-            try {
-                getProductsByListUseCase(currentListId, supermarketId).collect { productList ->
-                    val aisleMap = productList.groupBy { product ->
-                        _uiState.value.aisles.find { it.id == product.aisleId } 
-                            ?: Aisle(id = 0, name = "Sin pasillo", emoji = "📦", supermarketId = 0)
+            Log.d(TAG, "Loaded ${aisleList.size} aisles for supermarket $supermarketId")
+            
+            // Cargar productos
+            launch {
+                getProductsByListUseCase(currentListId, supermarketId)
+                    .catch { e -> Log.e(TAG, "Error loading products", e) }
+                    .collect { productList ->
+                        val aisleMap = productList.groupBy { product ->
+                            aisleList.find { it.id == product.aisleId } 
+                                ?: Aisle(id = 0, name = "Sin pasillo", emoji = "📦", supermarketId = 0)
+                        }
+                        
+                        _uiState.update { state ->
+                            state.copy(
+                                productsByAisle = aisleMap,
+                                totalItems = productList.size,
+                                purchasedItems = productList.count { it.isPurchased },
+                                totalPrice = productList.sumOf { (it.finalPrice ?: it.estimatedPrice ?: 0f).toDouble() }.toFloat()
+                            )
+                        }
                     }
-                    
-                    _uiState.update { state ->
-                        state.copy(
-                            productsByAisle = aisleMap,
-                            totalItems = productList.size,
-                            purchasedItems = productList.count { it.isPurchased },
-                            totalPrice = productList.sumOf { (it.finalPrice ?: it.estimatedPrice ?: 0f).toDouble() }.toFloat()
-                        )
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error loading products", e)
             }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error loading aisles and products", e)
         }
     }
 
     fun selectSupermarket(supermarketId: Long) {
         viewModelScope.launch {
             _uiState.update { it.copy(selectedSupermarketId = supermarketId) }
-            loadAisles(supermarketId)
-            loadProductsForSupermarket(supermarketId)
+            loadAislesAndProducts(supermarketId)
         }
     }
 
@@ -217,7 +208,6 @@ class ProductListViewModel @Inject constructor(
                     price = price,
                     supermarketId = selectedSupermarketId
                 )
-                Log.d(TAG, "History updated: $name -> aisle $selectedAisleId")
                 
                 if (price != null) {
                     savePriceHistoryUseCase(
@@ -225,7 +215,6 @@ class ProductListViewModel @Inject constructor(
                         price = price,
                         quantity = quantity.toInt()
                     )
-                    Log.d(TAG, "Price history saved: $name -> $price €")
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error adding product", e)
@@ -299,8 +288,6 @@ class ProductListViewModel @Inject constructor(
                             historySuggestions = historyResults
                         )
                     }
-                    
-                    Log.d(TAG, "Found ${catalogResults.size} catalog + ${historyResults.size} history for '$query'")
                 } else {
                     _uiState.update { 
                         it.copy(
