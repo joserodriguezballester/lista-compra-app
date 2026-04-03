@@ -3,48 +3,39 @@ package com.jose.listacompra.ui.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.jose.listacompra.data.local.dao.PriceStats
-import com.jose.listacompra.data.local.entities.ProductFrequencyEntity
-import com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity
 import com.jose.listacompra.data.preferences.ThemePreferences
 import com.jose.listacompra.domain.model.Aisle
-import com.jose.listacompra.domain.model.Articulo
-import com.jose.listacompra.domain.model.Category
-import com.jose.listacompra.domain.model.Offer
 import com.jose.listacompra.domain.model.Product
-import com.jose.listacompra.domain.model.Supermarket
 import com.jose.listacompra.domain.usecase.aisle.GetAislesBySupermarketUseCase
 import com.jose.listacompra.domain.usecase.articulo.SearchArticulosUseCase
 import com.jose.listacompra.domain.usecase.category.GetAllCategoriesFlowUseCase
-import com.jose.listacompra.domain.usecase.history.*
+import com.jose.listacompra.domain.usecase.history.GetPriceHistoryUseCase
+import com.jose.listacompra.domain.usecase.history.GetPriceStatsUseCase
+import com.jose.listacompra.domain.usecase.history.GetProductHistorySuggestionsUseCase
+import com.jose.listacompra.domain.usecase.history.SavePriceHistoryUseCase
+import com.jose.listacompra.domain.usecase.history.UpdateProductFrequencyUseCase
 import com.jose.listacompra.domain.usecase.list.GetDefaultListUseCase
 import com.jose.listacompra.domain.usecase.offers.CalculatePriceUseCase
 import com.jose.listacompra.domain.usecase.offers.GetAllOffersUseCase
-import com.jose.listacompra.domain.usecase.product.*
+import com.jose.listacompra.domain.usecase.product.AddProductUseCase
+import com.jose.listacompra.domain.usecase.product.DeleteProductUseCase
+import com.jose.listacompra.domain.usecase.product.DeletePurchasedProductsUseCase
+import com.jose.listacompra.domain.usecase.product.GetProductsByListUseCase
+import com.jose.listacompra.domain.usecase.product.ToggleProductPurchasedUseCase
+import com.jose.listacompra.domain.usecase.product.UpdateProductUseCase
 import com.jose.listacompra.domain.usecase.supermarket.GetAllSupermarketsFlowUseCase
+import com.jose.listacompra.ui.state.ProductListUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-
-data class ProductListUiState(
-    val productsByAisle: Map<Aisle, List<Product>> = emptyMap(),
-    val totalPrice: Float = 0f,
-    val totalItems: Int = 0,
-    val purchasedItems: Int = 0,
-    val isLoading: Boolean = true,
-    val error: String? = null,
-    val supermarkets: List<Supermarket> = emptyList(),
-    val selectedSupermarketId: Long? = null,
-    val aisles: List<Aisle> = emptyList(),
-    val categories: List<Category> = emptyList(),
-    val offers: List<Offer> = emptyList(),
-    val articleSuggestions: List<Articulo> = emptyList(),
-    val collapsedAisles: Set<Long> = emptySet(),
-    val historySuggestions: List<ProductFrequencyEntity> = emptyList(),
-    val selectedPriceHistory: List<ProductPriceHistoryEntity> = emptyList(),
-    val selectedPriceStats: PriceStats? = null
-)
 
 @HiltViewModel
 class ProductListViewModel @Inject constructor(
@@ -75,20 +66,22 @@ class ProductListViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(ProductListUiState())
     val uiState: StateFlow<ProductListUiState> = _uiState.asStateFlow()
     
-    val primaryColor: Flow<Int> = themePreferences.primaryColor
+ //   val primaryColor: Flow<Int> = themePreferences.primaryColor
+    val primaryColor: StateFlow<Int> = themePreferences.primaryColor
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ThemePreferences.DEFAULT_COLOR)
+
     val isDarkTheme: StateFlow<Boolean> = themePreferences.themeMode.map { it == "dark" }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     init {
         loadInitialData()
     }
-
     private fun loadInitialData() {
         viewModelScope.launch {
             try {
                 currentListId = getDefaultListUseCase()
                 Log.d(TAG, "Using list id: $currentListId")
-                
+
                 // Cargar supermercados
                 getAllSupermarketsFlowUseCase()
                     .catch { e -> Log.e(TAG, "Error loading supermarkets", e) }
@@ -100,13 +93,12 @@ class ProductListViewModel @Inject constructor(
                                 isLoading = false
                             )
                         }
-                        
-                        // Cargar pasillos del primer supermercado
+
                         supermarketList.firstOrNull()?.id?.let { supermarketId ->
                             loadAislesAndProducts(supermarketId)
                         }
                     }
-                
+
                 // Cargar categorías en paralelo
                 launch {
                     getAllCategoriesFlowUseCase()
@@ -115,7 +107,7 @@ class ProductListViewModel @Inject constructor(
                             _uiState.update { it.copy(categories = categoryList) }
                         }
                 }
-                
+
                 // Cargar ofertas
                 launch {
                     try {
@@ -126,30 +118,28 @@ class ProductListViewModel @Inject constructor(
                         Log.e(TAG, "Error loading offers", e)
                     }
                 }
-                
+
             } catch (e: Exception) {
                 Log.e(TAG, "Error initializing", e)
                 _uiState.update { it.copy(isLoading = false, error = e.message) }
             }
         }
     }
+    private fun loadAislesAndProducts(supermarketId: Long) {
+        viewModelScope.launch {
+            try {
+                val aisleList = getAislesBySupermarketUseCase(supermarketId)
+                _uiState.update { it.copy(aisles = aisleList) }
+                Log.d(TAG, "Loaded ${aisleList.size} aisles for supermarket $supermarketId")
 
-    private suspend fun loadAislesAndProducts(supermarketId: Long) {
-        try {
-            val aisleList = getAislesBySupermarketUseCase(supermarketId)
-            _uiState.update { it.copy(aisles = aisleList) }
-            Log.d(TAG, "Loaded ${aisleList.size} aisles for supermarket $supermarketId")
-            
-            // Cargar productos
-            launch {
                 getProductsByListUseCase(currentListId, supermarketId)
                     .catch { e -> Log.e(TAG, "Error loading products", e) }
                     .collect { productList ->
                         val aisleMap = productList.groupBy { product ->
-                            aisleList.find { it.id == product.aisleId } 
+                            aisleList.find { it.id == product.aisleId }
                                 ?: Aisle(id = 0, name = "Sin pasillo", emoji = "📦", supermarketId = 0)
                         }
-                        
+
                         _uiState.update { state ->
                             state.copy(
                                 productsByAisle = aisleMap,
@@ -159,16 +149,41 @@ class ProductListViewModel @Inject constructor(
                             )
                         }
                     }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error loading aisles and products", e)
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error loading aisles and products", e)
         }
     }
+
 
     fun selectSupermarket(supermarketId: Long) {
         viewModelScope.launch {
             _uiState.update { it.copy(selectedSupermarketId = supermarketId) }
-            loadAislesAndProducts(supermarketId)
+
+            try {
+                val aisleList = getAislesBySupermarketUseCase(supermarketId)
+                _uiState.update { it.copy(aisles = aisleList) }
+
+                getProductsByListUseCase(currentListId, supermarketId)
+                    .catch { e -> Log.e(TAG, "Error loading products", e) }
+                    .collect { productList ->
+                        val aisleMap = productList.groupBy { product ->
+                            aisleList.find { it.id == product.aisleId }
+                                ?: Aisle(id = 0, name = "Sin pasillo", emoji = "📦", supermarketId = 0)
+                        }
+
+                        _uiState.update { state ->
+                            state.copy(
+                                productsByAisle = aisleMap,
+                                totalItems = productList.size,
+                                purchasedItems = productList.count { it.isPurchased },
+                                totalPrice = productList.sumOf { (it.finalPrice ?: it.estimatedPrice ?: 0f).toDouble() }.toFloat()
+                            )
+                        }
+                    }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error selecting supermarket", e)
+            }
         }
     }
 
@@ -208,6 +223,7 @@ class ProductListViewModel @Inject constructor(
                     price = price,
                     supermarketId = selectedSupermarketId
                 )
+                Log.d(TAG, "History updated: $name -> aisle $selectedAisleId")
                 
                 if (price != null) {
                     savePriceHistoryUseCase(
@@ -215,6 +231,7 @@ class ProductListViewModel @Inject constructor(
                         price = price,
                         quantity = quantity.toInt()
                     )
+                    Log.d(TAG, "Price history saved: $name -> $price €")
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error adding product", e)
@@ -288,6 +305,8 @@ class ProductListViewModel @Inject constructor(
                             historySuggestions = historyResults
                         )
                     }
+                    
+                    Log.d(TAG, "Found ${catalogResults.size} catalog + ${historyResults.size} history for '$query'")
                 } else {
                     _uiState.update { 
                         it.copy(

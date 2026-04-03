@@ -32,6 +32,8 @@ object PreferencesModule {
     ): ThemePreferences {
         return ThemePreferences(context)
     }
+
+
 }
 
 @Module
@@ -49,4 +51,9 @@ abstract class PreferencesRepositoryModule {
     abstract fun bindArticuloRepository(
         articuloRepositoryImpl: ArticuloRepositoryImpl
     ): IArticuloRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindHistoryRepository(impl: com.jose.listacompra.data.repository.HistoryRepositoryImpl): com.jose.listacompra.domain.repository.IHistoryRepository
+
 }
