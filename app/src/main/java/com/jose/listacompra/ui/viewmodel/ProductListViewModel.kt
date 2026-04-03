@@ -4,6 +4,9 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jose.listacompra.data.preferences.ThemePreferences
+import com.jose.listacompra.data.local.dao.PriceStats
+import com.jose.listacompra.data.local.entities.ProductFrequencyEntity
+import com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity
 import com.jose.listacompra.domain.model.Aisle
 import com.jose.listacompra.domain.model.Articulo
 import com.jose.listacompra.domain.model.Category
@@ -13,6 +16,7 @@ import com.jose.listacompra.domain.model.Supermarket
 import com.jose.listacompra.domain.usecase.aisle.GetAislesBySupermarketUseCase
 import com.jose.listacompra.domain.usecase.articulo.SearchArticulosUseCase
 import com.jose.listacompra.domain.usecase.category.GetAllCategoriesFlowUseCase
+import com.jose.listacompra.domain.usecase.history.*
 import com.jose.listacompra.domain.usecase.list.GetDefaultListUseCase
 import com.jose.listacompra.domain.usecase.offers.CalculatePriceUseCase
 import com.jose.listacompra.domain.usecase.offers.GetAllOffersUseCase
@@ -36,7 +40,11 @@ data class ProductListUiState(
     val categories: List<Category> = emptyList(),
     val offers: List<Offer> = emptyList(),
     val articleSuggestions: List<Articulo> = emptyList(),
-    val collapsedAisles: Set<Long> = emptySet()
+    val collapsedAisles: Set<Long> = emptySet(),
+    // Historial
+    val historySuggestions: List<ProductFrequencyEntity> = emptyList(),
+    val selectedPriceHistory: List<ProductPriceHistoryEntity> = emptyList(),
+    val selectedPriceStats: PriceStats? = null
 )
 
 /**
@@ -65,6 +73,13 @@ class ProductListViewModel @Inject constructor(
     private val searchArticulosUseCase: SearchArticulosUseCase,
     private val getDefaultListUseCase: GetDefaultListUseCase,
     private val calculatePriceUseCase: CalculatePriceUseCase,
+    
+    // UseCases de historial
+    private val getProductHistorySuggestionsUseCase: GetProductHistorySuggestionsUseCase,
+    private val updateProductFrequencyUseCase: UpdateProductFrequencyUseCase,
+    private val savePriceHistoryUseCase: SavePriceHistoryUseCase,
+    private val getPriceHistoryUseCase: GetPriceHistoryUseCase,
+    private val getPriceStatsUseCase: GetPriceStatsUseCase,
     
     // Preferences (OK - no es repositorio de dominio)
     private val themePreferences: ThemePreferences
@@ -214,13 +229,15 @@ class ProductListViewModel @Inject constructor(
 
             try {
                 val finalPrice = calculateFinalPrice(quantity, price, offerId)
+                val selectedAisleId = aisleId ?: _uiState.value.aisles.firstOrNull()?.id ?: 0L
+                val selectedSupermarketId = _uiState.value.selectedSupermarketId ?: 1L
                 
                 val product = Product(
                     shoppingListId = currentListId,
                     name = name,
                     quantity = quantity,
-                    aisleId = aisleId ?: _uiState.value.aisles.firstOrNull()?.id ?: 0L,
-                    supermarketId = _uiState.value.selectedSupermarketId ?: 1L,
+                    aisleId = selectedAisleId,
+                    supermarketId = selectedSupermarketId,
                     estimatedPrice = price,
                     finalPrice = finalPrice,
                     offerId = offerId,
@@ -228,8 +245,29 @@ class ProductListViewModel @Inject constructor(
                     photoUri = photoUri
                 )
                 
+                // 1. Guardar producto en la lista
                 addProductUseCase(product)
                 Log.d(TAG, "Product added: $name")
+                
+                // 2. Guardar frecuencia (para sugerir pasillo)
+                updateProductFrequencyUseCase(
+                    name = name,
+                    aisleId = selectedAisleId,
+                    quantity = quantity,
+                    price = price,
+                    supermarketId = selectedSupermarketId
+                )
+                Log.d(TAG, "History updated: $name -> aisle $selectedAisleId")
+                
+                // 3. Guardar precio histórico (para evolución)
+                if (price != null) {
+                    savePriceHistoryUseCase(
+                        productName = name,
+                        price = price,
+                        quantity = quantity.toInt()
+                    )
+                    Log.d(TAG, "Price history saved: $name -> $price €")
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Error adding product", e)
                 _uiState.update { it.copy(error = "Error al añadir: ${e.message}") }
@@ -293,13 +331,53 @@ class ProductListViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 if (query.length >= 2) {
-                    val results = searchArticulosUseCase(query)
-                    _uiState.update { it.copy(articleSuggestions = results) }
+                    // Buscar en catálogo
+                    val catalogResults = searchArticulosUseCase(query)
+                    
+                    // Buscar en historial (para sugerencias de pasillo)
+                    val historyResults = getProductHistorySuggestionsUseCase(query)
+                    
+                    _uiState.update { 
+                        it.copy(
+                            articleSuggestions = catalogResults,
+                            historySuggestions = historyResults
+                        )
+                    }
+                    
+                    Log.d(TAG, "Found ${catalogResults.size} catalog + ${historyResults.size} history for '$query'")
                 } else {
-                    _uiState.update { it.copy(articleSuggestions = emptyList()) }
+                    _uiState.update { 
+                        it.copy(
+                            articleSuggestions = emptyList(),
+                            historySuggestions = emptyList()
+                        )
+                    }
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error searching articles", e)
+            }
+        }
+    }
+    
+    /**
+     * Carga el historial de precios de un producto específico
+     */
+    fun loadPriceHistory(productName: String) {
+        viewModelScope.launch {
+            try {
+                val history = getPriceHistoryUseCase(productName)
+                val stats = getPriceStatsUseCase(productName)
+                
+                _uiState.update {
+                    it.copy(
+                        selectedPriceHistory = history,
+                        selectedPriceStats = stats
+                    )
+                }
+                
+                Log.d(TAG, "Loaded ${history.size} price records for '$productName'")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error loading price history", e)
             }
         }
     }

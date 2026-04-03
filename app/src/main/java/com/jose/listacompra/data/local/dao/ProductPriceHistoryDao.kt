@@ -4,31 +4,56 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import com.jose.listacompra.data.local.entities.ProductFrequencyEntity
 import com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity
 
 @Dao
 interface ProductPriceHistoryDao {
-    @Query("SELECT * FROM product_price_history WHERE productName = :name ORDER BY fecha DESC")
-    suspend fun getPriceHistoryForProduct(name: String): List<ProductPriceHistoryEntity>
-
-    @Query("SELECT * FROM product_price_history ORDER BY fecha DESC LIMIT 100")
-    suspend fun getRecentPriceHistory(): List<ProductPriceHistoryEntity>
-
-    @Insert(onConflict = OnConflictStrategy.Companion.REPLACE)
-    suspend fun insertPriceRecord(record: ProductPriceHistoryEntity): Long
-
-    @Insert(onConflict = OnConflictStrategy.Companion.REPLACE)
-    suspend fun insertAllPriceRecords(records: List<ProductPriceHistoryEntity>)
-
-    @Query("SELECT AVG(price) FROM product_price_history WHERE productName = :name")
-    suspend fun getAveragePriceForProduct(name: String): Float?
-
-    @Query("SELECT MIN(price) FROM product_price_history WHERE productName = :name")
-    suspend fun getLowestPriceForProduct(name: String): Float?
-
-    @Query("SELECT MAX(price) FROM product_price_history WHERE productName = :name")
-    suspend fun getHighestPriceForProduct(name: String): Float?
-
-    @Query("SELECT price FROM product_price_history WHERE productName = :name ORDER BY fecha DESC LIMIT 1")
-    suspend fun getLastPriceForProduct(name: String): Float?
+    
+    @Query("""
+        SELECT * FROM product_price_history 
+        WHERE productName = :productName 
+        ORDER BY fecha ASC
+    """)
+    suspend fun getPriceHistory(productName: String): List<ProductPriceHistoryEntity>
+    
+    @Query("""
+        SELECT * FROM product_price_history 
+        WHERE productName = :productName 
+        ORDER BY fecha DESC 
+        LIMIT :limit
+    """)
+    suspend fun getRecentPriceHistory(productName: String, limit: Int = 10): List<ProductPriceHistoryEntity>
+    
+    @Query("""
+        SELECT 
+            MIN(price) as minPrice,
+            MAX(price) as maxPrice,
+            AVG(price) as avgPrice,
+            COUNT(*) as totalPurchases
+        FROM product_price_history 
+        WHERE productName = :productName
+    """)
+    suspend fun getPriceStats(productName: String): PriceStats?
+    
+    @Query("""
+        SELECT price FROM product_price_history 
+        WHERE productName = :productName 
+        ORDER BY fecha DESC 
+        LIMIT 1
+    """)
+    suspend fun getLastPrice(productName: String): Float?
+    
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertPriceHistory(priceHistory: ProductPriceHistoryEntity)
+    
+    @Query("SELECT * FROM product_price_history ORDER BY fecha DESC")
+    suspend fun getAllPriceHistory(): List<ProductPriceHistoryEntity>
 }
+
+data class PriceStats(
+    val minPrice: Float,
+    val maxPrice: Float,
+    val avgPrice: Float,
+    val totalPurchases: Int
+)

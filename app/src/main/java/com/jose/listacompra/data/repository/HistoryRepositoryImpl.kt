@@ -1,6 +1,7 @@
 package com.jose.listacompra.data.repository
 
 import com.jose.listacompra.data.local.dao.AisleDao
+import com.jose.listacompra.data.local.dao.PriceStats
 import com.jose.listacompra.data.local.dao.ProductFrequencyDao
 import com.jose.listacompra.data.local.dao.ProductHistoryDao
 import com.jose.listacompra.data.local.dao.ProductPriceHistoryDao
@@ -81,5 +82,21 @@ class HistoryRepositoryImpl @Inject constructor(
                 usageCount = entity.usageCount
             )
         }
+    }
+    
+    override suspend fun insertFrequency(entity: ProductFrequencyEntity) {
+        frequencyDao.insertOrUpdateFrequency(entity)
+    }
+    
+    override suspend fun getPriceHistory(productName: String): List<ProductPriceHistoryEntity> {
+        return priceHistoryDao.getPriceHistory(productName)
+    }
+    
+    override suspend fun getPriceStats(productName: String): PriceStats? {
+        return priceHistoryDao.getPriceStats(productName)
+    }
+    
+    override suspend fun savePriceHistory(priceHistory: ProductPriceHistoryEntity) {
+        priceHistoryDao.insertPriceHistory(priceHistory)
     }
 }

@@ -166,6 +166,7 @@ fun ProductListScreen(
                 aisles = uiState.aisles,
                 offers = uiState.offers,
                 suggestions = uiState.articleSuggestions,
+                historySuggestions = uiState.historySuggestions,
                 initialName = null,
                 onSearch = { query -> viewModel.searchArticles(query) },
                 onOpenScanner = onNavigateToScanner,

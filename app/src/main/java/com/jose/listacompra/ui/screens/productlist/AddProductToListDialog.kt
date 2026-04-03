@@ -30,6 +30,7 @@ import coil.compose.AsyncImage
 import com.jose.listacompra.domain.model.Aisle
 import com.jose.listacompra.domain.model.Articulo
 import com.jose.listacompra.domain.model.Offer
+import com.jose.listacompra.data.local.entities.ProductFrequencyEntity
 import com.jose.listacompra.ui.utils.getCategoryEmoji
 import kotlinx.coroutines.delay
 import android.util.Log
@@ -41,6 +42,7 @@ fun AddProductToListDialog(
     aisles: List<Aisle>,
     offers: List<Offer> = emptyList(),
     suggestions: List<Articulo> = emptyList(),
+    historySuggestions: List<ProductFrequencyEntity> = emptyList(),  // NUEVO
     initialName: String? = null,
     onSearch: (String) -> Unit = {},
     onOpenScanner: () -> Unit = {},
@@ -236,6 +238,11 @@ fun AddProductToListDialog(
                         onDismissRequest = { showSuggestions = false }
                     ) {
                         suggestions.forEach { articulo ->
+                            // Buscar si hay historial para este producto
+                            val history = historySuggestions.find { 
+                                it.name.equals(articulo.name, ignoreCase = true) 
+                            }
+                            
                             DropdownMenuItem(
                                 text = {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -244,7 +251,7 @@ fun AddProductToListDialog(
                                             fontSize = 20.sp
                                         )
                                         Spacer(modifier = Modifier.width(8.dp))
-                                        Column {
+                                        Column(modifier = Modifier.weight(1f)) {
                                             Text(articulo.name, fontWeight = FontWeight.Medium)
                                             articulo.finalPrice?.let {
                                                 Text(
@@ -254,11 +261,48 @@ fun AddProductToListDialog(
                                                 )
                                             }
                                         }
+                                        
+                                        // Badge de historial si existe
+                                        history?.let { h ->
+                                            val aisle = aisles.find { it.id == h.aisleId }
+                                            if (aisle != null) {
+                                                Surface(
+                                                    shape = MaterialTheme.shapes.small,
+                                                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
+                                                ) {
+                                                    Row(
+                                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                                        verticalAlignment = Alignment.CenterVertically
+                                                    ) {
+                                                        Text(
+                                                            "📍 ${aisle.emoji} ${aisle.name}",
+                                                            style = MaterialTheme.typography.labelSmall,
+                                                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                                                        )
+                                                        Spacer(modifier = Modifier.width(4.dp))
+                                                        Text(
+                                                            "📊${h.usageCount}x",
+                                                            style = MaterialTheme.typography.labelSmall,
+                                                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                 },
                                 onClick = {
                                     name = articulo.name
                                     articulo.finalPrice?.let { price = it.toString() }
+                                    
+                                    // PRESELECCIONAR PASILLO DESDE HISTORIAL
+                                    history?.let { h ->
+                                        if (h.aisleId > 0) {
+                                            selectedAisleId = h.aisleId
+                                            quantity = h.lastQuantity.toString()
+                                        }
+                                    }
+                                    
                                     showSuggestions = false
                                 }
                             )
