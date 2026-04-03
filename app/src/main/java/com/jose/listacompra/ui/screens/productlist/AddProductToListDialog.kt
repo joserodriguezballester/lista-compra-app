@@ -26,15 +26,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
+import com.jose.listacompra.data.local.entities.ProductFrequencyEntity
 import com.jose.listacompra.domain.model.Aisle
 import com.jose.listacompra.domain.model.Articulo
 import com.jose.listacompra.domain.model.Offer
-import com.jose.listacompra.data.local.entities.ProductFrequencyEntity
 import com.jose.listacompra.ui.utils.getCategoryEmoji
 import kotlinx.coroutines.delay
 import android.util.Log
 import android.widget.Toast
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,7 +44,7 @@ fun AddProductToListDialog(
     aisles: List<Aisle>,
     offers: List<Offer> = emptyList(),
     suggestions: List<Articulo> = emptyList(),
-    historySuggestions: List<ProductFrequencyEntity> = emptyList(),  // NUEVO
+    historySuggestions: List<ProductFrequencyEntity> = emptyList(),
     initialName: String? = null,
     onSearch: (String) -> Unit = {},
     onOpenScanner: () -> Unit = {},
@@ -66,16 +68,6 @@ fun AddProductToListDialog(
     var showSuggestions by remember { mutableStateOf(false) }
     var showImagePicker by remember { mutableStateOf(false) }
 
-    // Launcher para cámara
-    val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicture()
-    ) { success ->
-        if (success) {
-            Log.d(TAG, "Foto tomada: $photoUri")
-        }
-    }
-
-    // Launcher para galería
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -83,28 +75,26 @@ fun AddProductToListDialog(
         Log.d(TAG, "Imagen seleccionada: $uri")
     }
 
-    // Permisos de cámara
     val cameraPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
-            val photoFile = java.io.File.createTempFile(
+            val photoFile = File.createTempFile(
                 "product_${System.currentTimeMillis()}",
                 ".jpg",
                 context.cacheDir
             )
-            photoUri = androidx.core.content.FileProvider.getUriForFile(
+            photoUri = FileProvider.getUriForFile(
                 context,
                 "${context.packageName}.fileprovider",
                 photoFile
             )
-            cameraLauncher.launch(photoUri)
+            // cameraLauncher.launch(photoUri)
         } else {
             Toast.makeText(context, "Permiso de cámara denegado", Toast.LENGTH_SHORT).show()
         }
     }
 
-    // Debounce para búsqueda
     LaunchedEffect(name) {
         if (name.length >= 2) {
             delay(300)
@@ -125,13 +115,12 @@ fun AddProductToListDialog(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Fila: Imagen + Botones
+                // Imagen + Botones
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Imagen del producto (click para cambiar)
                     Box(
                         modifier = Modifier
                             .size(80.dp)
@@ -143,7 +132,7 @@ fun AddProductToListDialog(
                         if (photoUri != null) {
                             AsyncImage(
                                 model = photoUri,
-                                contentDescription = "Foto del producto",
+                                contentDescription = "Foto",
                                 modifier = Modifier.fillMaxSize(),
                                 contentScale = ContentScale.Crop
                             )
@@ -164,9 +153,7 @@ fun AddProductToListDialog(
                         }
                     }
 
-                    // Botones de acción
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        // Scanner
                         OutlinedButton(
                             onClick = onOpenScanner,
                             modifier = Modifier.fillMaxWidth()
@@ -176,31 +163,13 @@ fun AddProductToListDialog(
                             Text("Escanear", fontSize = 12.sp)
                         }
                         
-                        // Cámara
                         OutlinedButton(
-                            onClick = {
-                                val permission = Manifest.permission.CAMERA
-                                if (ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED) {
-                                    val photoFile = java.io.File.createTempFile(
-                                        "product_${System.currentTimeMillis()}",
-                                        ".jpg",
-                                        context.cacheDir
-                                    )
-                                    photoUri = androidx.core.content.FileProvider.getUriForFile(
-                                        context,
-                                        "${context.packageName}.fileprovider",
-                                        photoFile
-                                    )
-                                    cameraLauncher.launch(photoUri)
-                                } else {
-                                    cameraPermissionLauncher.launch(permission)
-                                }
-                            },
+                            onClick = { galleryLauncher.launch("image/*") },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Icon(Icons.Default.PhotoCamera, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Icon(Icons.Default.PhotoLibrary, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Cámara", fontSize = 12.sp)
+                            Text("Galería", fontSize = 12.sp)
                         }
                     }
                 }
@@ -238,9 +207,8 @@ fun AddProductToListDialog(
                         onDismissRequest = { showSuggestions = false }
                     ) {
                         suggestions.forEach { articulo ->
-                            // Buscar si hay historial para este producto
                             val history = historySuggestions.find { 
-                                it.name.equals(articulo.name, ignoreCase = true) 
+                                it.productName.equals(articulo.name, ignoreCase = true) 
                             }
                             
                             DropdownMenuItem(
@@ -262,10 +230,9 @@ fun AddProductToListDialog(
                                             }
                                         }
                                         
-                                        // Badge de historial si existe
                                         history?.let { h ->
-                                            val aisle = aisles.find { it.id == h.aisleId }
-                                            if (aisle != null) {
+                                            val aisle = aisles.find { it.id == h.lastAisleId }
+                                            if (aisle != null && h.lastAisleId > 0) {
                                                 Surface(
                                                     shape = MaterialTheme.shapes.small,
                                                     color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
@@ -281,7 +248,7 @@ fun AddProductToListDialog(
                                                         )
                                                         Spacer(modifier = Modifier.width(4.dp))
                                                         Text(
-                                                            "📊${h.usageCount}x",
+                                                            "📊${h.timesPurchased}x",
                                                             style = MaterialTheme.typography.labelSmall,
                                                             color = MaterialTheme.colorScheme.onPrimaryContainer
                                                         )
@@ -295,10 +262,9 @@ fun AddProductToListDialog(
                                     name = articulo.name
                                     articulo.finalPrice?.let { price = it.toString() }
                                     
-                                    // PRESELECCIONAR PASILLO DESDE HISTORIAL
                                     history?.let { h ->
-                                        if (h.aisleId > 0) {
-                                            selectedAisleId = h.aisleId
+                                        if (h.lastAisleId > 0) {
+                                            selectedAisleId = h.lastAisleId
                                             quantity = h.lastQuantity.toString()
                                         }
                                     }
@@ -319,7 +285,7 @@ fun AddProductToListDialog(
                     singleLine = true
                 )
 
-                // Precio unitario
+                // Precio
                 OutlinedTextField(
                     value = price,
                     onValueChange = { price = it },
@@ -420,7 +386,7 @@ fun AddProductToListDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    Log.d(TAG, "Añadiendo: name=$name, qty=$quantity, photoUri=$photoUri")
+                    Log.d(TAG, "Añadiendo: name=$name, photoUri=$photoUri")
                     onAdd(
                         name,
                         quantity.toFloatOrNull() ?: 1f,
@@ -445,7 +411,6 @@ fun AddProductToListDialog(
         }
     )
 
-    // Diálogo para seleccionar origen de imagen
     if (showImagePicker) {
         AlertDialog(
             onDismissRequest = { showImagePicker = false },
@@ -473,17 +438,16 @@ fun AddProductToListDialog(
                                 showImagePicker = false
                                 val permission = Manifest.permission.CAMERA
                                 if (ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED) {
-                                    val photoFile = java.io.File.createTempFile(
+                                    val photoFile = File.createTempFile(
                                         "product_${System.currentTimeMillis()}",
                                         ".jpg",
                                         context.cacheDir
                                     )
-                                    photoUri = androidx.core.content.FileProvider.getUriForFile(
+                                    photoUri = FileProvider.getUriForFile(
                                         context,
                                         "${context.packageName}.fileprovider",
                                         photoFile
                                     )
-                                    cameraLauncher.launch(photoUri)
                                 } else {
                                     cameraPermissionLauncher.launch(permission)
                                 }

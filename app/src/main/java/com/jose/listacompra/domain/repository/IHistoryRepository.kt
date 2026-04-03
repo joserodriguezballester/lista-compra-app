@@ -11,7 +11,7 @@ interface IHistoryRepository {
     // Guarda el ticket y los precios, devuelve el ID de la compra
     suspend fun savePurchaseTransaction(purchase: Purchase): Long
 
-    // Gestión de frecuencias (usamos la Entity directamente para no crear más clases)
+    // Gestión de frecuencias
     suspend fun getFrequency(productName: String): ProductFrequencyEntity?
     suspend fun updateFrequency(entity: ProductFrequencyEntity)
     suspend fun insertFrequency(entity: ProductFrequencyEntity)
@@ -22,6 +22,6 @@ interface IHistoryRepository {
     suspend fun savePriceHistory(priceHistory: ProductPriceHistoryEntity)
 
     // Consultas
-    suspend fun getProductSuggestions(query: String): List<ProductSuggestion>
+    suspend fun getProductSuggestions(query: String): List<ProductFrequencyEntity>
     suspend fun getSpendingStats(): SpendingStats
 }

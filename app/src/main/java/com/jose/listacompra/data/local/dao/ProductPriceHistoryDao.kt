@@ -47,8 +47,15 @@ interface ProductPriceHistoryDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPriceHistory(priceHistory: ProductPriceHistoryEntity)
     
-    @Query("SELECT * FROM product_price_history ORDER BY fecha DESC")
-    suspend fun getAllPriceHistory(): List<ProductPriceHistoryEntity>
+    // ProductFrequencyDao methods
+    @Query("SELECT * FROM product_frequency WHERE productName = :productName LIMIT 1")
+    suspend fun getFrequency(productName: String): ProductFrequencyEntity?
+    
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertFrequency(frequency: ProductFrequencyEntity)
+    
+    @Query("SELECT * FROM product_frequency WHERE productName LIKE '%' || :query || '%' ORDER BY timesPurchased DESC LIMIT 10")
+    suspend fun findSuggestions(query: String): List<ProductFrequencyEntity>
 }
 
 data class PriceStats(

@@ -9,7 +9,6 @@ import com.jose.listacompra.data.local.dao.PurchaseHistoryDao
 import com.jose.listacompra.data.local.entities.ProductFrequencyEntity
 import com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity
 import com.jose.listacompra.data.local.entities.PurchaseHistoryEntity
-import com.jose.listacompra.domain.model.ProductSuggestion
 import com.jose.listacompra.domain.model.Purchase
 import com.jose.listacompra.domain.model.SpendingStats
 import com.jose.listacompra.domain.repository.IHistoryRepository
@@ -18,85 +17,75 @@ import javax.inject.Singleton
 
 @Singleton
 class HistoryRepositoryImpl @Inject constructor(
-    private val purchaseDao: PurchaseHistoryDao,
-    private val priceHistoryDao: ProductPriceHistoryDao,
+    private val historyDao: ProductHistoryDao,
     private val frequencyDao: ProductFrequencyDao,
-    private val historyDao: ProductHistoryDao, // El de las sugerencias simples
+    private val priceHistoryDao: ProductPriceHistoryDao,
+    private val purchaseHistoryDao: PurchaseHistoryDao,
     private val aisleDao: AisleDao
 ) : IHistoryRepository {
 
     override suspend fun savePurchaseTransaction(purchase: Purchase): Long {
-        // 1. Insertamos el ticket principal
-        val purchaseId = purchaseDao.insertPurchase(
-            PurchaseHistoryEntity(
-                fecha = System.currentTimeMillis(),
-                total = purchase.total,
-                tienda = purchase.storeName,
-                numProductos = purchase.items.size,
-                ahorroTotal = purchase.savings
-            )
+        // Guardar la compra principal
+        val purchaseEntity = PurchaseHistoryEntity(
+            supermarket = purchase.supermarket,
+            fecha = purchase.fecha.time,
+            total = purchase.total
         )
+        val purchaseId = purchaseHistoryDao.insertPurchaseHistory(purchaseEntity)
 
-        // 2. Insertamos el desglose de precios (mapeando de Product a la Entity)
-        val priceRecords = purchase.items.map { product ->
-            ProductPriceHistoryEntity(
-                purchaseId = purchaseId,
-                productName = product.name.uppercase().trim(),
-                price = product.finalPrice ?: 0f,
-                aisle = null, // Podrías sacar el nombre del pasillo si lo tienes
-                fecha = System.currentTimeMillis()
-            )
+        // Guardar cada producto con su precio
+        purchase.products.forEach { product ->
+            if (product.finalPrice != null) {
+                val priceHistory = ProductPriceHistoryEntity(
+                    purchaseId = purchaseId,
+                    productName = product.name.lowercase(),
+                    price = product.finalPrice!!,
+                    quantity = product.quantity.toInt(),
+                    aisle = null,
+                    fecha = purchase.fecha.time
+                )
+                priceHistoryDao.insertPriceHistory(priceHistory)
+            }
         }
-        priceHistoryDao.insertAllPriceRecords(priceRecords)
 
         return purchaseId
     }
 
     override suspend fun getFrequency(productName: String): ProductFrequencyEntity? {
-        return frequencyDao.getFrequencyForProduct(productName)
+        return frequencyDao.getFrequency(productName)
     }
 
     override suspend fun updateFrequency(entity: ProductFrequencyEntity) {
-        frequencyDao.insertOrUpdateFrequency(entity)
+        frequencyDao.insertFrequency(entity)
     }
 
-    override suspend fun getSpendingStats(): SpendingStats {
-        val average = purchaseDao.getAveragePurchaseAmount() ?: 0f
-        val total = purchaseDao.getTotalSpentSince(0) ?: 0f
-        val count = purchaseDao.getAllPurchases().size
-
-        return SpendingStats(
-            averagePerPurchase = average,
-            totalSpent = total,
-            totalPurchasesCount = count
-        )
-    }
-
-    override suspend fun getProductSuggestions(query: String): List<ProductSuggestion> {
-        return historyDao.findSuggestions(query.lowercase()).map { entity ->
-            ProductSuggestion(
-                name = entity.originalName,
-                aisleId = entity.aisleId,
-                suggestedQuantity = entity.lastQuantity,
-                suggestedPrice = entity.lastPrice,
-                usageCount = entity.usageCount
-            )
-        }
-    }
-    
     override suspend fun insertFrequency(entity: ProductFrequencyEntity) {
-        frequencyDao.insertOrUpdateFrequency(entity)
+        frequencyDao.insertFrequency(entity)
     }
-    
+
     override suspend fun getPriceHistory(productName: String): List<ProductPriceHistoryEntity> {
         return priceHistoryDao.getPriceHistory(productName)
     }
-    
+
     override suspend fun getPriceStats(productName: String): PriceStats? {
         return priceHistoryDao.getPriceStats(productName)
     }
-    
+
     override suspend fun savePriceHistory(priceHistory: ProductPriceHistoryEntity) {
         priceHistoryDao.insertPriceHistory(priceHistory)
+    }
+
+    override suspend fun getProductSuggestions(query: String): List<ProductFrequencyEntity> {
+        return frequencyDao.findSuggestions(query.lowercase())
+    }
+
+    override suspend fun getSpendingStats(): SpendingStats {
+        // TODO: Implementar estadísticas de gasto
+        return SpendingStats(
+            totalSpent = 0f,
+            averagePerTrip = 0f,
+            mostFrequentProducts = emptyList(),
+            monthlySpending = emptyMap()
+        )
     }
 }

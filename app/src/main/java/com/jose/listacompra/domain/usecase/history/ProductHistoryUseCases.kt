@@ -63,23 +63,25 @@ class UpdateProductFrequencyUseCase @Inject constructor(
         if (existing != null) {
             historyRepository.updateFrequency(
                 existing.copy(
-                    usageCount = existing.usageCount + 1,
+                    timesPurchased = existing.timesPurchased + 1,
                     lastQuantity = quantity,
                     lastPrice = price ?: existing.lastPrice,
-                    aisleId = aisleId ?: existing.aisleId,
-                    lastSupermarketId = supermarketId ?: existing.lastSupermarketId
+                    lastAisleId = aisleId ?: existing.lastAisleId,
+                    lastSupermarketId = supermarketId ?: existing.lastSupermarketId,
+                    lastPurchaseDate = System.currentTimeMillis()
                 )
             )
         } else {
             historyRepository.insertFrequency(
                 ProductFrequencyEntity(
-                    name = normalizedName,
+                    productName = normalizedName,
                     originalName = name,
-                    aisleId = aisleId ?: 0L,
+                    timesPurchased = 1,
                     lastQuantity = quantity,
                     lastPrice = price ?: 0f,
+                    lastAisleId = aisleId ?: 0L,
                     lastSupermarketId = supermarketId ?: 0L,
-                    usageCount = 1
+                    lastPurchaseDate = System.currentTimeMillis()
                 )
             )
         }
