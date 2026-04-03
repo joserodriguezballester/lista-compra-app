@@ -1,25 +1,19 @@
 package com.jose.listacompra.domain.usecase.history
 
 import com.jose.listacompra.data.local.entities.ProductFrequencyEntity
-import com.jose.listacompra.domain.model.Purchase
 import com.jose.listacompra.domain.repository.IHistoryRepository
 import javax.inject.Inject
 
 class CompletePurchaseUseCase @Inject constructor(
     private val repository: IHistoryRepository
 ) {
-    suspend operator fun invoke(purchase: Purchase) {
-        // 1. Guardar la compra completa (Ticket + Precios)
-        val purchaseId = repository.savePurchaseTransaction(purchase)
-
-        // 2. Actualizar la inteligencia de cada producto
-        purchase.items.forEach { product ->
-            val name = product.name.uppercase().trim()
+    suspend operator fun invoke(products: List<ProductPurchaseData>) {
+        products.forEach { productData ->
+            val name = productData.name.lowercase().trim()
             val existing = repository.getFrequency(name)
             val now = System.currentTimeMillis()
 
             val updatedEntity = if (existing != null) {
-                // Tu lógica matemática original de promedios
                 val daysSinceLast = (now - existing.lastPurchaseDate) / (1000 * 60 * 60 * 24)
                 val newCount = existing.timesPurchased + 1
                 val newAverage = if (existing.averageDaysBetween != null) {
@@ -32,13 +26,20 @@ class CompletePurchaseUseCase @Inject constructor(
                     timesPurchased = newCount,
                     averageDaysBetween = newAverage,
                     lastPurchaseDate = now,
-                    estimatedNextDate = nextDate
+                    estimatedNextDate = nextDate,
+                    lastAisleId = productData.aisleId ?: existing.lastAisleId,
+                    lastPrice = productData.price ?: existing.lastPrice,
+                    lastQuantity = productData.quantity
                 )
             } else {
                 ProductFrequencyEntity(
                     productName = name,
+                    originalName = productData.name.trim(),
                     timesPurchased = 1,
-                    lastPurchaseDate = now
+                    lastPurchaseDate = now,
+                    lastAisleId = productData.aisleId ?: 0L,
+                    lastPrice = productData.price ?: 0f,
+                    lastQuantity = productData.quantity
                 )
             }
 
@@ -46,3 +47,10 @@ class CompletePurchaseUseCase @Inject constructor(
         }
     }
 }
+
+data class ProductPurchaseData(
+    val name: String,
+    val quantity: Float = 1f,
+    val price: Float? = null,
+    val aisleId: Long? = null
+)

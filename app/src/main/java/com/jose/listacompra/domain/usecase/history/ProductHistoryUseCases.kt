@@ -103,6 +103,7 @@ class SavePriceHistoryUseCase @Inject constructor(
     ) {
         historyRepository.savePriceHistory(
             ProductPriceHistoryEntity(
+                purchaseId = 0L, // Se asignará cuando haya una compra real
                 productName = productName.lowercase().trim(),
                 price = price,
                 quantity = quantity,

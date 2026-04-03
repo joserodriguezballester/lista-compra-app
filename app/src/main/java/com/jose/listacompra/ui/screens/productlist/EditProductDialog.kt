@@ -50,7 +50,7 @@ fun EditProductDialog(
     var name by remember { mutableStateOf(product.name) }
     var quantity by remember { mutableStateOf(product.quantity.toString()) }
     var estimatedPrice by remember { mutableStateOf(product.estimatedPrice?.toString() ?: "") }
-    var selectedAisleId by remember { mutableStateOf(product.aisleId) }
+    var selectedAisleId by remember { mutableStateOf<Long?>(product.aisleId) }
     var selectedOfferId by remember { mutableStateOf(product.offerId) }
     var notes by remember { mutableStateOf(product.notes) }
     var photoUri by remember { mutableStateOf(product.photoUri?.let { Uri.parse(it) }) }

@@ -10,6 +10,16 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.jose.listacompra.domain.model.Supermarket
 
+// Extensión para tabIndicatorOffset
+@Composable
+fun Modifier.tabIndicatorOffset(
+    currentTabPosition: TabPosition
+): Modifier = this
+    .fillMaxWidth()
+    .wrapContentSize(align = androidx.compose.ui.Alignment.BottomStart)
+    .offset(x = currentTabPosition.left)
+    .width(currentTabPosition.width)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SupermarketBottomBar(
