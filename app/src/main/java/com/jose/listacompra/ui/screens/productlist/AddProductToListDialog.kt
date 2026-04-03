@@ -68,6 +68,17 @@ fun AddProductToListDialog(
     var showSuggestions by remember { mutableStateOf(false) }
     var showImagePicker by remember { mutableStateOf(false) }
 
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success) {
+            Log.d(TAG, "Foto tomada: $photoUri")
+        } else {
+            Log.w(TAG, "Foto cancelada")
+            photoUri = null
+        }
+    }
+
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -89,7 +100,7 @@ fun AddProductToListDialog(
                 "${context.packageName}.fileprovider",
                 photoFile
             )
-            // cameraLauncher.launch(photoUri)
+            cameraLauncher.launch(photoUri)
         } else {
             Toast.makeText(context, "Permiso de cámara denegado", Toast.LENGTH_SHORT).show()
         }
