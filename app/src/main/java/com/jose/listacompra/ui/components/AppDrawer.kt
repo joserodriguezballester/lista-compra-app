@@ -72,6 +72,12 @@ fun AppDrawer(
                 selected = false,
                 onClick = onNavigateToOffers
             )
+            NavigationDrawerItem(
+                icon = { Icon(Icons.Default.Category, contentDescription = null) },
+                label = { Text("Categorías") },
+                selected = false,
+                onClick = onNavigateToCategories
+            )
         }
 
         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))

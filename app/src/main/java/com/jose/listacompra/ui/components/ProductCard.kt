@@ -121,29 +121,26 @@ fun ProductCard(
                     else 
                         MaterialTheme.colorScheme.surface
                 ) {
-                    if (supermarketLogoRes != null) {
-                        Icon(
-                            painter = painterResource(id = supermarketLogoRes),
-                            contentDescription = "Supermercado",
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(6.dp),
-                            tint = androidx.compose.ui.graphics.Color.Unspecified
-                        )
-                    } else if (product.notes.isNotBlank()) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text("📝", fontSize = 20.sp)
+                    when {
+                        supermarketLogoRes != null -> {
+                            Icon(
+                                painter = painterResource(id = supermarketLogoRes),
+                                contentDescription = "Supermercado",
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(6.dp),
+                                tint = androidx.compose.ui.graphics.Color.Unspecified
+                            )
                         }
-                    } else {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text("🏪", fontSize = 20.sp)
+                        product.notes.isNotBlank() -> {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text("📝", fontSize = 20.sp)
+                            }
                         }
+                        // Sin emoji por defecto - dejar vacío
                     }
                 }
             }
@@ -352,6 +349,10 @@ private fun getSupermarketLogo(notes: String): Int? {
         lowerNotes.contains("lidl") -> R.drawable.logo_lidl
         lowerNotes.contains("aldi") -> R.drawable.logo_aldi
         lowerNotes.contains("dia") -> R.drawable.logo_dia
+        lowerNotes.contains("consum") -> R.drawable.logo_consum
+        else -> null
+    }
+}     lowerNotes.contains("dia") -> R.drawable.logo_dia
         lowerNotes.contains("consum") -> R.drawable.logo_consum
         else -> null
     }

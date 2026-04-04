@@ -41,6 +41,10 @@ fun HomeScreen(
                     scope.launch { drawerState.close() }
                     onNavigateToOffers()
                 },
+                onNavigateToCategories = {
+                    scope.launch { drawerState.close() }
+                    onNavigateToCategories()
+                },
                 onNavigateToSupermarkets = {
                     scope.launch { drawerState.close() }
                     onNavigateToSupermarkets()
