@@ -387,24 +387,51 @@ Diálogo: "¿Guardar en tu catálogo?"
 
 | # | Bug | Pantalla | Descripción |
 |---|-----|----------|-------------|
-| B16 | **Drawer no se abre en Home** | HomeScreen | Se muestra pero no responde al click |
+| B16 | **Drawer no se abre en Home** | HomeScreen | Hamburguesa (≡) no abre el drawer. Menú overflow (⋮) sí funciona, cambiar color funciona |
 | B17 | **Scanner no muestra datos del producto** | AddProductToListDialog | Escanea pero no rellena campos con datos del producto |
-| B18 | **Scanner no muestra categoría** | AddArticuloDialog | Escanea y rellena pero no asigna categoría |
+| B18 | **Scanner categoría incorrecta** | AddArticuloDialog | La categoría se asigna mal |
+| B19 | **Navegación a ofertas no implementada** | Navigation | No abre pantalla de ofertas |
+| B20 | **Ofertas no se muestran en añadir/editar** | Add/EditProductDialog | Dropdown vacío (verificar si se cargan) |
+| B21 | **Ofertas no se muestran en cards** | ProductCard | Productos con oferta no muestran badge |
 
 ### 🟠 Media Prioridad
 
 | # | Bug | Pantalla | Descripción |
 |---|-----|----------|-------------|
-| B19 | **Drawer sí abre en Mi Lista** | ProductListScreen | Comparar con Home para ver diferencia |
+| B22 | **Drawer sí abre en Mi Lista** | ProductListScreen | Comparar con Home para ver diferencia |
+
+### 📝 Investigar
+
+| # | Tarea | Descripción |
+|---|-------|-------------|
+| I1 | **Verificar carga de ofertas** | Comprobar BD: ¿Se cargaron las ofertas de la semilla? |
+| I2 | **Verificar productos con oferta** | Comprobar BD: ¿Los productos tienen offerId asignado? |
 
 ### 📝 Notas
+- **Drawer en Home:** Se muestra hamburguesa, no se abre. Muestra "menú desplegable 3" y cambiar color funciona
+- **Drawer en Mi Lista:** Sí se abre correctamente
+- **Drawer en resto:** Se muestra flecha de back (no drawer)
 - **Scanner funciona:** Ahora sí escanea (por permiso de cámara de imagen)
-- **B17 vs B18:** En añadir producto no muestra NADA, en añadir artículo sí muestra datos pero falta categoría
+- **B17:** En añadir producto no muestra NADA, en añadir artículo sí muestra datos pero categoría mal
+- **B20/B21:** Hay semillas de ofertas y productos con ofertas, pero no se ven en UI
 
 ---
 
 ## 📋 NOTAS DEL USUARIO (2026-04-04)
 
-- "El drawer se muestra en home pero no se abre, en mi lista si se abre"
+- **Tabla de comportamiento drawer/menú:**
+
+| Elemento | Home | Mi Lista | Resto |
+|----------|------|----------|-------|
+| Hamburguesa (≡) | No abre drawer | ✅ Abre drawer | No visible |
+| Menú overflow (⋮) | ✅ Funciona | - | - |
+| Cambiar color (⋮) | ✅ Funciona | ❌ No funciona | ❌ No funciona |
+| Flecha back | - | - | ✅ Visible |
+
 - "El scanner ahora sí que va pero no muestra ningún dato del producto (en añadir productos)"
-- "En añadir artículo lo hace bien menos la categoría"
+- "En añadir artículo lo hace bien menos la categoría (la pone pero mal)"
+- "Abrir la navegación a ofertas"
+- "En añadir/editar producto no se muestran las ofertas (debería de haber unas cuantas cargadas con semillas)"
+- "Verificar si se han cargado y no se muestran o no se cargan"
+- "En la card de producto no se ven las ofertas (hay semillas de productos con ofertas y estos productos si están cargados)"
+tos si están cargados)"
