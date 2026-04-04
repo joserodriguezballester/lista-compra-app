@@ -16,6 +16,7 @@ import com.jose.listacompra.ui.screens.scanner.BarcodeScannerScreen
 import com.jose.listacompra.ui.screens.supermarket.SupermarketAislesScreen
 import com.jose.listacompra.ui.screens.supermarket.SupermarketListScreen
 import com.jose.listacompra.ui.screens.catalogo.CatalogoScreen
+import com.jose.listacompra.ui.screens.offers.OffersScreen
 
 @Composable
 fun AppNavigation(
@@ -46,6 +47,7 @@ fun AppNavigation(
                 onNavigateToList = { navController.navigate(NavScreen.ShoppingList.route) },
                 onNavigateToCatalogo = { navController.navigate(NavScreen.Catalogo.route) },
                 onNavigateToSupermarkets = { navController.navigate(NavScreen.Supermarkets.route) },
+                onNavigateToOffers = { navController.navigate(NavScreen.Offers.route) },
                 onChangeColor = onChangeColor
             )
         }
@@ -54,7 +56,7 @@ fun AppNavigation(
             ProductListScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToCatalogo = { navController.navigate(NavScreen.Catalogo.route) },
-                onNavigateToOffers = { /* TODO */ },
+                onNavigateToOffers = { navController.navigate(NavScreen.Offers.route) },
                 onNavigateToSupermarkets = { navController.navigate(NavScreen.Supermarkets.route) },
                 onNavigateToScanner = { navController.navigate(NavScreen.BarcodeScanner.route) },
                 isDarkMode = isDarkMode,
@@ -67,6 +69,12 @@ fun AppNavigation(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToList = { navController.navigate(NavScreen.ShoppingList.route) },
                 navController = navController
+            )
+        }
+        
+        composable(NavScreen.Offers.route) {
+            OffersScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
         

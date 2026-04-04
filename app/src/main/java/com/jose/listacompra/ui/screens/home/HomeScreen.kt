@@ -84,11 +84,11 @@ fun HomeScreen(
                 HomeCard(
                     modifier = Modifier.weight(1f),
                     title = "Ofertas",
-                    subtitle = "Próximamente",
+                    subtitle = "Ver ofertas",
                     icon = Icons.Default.LocalOffer,
                     emoji = "🏷️",
-                    enabled = false,
-                    onClick = { }
+                    enabled = true,
+                    onClick = onNavigateToOffers
                 )
             }
             
@@ -174,6 +174,9 @@ private fun HomeCard(
                     MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
                 textAlign = TextAlign.Center
             )
+        }
+    }
+}          )
         }
     }
 }
