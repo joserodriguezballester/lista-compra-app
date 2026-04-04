@@ -8,18 +8,24 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.LocalOffer
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.jose.listacompra.domain.model.Offer
+import com.jose.listacompra.ui.viewmodel.OffersViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OffersScreen(
-    offers: List<Offer> = emptyList(),
-    onNavigateBack: () -> Unit = {}
+    onNavigateBack: () -> Unit = {},
+    viewModel: OffersViewModel = hiltViewModel()
 ) {
+    val uiState by viewModel.uiState.collectAsState()
+    
     Scaffold(
         topBar = {
             TopAppBar(
@@ -32,7 +38,16 @@ fun OffersScreen(
             )
         }
     ) { padding ->
-        if (offers.isEmpty()) {
+        if (uiState.isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+        } else if (uiState.offers.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -62,7 +77,7 @@ fun OffersScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(offers) { offer ->
+                items(uiState.offers) { offer ->
                     OfferCard(offer = offer)
                 }
             }
@@ -114,21 +129,6 @@ private fun OfferCard(offer: Offer) {
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            
-            if (offer.isActive) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Surface(
-                    shape = MaterialTheme.shapes.small,
-                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
-                ) {
-                    Text(
-                        text = "✅ Activa",
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                }
-            }
         }
     }
 }

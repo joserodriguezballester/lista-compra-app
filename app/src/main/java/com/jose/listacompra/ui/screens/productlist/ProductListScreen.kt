@@ -34,6 +34,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -46,6 +47,16 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.jose.listacompra.domain.model.Product
+import com.jose.listacompra.ui.components.AisleHeader
+import com.jose.listacompra.ui.components.AppDrawer
+import com.jose.listacompra.ui.components.CommonTopBar
+import com.jose.listacompra.ui.components.PriceHistoryChart
+import com.jose.listacompra.ui.components.PriceStatsCard
+import com.jose.listacompra.ui.components.ProductCard
+import com.jose.listacompra.ui.components.SupermarketBottomBar
+import com.jose.listacompra.ui.components.VoiceInputButton
+import com.jose.listacompra.ui.screens.ColorSettingsDialog
+import com.jose.listacompra.ui.viewmodel.ProductListViewModel
 import com.jose.listacompra.ui.components.AisleHeader
 import com.jose.listacompra.ui.components.AppDrawer
 import com.jose.listacompra.ui.components.CommonTopBar
