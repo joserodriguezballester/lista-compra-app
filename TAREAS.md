@@ -295,6 +295,9 @@ Diálogo: "¿Guardar en tu catálogo?"
 | 2026-04-02 | Semilla 20 productos | `feature/seed` |
 | 2026-04-02 | Micrófono TopBar + voz | `feature/microphone` |
 | 2026-04-02 | Toggle tema en drawer | `feature/theme-toggle-drawer` |
+| 2026-04-03 | Historial productos + pasillos sugeridos | `feature/product-history` |
+| 2026-04-04 | Pantalla ofertas + navegación | `main` |
+| 2026-04-04 | Drawer funcional en Home | `main` |
 
 ---
 
