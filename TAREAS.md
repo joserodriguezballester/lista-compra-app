@@ -379,22 +379,32 @@ Diálogo: "¿Guardar en tu catálogo?"
 
 ## 🐛 NUEVOS BUGS (Testing 15:46)
 
-| # | Bug | Descripción |
-|---|-----|-------------|
-| B9 | **Checkbox posición** | Dejar siempre en misma posición (como si hubiera logo) |
-| B10 | **Total mal calculado** | No calcula correctamente el precio total |
-| B11 | **Oferta no se muestra** | Poner donde va logo: logo arriba, oferta abajo con ⚠️ si no cumple |
-| B12 | **Editar sin autocompletado** | Diálogo editar no sugiere nombres |
-| B13 | **Selector ofertas NO VA** | Dropdown de ofertas no funciona |
-| B14 | **Cambiar color en drawer** | Se queda en navigation drawer, no hace nada |
-| B15 | **Logos PNG movidos** | Copiar capturas/ a drawable/ |
+---
+
+## 🐛 BUGS NUEVOS (2026-04-04)
+
+### 🔴 Alta Prioridad
+
+| # | Bug | Pantalla | Descripción |
+|---|-----|----------|-------------|
+| B16 | **Drawer no se abre en Home** | HomeScreen | Se muestra pero no responde al click |
+| B17 | **Scanner no muestra datos del producto** | AddProductToListDialog | Escanea pero no rellena campos con datos del producto |
+| B18 | **Scanner no muestra categoría** | AddArticuloDialog | Escanea y rellena pero no asigna categoría |
+
+### 🟠 Media Prioridad
+
+| # | Bug | Pantalla | Descripción |
+|---|-----|----------|-------------|
+| B19 | **Drawer sí abre en Mi Lista** | ProductListScreen | Comparar con Home para ver diferencia |
+
+### 📝 Notas
+- **Scanner funciona:** Ahora sí escanea (por permiso de cámara de imagen)
+- **B17 vs B18:** En añadir producto no muestra NADA, en añadir artículo sí muestra datos pero falta categoría
 
 ---
 
-## 📝 NOTAS DEL USUARIO
+## 📋 NOTAS DEL USUARIO (2026-04-04)
 
-- "Diseño card ok, pero dejar checkbox siempre como si hubiera logo de supermercado (se muestra o no)"
-- "El total no lo calcula bien, pero en la precarga no los hace bien"
-- "No muestra la oferta (que tal ponerla donde va el logo, si hay logo este arriba y la oferta abajo con triangulo rojo si no cumple)"
-- "En editar no cumple sugerencia de nombre"
-- "Esta getSupermarketLogo que seguramente lo utilizaras en más sitios después (entre otros pestañas supermercados)"
+- "El drawer se muestra en home pero no se abre, en mi lista si se abre"
+- "El scanner ahora sí que va pero no muestra ningún dato del producto (en añadir productos)"
+- "En añadir artículo lo hace bien menos la categoría"
