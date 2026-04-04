@@ -24,23 +24,6 @@ android {
         }
     }
 
-    // Flavors para versiones Alfa y Beta
-    flavorDimensions += "version"
-    productFlavors {
-        create("alfa") {
-            dimension = "version"
-            applicationIdSuffix = ".alfa"
-            versionNameSuffix = "-alfa"
-            // Versión estable de referencia
-        }
-        create("beta") {
-            dimension = "version"
-            applicationIdSuffix = ".beta"
-            versionNameSuffix = "-beta"
-            // Versión con nuevas características
-        }
-    }
-
     buildTypes {
         debug {
             applicationIdSuffix = ".dev"
