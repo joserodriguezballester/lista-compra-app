@@ -1,5 +1,6 @@
 package com.jose.listacompra.ui.components
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -34,7 +36,6 @@ import coil.compose.AsyncImage
 import com.jose.listacompra.R
 import com.jose.listacompra.domain.model.Offer
 import com.jose.listacompra.domain.model.Product
-import android.util.Log
 
 @Composable
 fun ProductCard(
@@ -349,10 +350,6 @@ private fun getSupermarketLogo(notes: String): Int? {
         lowerNotes.contains("lidl") -> R.drawable.logo_lidl
         lowerNotes.contains("aldi") -> R.drawable.logo_aldi
         lowerNotes.contains("dia") -> R.drawable.logo_dia
-        lowerNotes.contains("consum") -> R.drawable.logo_consum
-        else -> null
-    }
-}     lowerNotes.contains("dia") -> R.drawable.logo_dia
         lowerNotes.contains("consum") -> R.drawable.logo_consum
         else -> null
     }

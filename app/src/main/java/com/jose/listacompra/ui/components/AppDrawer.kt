@@ -1,9 +1,29 @@
 package com.jose.listacompra.ui.components
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.Inventory
+import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.LocalOffer
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.Store
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -18,6 +38,7 @@ fun AppDrawer(
     onNavigateToOffers: () -> Unit,
     onNavigateToSupermarkets: () -> Unit,
     onNavigateToCatalogo: () -> Unit,
+    onNavigateToCategories:() -> Unit,
     onChangeColor: () -> Unit,
     onClose: () -> Unit
 ) {
@@ -72,6 +93,7 @@ fun AppDrawer(
                 selected = false,
                 onClick = onNavigateToOffers
             )
+
             NavigationDrawerItem(
                 icon = { Icon(Icons.Default.Category, contentDescription = null) },
                 label = { Text("Categorías") },
