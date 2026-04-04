@@ -241,6 +241,9 @@ fun ProductListScreen(
                                 contentType = { "product" }
                             ) { product ->
                                 val offer = uiState.offers.find { it.id == product.offerId }
+                                if (product.offerId != null && product.offerId > 0) {
+                                    Log.d("ProductListScreen", "🔍 ${product.name}: offerId=${product.offerId}, found offer=${offer?.name}, total offers=${uiState.offers.size}")
+                                }
                                 SwipeableProductCard(
                                     product = product,
                                     offer = offer,
