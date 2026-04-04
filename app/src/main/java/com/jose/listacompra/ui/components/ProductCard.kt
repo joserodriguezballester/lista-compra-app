@@ -36,6 +36,7 @@ import coil.compose.AsyncImage
 import com.jose.listacompra.R
 import com.jose.listacompra.domain.model.Offer
 import com.jose.listacompra.domain.model.Product
+import android.util.Log
 
 @Composable
 fun ProductCard(

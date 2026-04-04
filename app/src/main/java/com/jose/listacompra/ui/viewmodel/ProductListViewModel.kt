@@ -82,7 +82,27 @@ class ProductListViewModel @Inject constructor(
                 currentListId = getDefaultListUseCase()
                 Log.d(TAG, "Using list id: $currentListId")
 
-                // Cargar supermercados
+                // Cargar ofertas EN PARALELO (no bloquea)
+                launch {
+                    try {
+                        val offerList = getAllOffersUseCase()
+                        _uiState.update { it.copy(offers = offerList) }
+                        Log.d(TAG, "✅ Loaded ${offerList.size} offers: ${offerList.map { "${it.name}(id=${it.id})" }}")
+                    } catch (e: Exception) {
+                        Log.e(TAG, "❌ Error loading offers", e)
+                    }
+                }
+
+                // Cargar categorías EN PARALELO (no bloquea)
+                launch {
+                    getAllCategoriesFlowUseCase()
+                        .catch { e -> Log.e(TAG, "Error loading categories", e) }
+                        .collect { categoryList ->
+                            _uiState.update { it.copy(categories = categoryList) }
+                        }
+                }
+
+                // Cargar supermercados (este sí usa collect, pero ya lanzamos lo demás antes)
                 getAllSupermarketsFlowUseCase()
                     .catch { e -> Log.e(TAG, "Error loading supermarkets", e) }
                     .collect { supermarketList ->
@@ -98,26 +118,6 @@ class ProductListViewModel @Inject constructor(
                             loadAislesAndProducts(supermarketId)
                         }
                     }
-
-                // Cargar categorías en paralelo
-                launch {
-                    getAllCategoriesFlowUseCase()
-                        .catch { e -> Log.e(TAG, "Error loading categories", e) }
-                        .collect { categoryList ->
-                            _uiState.update { it.copy(categories = categoryList) }
-                        }
-                }
-
-                // Cargar ofertas
-                launch {
-                    try {
-                        val offerList = getAllOffersUseCase()
-                        _uiState.update { it.copy(offers = offerList) }
-                        Log.d(TAG, "✅ Loaded ${offerList.size} offers: ${offerList.map { "${it.name}(id=${it.id})" }}")
-                    } catch (e: Exception) {
-                        Log.e(TAG, "❌ Error loading offers", e)
-                    }
-                }
 
             } catch (e: Exception) {
                 Log.e(TAG, "Error initializing", e)
