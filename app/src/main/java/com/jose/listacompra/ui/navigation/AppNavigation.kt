@@ -54,6 +54,7 @@ fun AppNavigation(
         
         composable(NavScreen.ShoppingList.route) {
             ProductListScreen(
+                navController = navController,
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToCatalogo = { navController.navigate(NavScreen.Catalogo.route) },
                 onNavigateToOffers = { navController.navigate(NavScreen.Offers.route) },

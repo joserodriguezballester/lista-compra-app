@@ -44,16 +44,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import com.jose.listacompra.domain.model.Product
 import com.jose.listacompra.ui.components.AisleHeader
 import com.jose.listacompra.ui.components.AppDrawer
 import com.jose.listacompra.ui.components.CommonTopBar
+import com.jose.listacompra.ui.components.PriceHistoryChart
+import com.jose.listacompra.ui.components.PriceStatsCard
 import com.jose.listacompra.ui.components.ProductCard
 import com.jose.listacompra.ui.components.SupermarketBottomBar
 import com.jose.listacompra.ui.components.VoiceInputButton
-import com.jose.listacompra.ui.components.VoiceCommand
 import com.jose.listacompra.ui.screens.ColorSettingsDialog
-import com.jose.listacompra.ui.viewmodel.ProductListViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -66,6 +67,7 @@ fun ProductListScreen(
     onNavigateToScanner: () -> Unit = {},
     isDarkMode: Boolean = false,
     onToggleDarkMode: (Boolean) -> Unit = {},
+    navController: NavController? = null,
     viewModel: ProductListViewModel = hiltViewModel()
 ) {
     val scope = rememberCoroutineScope()
@@ -78,8 +80,30 @@ fun ProductListScreen(
     var showColorDialog by remember { mutableStateOf(false) }
     var showVoiceDialog by remember { mutableStateOf(false) }
     
+    // Datos del scanner
+    var scannedName by remember { mutableStateOf<String?>(null) }
+    var scannedPrice by remember { mutableStateOf<Float?>(null) }
+    var scannedAisleId by remember { mutableStateOf<Long?>(null) }
+    
     // Color actual
     val currentColor by viewModel.primaryColor.collectAsState(initial = 0)
+
+    // Leer datos del scanner al volver
+    LaunchedEffect(navController?.currentBackStackEntry?.savedStateHandle) {
+        navController?.currentBackStackEntry?.savedStateHandle
+            ?.get<String>("scannedName")?.let { name ->
+                scannedName = name
+                showAddProductDialog = true
+            }
+        navController?.currentBackStackEntry?.savedStateHandle
+            ?.get<String>("scannedImageUrl")?.let { /* manejar imagen */ }
+        navController?.currentBackStackEntry?.savedStateHandle
+            ?.get<String>("scannedQuantity")?.let { qty ->
+                scannedPrice = qty.toFloatOrNull()
+            }
+        navController?.currentBackStackEntry?.savedStateHandle
+            ?.get<String>("scannedCategoryId")?.let { /* manejar categoría */ }
+    }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -116,7 +140,8 @@ fun ProductListScreen(
                 CommonTopBar(
                     title = "Mi Lista de la Compra",
                     onOpenDrawer = { scope.launch { drawerState.open() } },
-                    onMicrophoneClick = { /* TODO: Voice input */ }
+                    onMicrophoneClick = { showVoiceDialog = true },
+                    onChangeColor = { showColorDialog = true }
                 )
             },
             bottomBar = {
@@ -138,20 +163,45 @@ fun ProductListScreen(
         ) { paddingValues ->
             if (uiState.isLoading) {
                 Box(
-                    modifier = Modifier.fillMaxSize().padding(paddingValues),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator()
                 }
             } else if (uiState.productsByAisle.isEmpty()) {
-                EmptyState(
-                    modifier = Modifier.fillMaxSize().padding(paddingValues),
-                    onNavigateToCatalogo = onNavigateToCatalogo
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "🛒",
+                            style = MaterialTheme.typography.displayLarge
+                        )
+                        Text(
+                            text = "Lista vacía",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Text(
+                            text = "Pulsa + para añadir productos",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
             } else {
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(2),
-                    modifier = Modifier.fillMaxSize().padding(paddingValues),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
                     contentPadding = PaddingValues(8.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -202,13 +252,21 @@ fun ProductListScreen(
                 offers = uiState.offers,
                 suggestions = uiState.articleSuggestions,
                 historySuggestions = uiState.historySuggestions,
-                initialName = null,
+                initialName = scannedName,
                 onSearch = { query -> viewModel.searchArticles(query) },
                 onOpenScanner = onNavigateToScanner,
-                onDismiss = { showAddProductDialog = false },
+                onDismiss = { 
+                    showAddProductDialog = false
+                    scannedName = null
+                    scannedPrice = null
+                    // Limpiar savedStateHandle
+                    navController?.currentBackStackEntry?.savedStateHandle?.remove<String>("scannedName")
+                },
                 onAdd = { name, quantity, aisleId, price, offerId, notes, photoUri ->
                     viewModel.addProduct(name, quantity, aisleId, price, offerId, notes, photoUri)
                     showAddProductDialog = false
+                    scannedName = null
+                    scannedPrice = null
                 }
             )
         }
@@ -270,35 +328,6 @@ fun ProductListScreen(
                     }
                 }
             )
-        }
-    }
-}
-
-@Composable
-private fun EmptyState(
-    modifier: Modifier = Modifier,
-    onNavigateToCatalogo: () -> Unit
-) {
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            imageVector = Icons.Default.ShoppingCart,
-            contentDescription = null,
-            modifier = Modifier.size(80.dp),
-            tint = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "Tu lista está vacía",
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        TextButton(onClick = onNavigateToCatalogo) {
-            Text("Ir al catálogo")
         }
     }
 }
