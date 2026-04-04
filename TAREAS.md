@@ -406,7 +406,14 @@ Diálogo: "¿Guardar en tu catálogo?"
 
 ---
 
-## 📋 NOTAS DEL USUARIO (2026-04-04)
+## 📋 NUEVAS TAREAS (2026-04-04)
+
+### 🔴 Funcionalidades pendientes
+
+| # | Tarea | Descripción | Prioridad |
+|---|-------|-------------|-----------|
+| T1 | **Añadir ofertas** | Crear AddOfferScreen para añadir ofertas personalizadas | Media |
+| T2 | **Editar ofertas** | Permitir editar ofertas existentes | Baja |
 
 - "El drawer se muestra en home pero no se abre, en mi lista si se abre"
 - "El scanner ahora sí que va pero no muestra ningún dato del producto (en añadir productos)"
