@@ -412,8 +412,8 @@ Diálogo: "¿Guardar en tu catálogo?"
 
 | # | Tarea | Descripción | Prioridad |
 |---|-------|-------------|-----------|
-| T1 | **Añadir ofertas** | Crear AddOfferScreen para añadir ofertas personalizadas | Media |
-| T2 | **Editar ofertas** | Permitir editar ofertas existentes | Baja |
+| T1 | **CRUD ofertas completo** | Añadir, editar y eliminar ofertas. Falta: delete | Alta |
+| T2 | **Pantalla añadir oferta** | Crear AddOfferScreen para añadir ofertas personalizadas | Media |
 
 - "El drawer se muestra en home pero no se abre, en mi lista si se abre"
 - "El scanner ahora sí que va pero no muestra ningún dato del producto (en añadir productos)"

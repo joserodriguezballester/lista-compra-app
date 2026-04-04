@@ -45,6 +45,11 @@ fun ProductCard(
     onTogglePurchased: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // Debug: verificar offer
+    if (product.offerId != null && product.offerId > 0) {
+        Log.d("ProductCard", "📦 ${product.name} tiene offerId=${product.offerId}, offer=${offer?.name}")
+    }
+    
     val backgroundColor = if (product.isPurchased) {
         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
     } else {

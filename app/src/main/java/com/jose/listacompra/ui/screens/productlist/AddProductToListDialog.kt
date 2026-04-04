@@ -55,6 +55,8 @@ fun AddProductToListDialog(
     val TAG = "AddProductDialog"
     val context = LocalContext.current
     
+    Log.d(TAG, "📊 Dialog recibió ${offers.size} offers: ${offers.map { it.name }}")
+    
     var name by remember { mutableStateOf(initialName ?: "") }
     var quantity by remember { mutableStateOf("1") }
     var price by remember { mutableStateOf("") }

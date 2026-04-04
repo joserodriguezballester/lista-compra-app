@@ -113,9 +113,9 @@ class ProductListViewModel @Inject constructor(
                     try {
                         val offerList = getAllOffersUseCase()
                         _uiState.update { it.copy(offers = offerList) }
-                        Log.d(TAG, "Loaded ${offerList.size} offers")
+                        Log.d(TAG, "✅ Loaded ${offerList.size} offers: ${offerList.map { "${it.name}(id=${it.id})" }}")
                     } catch (e: Exception) {
-                        Log.e(TAG, "Error loading offers", e)
+                        Log.e(TAG, "❌ Error loading offers", e)
                     }
                 }
 
