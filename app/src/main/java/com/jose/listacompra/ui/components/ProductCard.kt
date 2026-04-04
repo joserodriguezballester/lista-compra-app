@@ -116,25 +116,25 @@ fun ProductCard(
                     // Logo supermercado (si hay)
                     if (supermarketLogoRes != null) {
                         Surface(
-                            modifier = Modifier.size(32.dp),
+                            modifier = Modifier.size(56.dp),
                             shape = CircleShape,
                             color = MaterialTheme.colorScheme.surface
                         ) {
                             Icon(
                                 painter = painterResource(id = supermarketLogoRes),
                                 contentDescription = "Supermercado",
-                                modifier = Modifier.padding(4.dp),
+                                modifier = Modifier.padding(6.dp),
                                 tint = androidx.compose.ui.graphics.Color.Unspecified
                             )
                         }
                     } else if (product.notes.isNotBlank()) {
                         Surface(
-                            modifier = Modifier.size(32.dp),
+                            modifier = Modifier.size(56.dp),
                             shape = CircleShape,
                             color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
-                                Text("📝", fontSize = 14.sp)
+                                Text("📝", fontSize = 24.sp)
                             }
                         }
                     }

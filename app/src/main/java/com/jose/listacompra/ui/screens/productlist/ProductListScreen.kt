@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -49,6 +50,8 @@ import com.jose.listacompra.ui.components.AppDrawer
 import com.jose.listacompra.ui.components.CommonTopBar
 import com.jose.listacompra.ui.components.ProductCard
 import com.jose.listacompra.ui.components.SupermarketBottomBar
+import com.jose.listacompra.ui.components.VoiceInputButton
+import com.jose.listacompra.ui.components.VoiceCommand
 import com.jose.listacompra.ui.screens.ColorSettingsDialog
 import com.jose.listacompra.ui.viewmodel.ProductListViewModel
 import kotlinx.coroutines.launch
@@ -73,6 +76,7 @@ fun ProductListScreen(
     var showAddProductDialog by remember { mutableStateOf(false) }
     var productToEdit by remember { mutableStateOf<Product?>(null) }
     var showColorDialog by remember { mutableStateOf(false) }
+    var showVoiceDialog by remember { mutableStateOf(false) }
     
     // Color actual
     val currentColor by viewModel.primaryColor.collectAsState(initial = 0)
@@ -226,6 +230,45 @@ fun ProductListScreen(
                 currentColor = currentColor,
                 onDismiss = { showColorDialog = false },
                 onColorSelected = { color -> viewModel.setPrimaryColor(color) }
+            )
+        }
+        
+        // Diálogo de voz
+        if (showVoiceDialog) {
+            AlertDialog(
+                onDismissRequest = { showVoiceDialog = false },
+                title = { Text("Añadir por voz") },
+                text = {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text("Di algo como:", style = MaterialTheme.typography.bodyMedium)
+                        Text("\"3 litros de leche\"", style = MaterialTheme.typography.bodySmall)
+                        Text("\"dos kilos de patatas\"", style = MaterialTheme.typography.bodySmall)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        VoiceInputButton(
+                            onVoiceCommand = { command ->
+                                viewModel.addProduct(
+                                    name = command.productName,
+                                    quantity = command.quantity,
+                                    aisleId = null,
+                                    price = null,
+                                    offerId = null,
+                                    notes = null,
+                                    photoUri = null
+                                )
+                                showVoiceDialog = false
+                            },
+                            modifier = Modifier.size(64.dp)
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showVoiceDialog = false }) {
+                        Text("Cancelar")
+                    }
+                }
             )
         }
     }
