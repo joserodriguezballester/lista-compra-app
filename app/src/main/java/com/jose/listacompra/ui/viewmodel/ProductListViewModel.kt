@@ -23,6 +23,8 @@ import com.jose.listacompra.domain.usecase.product.DeletePurchasedProductsUseCas
 import com.jose.listacompra.domain.usecase.product.GetProductsByListUseCase
 import com.jose.listacompra.domain.usecase.product.ToggleProductPurchasedUseCase
 import com.jose.listacompra.domain.usecase.product.UpdateProductUseCase
+import com.jose.listacompra.domain.usecase.category.GetAllCategoriesFlowUseCase
+import com.jose.listacompra.domain.usecase.offers.GetAllOffersUseCase
 import com.jose.listacompra.domain.usecase.supermarket.GetAllSupermarketsFlowUseCase
 import com.jose.listacompra.ui.state.ProductListUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
