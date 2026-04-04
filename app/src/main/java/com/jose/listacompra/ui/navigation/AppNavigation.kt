@@ -48,6 +48,7 @@ fun AppNavigation(
                 onNavigateToCatalogo = { navController.navigate(NavScreen.Catalogo.route) },
                 onNavigateToSupermarkets = { navController.navigate(NavScreen.Supermarkets.route) },
                 onNavigateToOffers = { navController.navigate(NavScreen.Offers.route) },
+                onNavigateToCategories = { navController.navigate(NavScreen.Categories.route) },
                 onChangeColor = onChangeColor
             )
         }
@@ -116,6 +117,10 @@ fun AppNavigation(
             SupermarketAislesScreen(
                 supermarketId = supermarketId,
                 onNavigateBack = { navController.popBackStack() }
+            )
+        }
+    }
+}onNavigateBack = { navController.popBackStack() }
             )
         }
     }

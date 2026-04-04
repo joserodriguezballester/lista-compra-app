@@ -14,6 +14,7 @@ sealed class NavScreen(val route: String, val title: String, val icon: ImageVect
     object ShoppingList : NavScreen("lista", "Mi Lista", Icons.Default.ShoppingCart)
     object Catalogo : NavScreen("articulos", "Catálogo", Icons.Default.Inventory)
     object Supermarkets : NavScreen("supermercados", "Supermercados", Icons.Default.Store)
+    object Categories : NavScreen("categorias", "Categorías", Icons.Default.Category)
     object Offers : NavScreen("ofertas", "Ofertas", Icons.Default.LocalOffer)
     object BarcodeScanner : NavScreen("scanner", "Escanear", Icons.Default.Home)
     

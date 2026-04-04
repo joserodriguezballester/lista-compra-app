@@ -12,12 +12,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -78,7 +76,7 @@ fun ProductCard(
                 .fillMaxWidth()
                 .padding(8.dp)
         ) {
-            // FILA SUPERIOR: Imagen + Checkbox + (Logo u Oferta)
+            // FILA SUPERIOR: Imagen + Checkbox + Logo
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -114,69 +112,37 @@ fun ProductCard(
                     modifier = Modifier.size(36.dp)
                 )
 
-                // Columna derecha: Logo (si hay) + Oferta (si hay)
-                Column(
-                    horizontalAlignment = Alignment.End,
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                // Logo supermercado (siempre visible, con fondo cuadrado)
+                Surface(
+                    modifier = Modifier.size(48.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    color = if (product.isPurchased) 
+                        MaterialTheme.colorScheme.surfaceVariant 
+                    else 
+                        MaterialTheme.colorScheme.surface
                 ) {
-                    // Logo supermercado (si hay)
                     if (supermarketLogoRes != null) {
-                        Surface(
-                            modifier = Modifier.size(56.dp),
-                            shape = CircleShape,
-                            color = MaterialTheme.colorScheme.surface
-                        ) {
-                            Icon(
-                                painter = painterResource(id = supermarketLogoRes),
-                                contentDescription = "Supermercado",
-                                modifier = Modifier.padding(6.dp),
-                                tint = androidx.compose.ui.graphics.Color.Unspecified
-                            )
-                        }
+                        Icon(
+                            painter = painterResource(id = supermarketLogoRes),
+                            contentDescription = "Supermercado",
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(6.dp),
+                            tint = androidx.compose.ui.graphics.Color.Unspecified
+                        )
                     } else if (product.notes.isNotBlank()) {
-                        Surface(
-                            modifier = Modifier.size(56.dp),
-                            shape = CircleShape,
-                            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Text("📝", fontSize = 24.sp)
-                            }
+                            Text("📝", fontSize = 20.sp)
                         }
-                    }
-
-                    // Oferta (si hay)
-                    if (offer != null && !product.isPurchased) {
-                        Surface(
-                            shape = RoundedCornerShape(6.dp),
-                            color = if (offerStatus.needsMore) 
-                                MaterialTheme.colorScheme.errorContainer
-                            else 
-                                MaterialTheme.colorScheme.primaryContainer
+                    } else {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = offer.name,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (offerStatus.needsMore)
-                                        MaterialTheme.colorScheme.onErrorContainer
-                                    else
-                                        MaterialTheme.colorScheme.onPrimaryContainer
-                                )
-                                
-                                if (offerStatus.needsMore) {
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(
-                                        text = "⚠️+${offerStatus.remaining}",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onErrorContainer
-                                    )
-                                }
-                            }
+                            Text("🏪", fontSize = 20.sp)
                         }
                     }
                 }
@@ -184,7 +150,6 @@ fun ProductCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // SECCIÓN DE TEXTO (abajo)
             // Nombre
             Text(
                 text = product.name,
@@ -198,6 +163,42 @@ fun ProductCard(
                 else
                     MaterialTheme.colorScheme.onSurface
             )
+
+            // Oferta debajo del nombre (si hay)
+            if (offer != null && !product.isPurchased) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = if (offerStatus.needsMore) 
+                        MaterialTheme.colorScheme.errorContainer
+                    else 
+                        MaterialTheme.colorScheme.primaryContainer
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "🏷️ ${offer.name}",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = if (offerStatus.needsMore)
+                                MaterialTheme.colorScheme.onErrorContainer
+                            else
+                                MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        
+                        if (offerStatus.needsMore) {
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "⚠️+${offerStatus.remaining}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                        }
+                    }
+                }
+            }
 
             // Precio y cantidad
             Spacer(modifier = Modifier.height(6.dp))
@@ -293,7 +294,7 @@ private fun getCategoryEmoji(name: String): String {
         lower.contains("yogur") -> "🥛"
         lower.contains("queso") -> "🧀"
         lower.contains("tomate") -> "🍅"
-        lower.contains( "plátano") -> "🍌"
+        lower.contains("plátano") || lower.contains("platano") -> "🍌"
         lower.contains("manzana") -> "🍎"
         lower.contains("naranja") -> "🍊"
         lower.contains("pollo") -> "🍗"

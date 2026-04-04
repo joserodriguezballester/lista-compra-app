@@ -24,6 +24,7 @@ fun HomeScreen(
     onNavigateToCatalogo: () -> Unit = {},
     onNavigateToSupermarkets: () -> Unit = {},
     onNavigateToOffers: () -> Unit = {},
+    onNavigateToCategories: () -> Unit = {},
     onChangeColor: () -> Unit = {},
 ) {
     val scope = rememberCoroutineScope()
