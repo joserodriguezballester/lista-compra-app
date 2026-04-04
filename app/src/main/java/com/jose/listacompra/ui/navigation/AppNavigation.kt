@@ -10,13 +10,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.jose.listacompra.ui.screens.SplashScreen
-import com.jose.listacompra.ui.screens.catalogo.CatalogoScreen
 import com.jose.listacompra.ui.screens.home.HomeScreen
-import com.jose.listacompra.ui.screens.offers.OffersScreen
 import com.jose.listacompra.ui.screens.productlist.ProductListScreen
 import com.jose.listacompra.ui.screens.scanner.BarcodeScannerScreen
 import com.jose.listacompra.ui.screens.supermarket.SupermarketAislesScreen
 import com.jose.listacompra.ui.screens.supermarket.SupermarketListScreen
+import com.jose.listacompra.ui.screens.catalogo.CatalogoScreen
+import com.jose.listacompra.ui.screens.offers.OffersScreen
+import com.jose.listacompra.ui.screens.categories.CategoriesScreen
 
 @Composable
 fun AppNavigation(
@@ -76,6 +77,12 @@ fun AppNavigation(
         
         composable(NavScreen.Offers.route) {
             OffersScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        
+        composable(NavScreen.Categories.route) {
+            CategoriesScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }

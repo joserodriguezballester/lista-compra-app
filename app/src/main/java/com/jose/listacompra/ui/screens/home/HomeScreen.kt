@@ -138,20 +138,20 @@ fun HomeScreen(
                 ) {
                     HomeCard(
                         modifier = Modifier.weight(1f),
-                        title = "Historial",
-                        subtitle = "Próximamente",
-                        icon = Icons.Default.History,
-                        emoji = "📊",
-                        enabled = false,
-                        onClick = { }
+                        title = "Categorías",
+                        subtitle = "Ver categorías",
+                        icon = Icons.Default.Category,
+                        emoji = "📂",
+                        enabled = true,
+                        onClick = onNavigateToCategories
                     )
                     
                     HomeCard(
                         modifier = Modifier.weight(1f),
-                        title = "Categorías",
+                        title = "Historial",
                         subtitle = "Próximamente",
-                        icon = Icons.Default.Category,
-                        emoji = "📂",
+                        icon = Icons.Default.History,
+                        emoji = "📊",
                         enabled = false,
                         onClick = { }
                     )

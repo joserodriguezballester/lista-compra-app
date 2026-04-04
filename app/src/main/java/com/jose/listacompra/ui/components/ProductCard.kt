@@ -173,10 +173,31 @@ fun ProductCard(
                         MaterialTheme.colorScheme.primaryContainer
                 ) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
+                            text = offer.name,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = if (offerStatus.needsMore)
+                                MaterialTheme.colorScheme.onErrorContainer
+                            else
+                                MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        
+                        if (offerStatus.needsMore) {
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "+${offerStatus.remaining}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                        }
+                    }
+                }
+            }
                             text = "🏷️ ${offer.name}",
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
