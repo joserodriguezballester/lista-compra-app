@@ -118,25 +118,16 @@ private fun CategoryCard(category: Category) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = category.icon ?: "📁",
+                text = category.icon,
                 style = MaterialTheme.typography.displaySmall
             )
             Spacer(modifier = Modifier.width(16.dp))
-            Column {
-                Text(
-                    text = category.name,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                category.name?.let { desc ->
-                    Text(
-                        text = desc,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
+            Text(
+                text = category.name,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
         }
     }
 }

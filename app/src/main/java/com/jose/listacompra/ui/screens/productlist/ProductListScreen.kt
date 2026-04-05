@@ -141,7 +141,7 @@ fun ProductListScreen(
                 },
                 onNavigateToCategories = {
                     scope.launch { drawerState.close() }
-                    // TODO: añadir navegación a categorías desde Mi Lista
+                    onNavigateToCategories()
                 },
                 onChangeColor = {
                     scope.launch { drawerState.close() }

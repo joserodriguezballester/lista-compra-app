@@ -3,6 +3,7 @@ package com.jose.listacompra.data.local.dataseeder
 import android.util.Log
 import com.jose.listacompra.data.repository.ShoppingListRepository
 import com.jose.listacompra.domain.model.Aisle
+import com.jose.listacompra.domain.model.Category
 import com.jose.listacompra.domain.model.Offer
 import com.jose.listacompra.domain.repository.IAisleRepository
 import com.jose.listacompra.domain.repository.IArticuloRepository
