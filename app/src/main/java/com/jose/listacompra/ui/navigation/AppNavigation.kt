@@ -56,7 +56,6 @@ fun AppNavigation(
         
         composable(NavScreen.ShoppingList.route) {
             ProductListScreen(
-                navController = navController,
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToCatalogo = { navController.navigate(NavScreen.Catalogo.route) },
                 onNavigateToOffers = { navController.navigate(NavScreen.Offers.route) },
@@ -64,7 +63,8 @@ fun AppNavigation(
                 onNavigateToScanner = { navController.navigate(NavScreen.BarcodeScanner.route) },
                 onNavigateToCategories = { navController.navigate(NavScreen.Categories.route) },
                 isDarkMode = isDarkMode,
-                onToggleDarkMode = { onToggleTheme() }
+                onToggleDarkMode = { onToggleTheme() },
+                navController = navController
             )
         }
         

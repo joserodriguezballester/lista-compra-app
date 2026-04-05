@@ -77,6 +77,7 @@ fun ProductListScreen(
     onNavigateToOffers: () -> Unit = {},
     onNavigateToSupermarkets: () -> Unit = {},
     onNavigateToScanner: () -> Unit = {},
+    onNavigateToCategories: () -> Unit = {},
     isDarkMode: Boolean = false,
     onToggleDarkMode: (Boolean) -> Unit = {},
     navController: NavController? = null,
