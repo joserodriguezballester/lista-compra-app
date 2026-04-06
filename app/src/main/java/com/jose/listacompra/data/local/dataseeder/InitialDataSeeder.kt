@@ -52,6 +52,7 @@ class InitialDataSeeder @Inject constructor(
         seedShoppingListIfNeeded()
         seedCatalogIfNeeded()
         seedProductsIfNeeded()
+        seedHistoryIfNeeded()
         
         Log.d(TAG, "seedAll completed!")
     }
