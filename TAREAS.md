@@ -1,6 +1,6 @@
 # 📋 TAREAS - Lista Compra App
 
-**Última actualización:** 2026-04-02 05:55
+**Última actualización:** 2026-04-06 10:00
 
 ---
 
@@ -414,6 +414,57 @@ Diálogo: "¿Guardar en tu catálogo?"
 |---|-------|-------------|-----------|
 | T1 | **CRUD ofertas completo** | Añadir, editar y eliminar ofertas. Falta: delete | Alta |
 | T2 | **Pantalla añadir oferta** | Crear AddOfferScreen para añadir ofertas personalizadas | Media |
+| T3 | **Botón Home en BottomBar** | Añadir 🏠 Home a la izquierda en la bottom bar de cada pantalla | Media |
+| T4 | **Supermercado por producto** | Seleccionar supermercado al añadir/editar, filtrar lista por supermercado + "Cualquiera" | Alta |
+| T5 | **Mejorar micrófono** | 1) Solo instrucciones primera vez 2) En todas las TopBar 3) Buscar en artículos | Media |
+
+---
+
+### T4 - Supermercado por producto (detalles)
+
+**Objetivo:**
+1. Cada producto puede asignarse a un supermercado o "Cualquiera"
+2. Al filtrar por supermercado X, mostrar productos de X + "Cualquiera"
+3. Añadir opción "Todos" en la bottom bar para ver todo
+
+**Implementación:**
+
+| Paso | Archivo | Cambio |
+|------|---------|--------|
+| 1 | InitialDataSeeder.kt | Añadir supermercado "Cualquiera" (id=0) |
+| 2 | ProductDao.kt | `getProductsBySupermarketOrAnyFlow()` |
+| 3 | IProductRepository.kt | Método `getProductsBySupermarketOrAny()` |
+| 4 | GetProductsByListUseCase.kt | Flag `showAll` + lógica de filtrado |
+| 5 | ProductListViewModel.kt | Manejar `showAllProducts` y `selectedSupermarketId` nullable |
+| 6 | SupermarketBottomBar.kt | Tab "📦 Todos" al principio |
+| 7 | AddProductToListDialog.kt | Dropdown de supermercado |
+| 8 | EditProductDialog.kt | Dropdown de supermercado |
+
+**Sin migración de BD:** El campo `supermarketId` ya existe.
+
+**Ver plan detallado:** `PLAN-SUPERMERCADO-PRODUCTO-2026-04-06.md`
+
+---
+
+### T5 - Mejorar micrófono (detalles)
+
+**Problemas actuales:**
+1. Abre un diálogo cada vez → Solo mostrar la primera vez (guardar en preferencias)
+2. Solo aparece en algunas TopBar → Añadir a TODAS las pantallas
+3. Busca solo en productos de la lista → Debe buscar en el catálogo de artículos
+
+**Implementación:**
+
+| Paso | Archivo | Cambio |
+|------|---------|--------|
+| 1 | PreferencesManager.kt | Añadir `hasSeenMicInstructions: Boolean` |
+| 2 | MicrophoneDialog.kt | Si `hasSeenMicInstructions == true`, empezar a escuchar directo |
+| 3 | CommonTopBar.kt | Añadir `onMicrophoneClick` como parámetro obligatorio |
+| 4 | HomeScreen.kt | Añadir micrófono a TopBar |
+| 5 | OffersScreen.kt | Añadir micrófono a TopBar |
+| 6 | CategoriesScreen.kt | Añadir micrófono a TopBar |
+| 7 | SupermarketsScreen.kt | Añadir micrófono a TopBar |
+| 8 | ProductListViewModel.kt | Buscar también en `articuloRepository.searchArticulos()` |
 
 - "El drawer se muestra en home pero no se abre, en mi lista si se abre"
 - "El scanner ahora sí que va pero no muestra ningún dato del producto (en añadir productos)"
