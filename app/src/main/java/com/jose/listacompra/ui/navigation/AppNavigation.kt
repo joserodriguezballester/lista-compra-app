@@ -12,10 +12,10 @@ import androidx.navigation.navArgument
 import com.jose.listacompra.ui.screens.SplashScreen
 import com.jose.listacompra.ui.screens.catalogo.CatalogoScreen
 import com.jose.listacompra.ui.screens.categories.CategoriesScreen
+import com.jose.listacompra.ui.screens.history.HistoryScreen
 import com.jose.listacompra.ui.screens.home.HomeScreen
 import com.jose.listacompra.ui.screens.offers.OffersScreen
 import com.jose.listacompra.ui.screens.productlist.ProductListScreen
-import com.jose.listacompra.ui.screens.history.HistoryScreen
 import com.jose.listacompra.ui.screens.scanner.BarcodeScannerScreen
 import com.jose.listacompra.ui.screens.supermarket.SupermarketAislesScreen
 import com.jose.listacompra.ui.screens.supermarket.SupermarketListScreen
@@ -91,12 +91,6 @@ fun AppNavigation(
             )
         }
         
-        composable(NavScreen.History.route) {
-            HistoryScreen(
-                onNavigateBack = { navController.popBackStack() }
-            )
-        }
-        
         composable(NavScreen.BarcodeScanner.route) {
             BarcodeScannerScreen(
                 onBarcodeScanned = { ean, name, imageUrl, quantity, categoryId ->
@@ -123,7 +117,11 @@ fun AppNavigation(
                 }
             )
         }
-        
+        composable(NavScreen.History.route) {
+            HistoryScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
         composable(
             route = NavScreen.SupermarketAisles.route,
             arguments = listOf(
