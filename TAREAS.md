@@ -399,6 +399,8 @@ Diálogo: "¿Guardar en tu catálogo?"
 | # | Bug | Pantalla | Descripción |
 |---|-----|----------|-------------|
 | B19 | **Drawer sí abre en Mi Lista** | ProductListScreen | Comparar con Home para ver diferencia |
+| B22 | **ProductCard precio mal si línea larga** | ProductCard | El precio se corta o solapa con texto largo |
+| B23 | **Total de la lista incorrecto** | ProductListScreen | Verificar si es por datos de semilla o cálculo |
 
 ### 📝 Notas
 - **Scanner funciona:** Ahora sí escanea (por permiso de cámara de imagen)
