@@ -30,7 +30,8 @@ class InitialDataSeeder @Inject constructor(
     private val articuloRepository: IArticuloRepository,
     private val shoppingListRepository: IShoppingListRepository,
     private val productRepository: IProductRepository,
-    private val offerRepository: IOfferRepository
+    private val offerRepository: IOfferRepository,
+    private val historyRepository: IHistoryRepository
 ) {
 
     companion object {

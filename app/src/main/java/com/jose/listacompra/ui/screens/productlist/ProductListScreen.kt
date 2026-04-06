@@ -385,6 +385,4 @@ private fun SwipeableProductCard(
             ProductCard(product, offer, onClick, onTogglePurchased, Modifier.fillMaxWidth())
         }
     )
-}    }
-    )
 }
