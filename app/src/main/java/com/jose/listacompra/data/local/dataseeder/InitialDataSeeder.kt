@@ -451,10 +451,25 @@ class InitialDataSeeder @Inject constructor(
             )
             
             // Insertar datos
-            frequencyData.forEach { historyRepository.insertFrequency(it) }
-            priceHistoryData.forEach { historyRepository.savePriceHistory(it) }
+            Log.d(TAG, "Inserting ${frequencyData.size} frequency records...")
+            frequencyData.forEach { 
+                Log.d(TAG, "Inserting frequency: ${it.productName}")
+                historyRepository.insertFrequency(it) 
+            }
+            
+            Log.d(TAG, "Inserting ${priceHistoryData.size} price history records...")
+            priceHistoryData.forEach { 
+                Log.d(TAG, "Inserting price history: ${it.productName} - €${it.price}")
+                historyRepository.savePriceHistory(it) 
+            }
             
             Log.d(TAG, "Inserted ${frequencyData.size} frequency records and ${priceHistoryData.size} price history records")
+            
+            // Verificar inserción
+            val verify = historyRepository.getAllFrequencies()
+            Log.d(TAG, "Verification: ${verify.size} frequency records in DB")
+        } else {
+            Log.d(TAG, "History data already exists, skipping seed")
         }
     }
 }
