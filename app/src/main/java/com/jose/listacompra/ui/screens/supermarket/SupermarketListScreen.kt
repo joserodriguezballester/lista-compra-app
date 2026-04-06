@@ -13,6 +13,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.jose.listacompra.domain.model.Supermarket
+import com.jose.listacompra.ui.components.CommonBottomBar
 import com.jose.listacompra.ui.components.CommonTopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -20,6 +21,11 @@ import com.jose.listacompra.ui.components.CommonTopBar
 fun SupermarketListScreen(
     onNavigateBack: () -> Unit,
     onNavigateToAisles: (Long) -> Unit,
+    onNavigateToHome: () -> Unit = {},
+    onNavigateToList: () -> Unit = {},
+    onToggleDarkMode: () -> Unit = {},
+    isDarkMode: Boolean = false,
+    onChangeColor: () -> Unit = {},
     viewModel: SupermarketListViewModel = hiltViewModel()
 ) {
     val supermarkets by viewModel.supermarkets.collectAsState()
@@ -30,8 +36,18 @@ fun SupermarketListScreen(
     Scaffold(
         topBar = {
             CommonTopBar(
-                title = "Supermercados",
-                onNavigateBack = onNavigateBack
+                title = "🏪 Supermercados",
+                onNavigateBack = onNavigateBack,
+                onChangeColor = onChangeColor,
+                onToggleDarkMode = onToggleDarkMode,
+                isDarkMode = isDarkMode
+            )
+        },
+        bottomBar = {
+            CommonBottomBar(
+                onNavigateToHome = onNavigateToHome,
+                onNavigateToList = onNavigateToList,
+                currentRoute = "supermercados"
             )
         },
         floatingActionButton = {
@@ -145,7 +161,6 @@ private fun SupermarketCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Emoji
             Text(
                 text = supermarket.emoji,
                 style = MaterialTheme.typography.headlineMedium
@@ -153,7 +168,6 @@ private fun SupermarketCard(
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            // Info
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = supermarket.name,
@@ -169,7 +183,6 @@ private fun SupermarketCard(
                 }
             }
 
-            // Acciones
             IconButton(onClick = onEdit) {
                 Icon(Icons.Default.Edit, contentDescription = "Editar")
             }

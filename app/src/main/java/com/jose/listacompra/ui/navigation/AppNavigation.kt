@@ -91,11 +91,7 @@ fun AppNavigation(
         composable(NavScreen.Catalogo.route) {
             CatalogoScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToHome = navigateToHome,
                 onNavigateToList = navigateToList,
-                onToggleDarkMode = onToggleTheme,
-                isDarkMode = isDarkMode,
-                onChangeColor = onChangeColor,
                 navController = navController
             )
         }
@@ -105,6 +101,10 @@ fun AppNavigation(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToHome = navigateToHome,
                 onNavigateToList = navigateToList,
+                onNavigateToCatalogo = { navController.navigate(NavScreen.Catalogo.route) },
+                onNavigateToSupermarkets = { navController.navigate(NavScreen.Supermarkets.route) },
+                onNavigateToCategories = { navController.navigate(NavScreen.Categories.route) },
+                onNavigateToHistory = { navController.navigate(NavScreen.History.route) },
                 onToggleDarkMode = onToggleTheme,
                 isDarkMode = isDarkMode,
                 onChangeColor = onChangeColor
@@ -116,6 +116,10 @@ fun AppNavigation(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToHome = navigateToHome,
                 onNavigateToList = navigateToList,
+                onNavigateToOffers = { navController.navigate(NavScreen.Offers.route) },
+                onNavigateToCatalogo = { navController.navigate(NavScreen.Catalogo.route) },
+                onNavigateToSupermarkets = { navController.navigate(NavScreen.Supermarkets.route) },
+                onNavigateToHistory = { navController.navigate(NavScreen.History.route) },
                 onToggleDarkMode = onToggleTheme,
                 isDarkMode = isDarkMode,
                 onChangeColor = onChangeColor
@@ -127,6 +131,10 @@ fun AppNavigation(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToHome = navigateToHome,
                 onNavigateToList = navigateToList,
+                onNavigateToOffers = { navController.navigate(NavScreen.Offers.route) },
+                onNavigateToCatalogo = { navController.navigate(NavScreen.Catalogo.route) },
+                onNavigateToSupermarkets = { navController.navigate(NavScreen.Supermarkets.route) },
+                onNavigateToCategories = { navController.navigate(NavScreen.Categories.route) },
                 onToggleDarkMode = onToggleTheme,
                 isDarkMode = isDarkMode,
                 onChangeColor = onChangeColor
@@ -156,7 +164,12 @@ fun AppNavigation(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToAisles = { supermarketId ->
                     navController.navigate(NavScreen.SupermarketAisles.createRoute(supermarketId))
-                }
+                },
+                onNavigateToHome = navigateToHome,
+                onNavigateToList = navigateToList,
+                onToggleDarkMode = onToggleTheme,
+                isDarkMode = isDarkMode,
+                onChangeColor = onChangeColor
             )
         }
         

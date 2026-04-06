@@ -270,139 +270,181 @@ class InitialDataSeeder @Inject constructor(
             val priceHistoryData = listOf(
                 // Leche entera - variación de precios
                 com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    purchaseId = 1L,
                     productName = "leche entera",
                     price = 1.25f,
                     quantity = 2,
+                    aisle = "Lácteos",
                     fecha = now - (21 * day)
                 ),
                 com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    purchaseId = 2L,
                     productName = "leche entera",
                     price = 1.30f,
                     quantity = 2,
+                    aisle = "Lácteos",
                     fecha = now - (17 * day)
                 ),
                 com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    purchaseId = 3L,
                     productName = "leche entera",
                     price = 1.35f,
                     quantity = 2,
+                    aisle = "Lácteos",
                     fecha = now - (14 * day)
                 ),
                 com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    purchaseId = 4L,
                     productName = "leche entera",
                     price = 1.28f,
                     quantity = 2,
+                    aisle = "Lácteos",
                     fecha = now - (10 * day)
                 ),
                 com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    purchaseId = 5L,
                     productName = "leche entera",
                     price = 1.35f,
                     quantity = 2,
+                    aisle = "Lácteos",
                     fecha = now - (7 * day)
                 ),
                 com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    purchaseId = 6L,
                     productName = "leche entera",
                     price = 1.32f,
                     quantity = 2,
+                    aisle = "Lácteos",
                     fecha = now - (2 * day)
                 ),
                 
                 // Pan de molde
                 com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    purchaseId = 7L,
                     productName = "pan de molde",
                     price = 1.45f,
                     quantity = 1,
+                    aisle = "Panadería",
                     fecha = now - (25 * day)
                 ),
                 com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    purchaseId = 8L,
                     productName = "pan de molde",
                     price = 1.50f,
                     quantity = 1,
+                    aisle = "Panadería",
                     fecha = now - (20 * day)
                 ),
                 com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    purchaseId = 9L,
                     productName = "pan de molde",
                     price = 1.48f,
                     quantity = 1,
+                    aisle = "Panadería",
                     fecha = now - (12 * day)
                 ),
                 com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    purchaseId = 10L,
                     productName = "pan de molde",
                     price = 1.50f,
                     quantity = 1,
+                    aisle = "Panadería",
                     fecha = now - (5 * day)
                 ),
                 
                 // Huevos
                 com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    purchaseId = 11L,
                     productName = "huevos",
                     price = 2.00f,
                     quantity = 12,
+                    aisle = "Charcutería",
                     fecha = now - (18 * day)
                 ),
                 com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    purchaseId = 12L,
                     productName = "huevos",
                     price = 2.10f,
                     quantity = 12,
+                    aisle = "Charcutería",
                     fecha = now - (10 * day)
                 ),
                 com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    purchaseId = 13L,
                     productName = "huevos",
                     price = 2.05f,
                     quantity = 12,
+                    aisle = "Charcutería",
                     fecha = now - (3 * day)
                 ),
                 
                 // Yogur
                 com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    purchaseId = 14L,
                     productName = "yogur natural",
                     price = 1.75f,
                     quantity = 1,
+                    aisle = "Lácteos",
                     fecha = now - (21 * day)
                 ),
                 com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    purchaseId = 15L,
                     productName = "yogur natural",
                     price = 1.80f,
                     quantity = 1,
+                    aisle = "Lácteos",
                     fecha = now - (14 * day)
                 ),
                 com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    purchaseId = 16L,
                     productName = "yogur natural",
                     price = 1.85f,
                     quantity = 1,
+                    aisle = "Lácteos",
                     fecha = now - (7 * day)
                 ),
                 
                 // Café
                 com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    purchaseId = 17L,
                     productName = "café molido",
                     price = 3.20f,
                     quantity = 1,
+                    aisle = "Despensa",
                     fecha = now - (45 * day)
                 ),
                 com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    purchaseId = 18L,
                     productName = "café molido",
                     price = 3.50f,
                     quantity = 1,
+                    aisle = "Despensa",
                     fecha = now - (28 * day)
                 ),
                 com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    purchaseId = 19L,
                     productName = "café molido",
                     price = 3.40f,
                     quantity = 1,
+                    aisle = "Despensa",
                     fecha = now - (14 * day)
                 ),
                 
                 // Aceite
                 com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    purchaseId = 20L,
                     productName = "aceite de oliva",
                     price = 5.00f,
                     quantity = 1,
+                    aisle = "Despensa",
                     fecha = now - (60 * day)
                 ),
                 com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    purchaseId = 21L,
                     productName = "aceite de oliva",
                     price = 5.50f,
                     quantity = 1,
+                    aisle = "Despensa",
                     fecha = now - (30 * day)
                 )
             )
