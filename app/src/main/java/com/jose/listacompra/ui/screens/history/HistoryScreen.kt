@@ -2,7 +2,6 @@ package com.jose.listacompra.ui.screens.history
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -21,7 +20,6 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.jose.listacompra.data.local.entities.ProductFrequencyEntity
 import com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity
@@ -33,7 +31,7 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
-data class ProductHistory(
+data class ProductChartData(
     val product: ProductFrequencyEntity,
     val history: List<ProductPriceHistoryEntity>,
     val color: Color
@@ -57,29 +55,6 @@ fun HistoryScreen(
     val scope = rememberCoroutineScope()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val uiState by viewModel.uiState.collectAsState()
-
-    // Colores para las líneas de cada producto
-    val lineColors = listOf(
-        Color(0xFF2196F3), // Azul
-        Color(0xFF4CAF50), // Verde
-        Color(0xFFFF9800), // Naranja
-        Color(0xFF9C27B0), // Púrpura
-        Color(0xFFF44336), // Rojo
-        Color(0xFF00BCD4)  // Cyan
-    )
-
-    // Estado para productos seleccionados en la gráfica
-    var selectedProducts by remember { mutableStateOf<List<ProductHistory>>(emptyList()) }
-    var showProductPicker by remember { mutableStateOf(false) }
-
-    // Actualizar historial cuando cambian los productos seleccionados
-    LaunchedEffect(selectedProducts) {
-        if (selectedProducts.isNotEmpty()) {
-            selectedProducts.forEach { ph ->
-                viewModel.selectProduct(ph.product)
-            }
-        }
-    }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -141,21 +116,30 @@ fun HistoryScreen(
                     .fillMaxSize()
                     .padding(padding)
             ) {
-                TabRow(selectedTabIndex = uiState.selectedTab) {
+                TabRow(
+                    selectedTabIndex = uiState.selectedTab,
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.primary
+                ) {
                     Tab(
                         selected = uiState.selectedTab == 0,
                         onClick = { viewModel.selectTab(0) },
-                        text = { Text("📊 Frecuencia") }
+                        text = { Text("📊 Frecuencia", maxLines = 1) }
                     )
                     Tab(
                         selected = uiState.selectedTab == 1,
                         onClick = { viewModel.selectTab(1) },
-                        text = { Text("📈 Precios") }
+                        text = { Text("📈 Precios", maxLines = 1) }
                     )
                     Tab(
                         selected = uiState.selectedTab == 2,
                         onClick = { viewModel.selectTab(2) },
-                        text = { Text("📉 Gráfica") }
+                        text = { Text("📉 Gráfica", maxLines = 1) }
+                    )
+                    Tab(
+                        selected = uiState.selectedTab == 3,
+                        onClick = { viewModel.selectTab(3) },
+                        text = { Text("📊 Comparar", maxLines = 1) }
                     )
                 }
 
@@ -164,36 +148,21 @@ fun HistoryScreen(
                         products = uiState.frequencyData,
                         onProductClick = { viewModel.selectProduct(it) }
                     )
-                    1 -> PriceEvolutionTab(
+                    1 -> PriceListTab(
                         products = uiState.frequencyData,
                         selectedProduct = uiState.selectedProduct,
                         priceHistory = uiState.priceHistory,
                         onProductSelect = { viewModel.selectProduct(it) }
                     )
-                    2 -> MultiProductChartTab(
+                    2 -> SingleChartTab(
                         products = uiState.frequencyData,
-                        selectedProducts = selectedProducts,
-                        onAddProduct = { product ->
-                            if (selectedProducts.none { it.product.productName == product.productName }) {
-                                val newHistory = uiState.frequencyData
-                                    .filter { it.productName == product.productName }
-                                    .map { 
-                                        // Buscar historial de precios para este producto
-                                        uiState.priceHistory.filter { it.productName == product.productName }
-                                    }
-                                    .firstOrNull() ?: emptyList()
-                                
-                                selectedProducts = selectedProducts + ProductHistory(
-                                    product = product,
-                                    history = newHistory,
-                                    color = lineColors[selectedProducts.size % lineColors.size]
-                                )
-                            }
-                        },
-                        onRemoveProduct = { product ->
-                            selectedProducts = selectedProducts.filter { it.product.productName != product.productName }
-                        },
-                        priceHistoryMap = emptyMap() // Se actualizará dinámicamente
+                        selectedProduct = uiState.selectedProduct,
+                        priceHistory = uiState.priceHistory,
+                        onProductSelect = { viewModel.selectProduct(it) }
+                    )
+                    3 -> MultiProductCompareTab(
+                        products = uiState.frequencyData,
+                        viewModel = viewModel
                     )
                 }
             }
@@ -207,22 +176,19 @@ fun rememberDrawerState(initialValue: DrawerValue): androidx.compose.material3.D
     return androidx.compose.material3.rememberDrawerState(initialValue = initialValue)
 }
 
+// ============ PESTAÑA 0: FRECUENCIA ============
 @Composable
 private fun FrequencyTab(
     products: List<ProductFrequencyEntity>,
     onProductClick: (ProductFrequencyEntity) -> Unit
 ) {
     if (products.isEmpty()) {
-        EmptyStateTab(
-            emoji = "📊",
-            title = "Sin datos de frecuencia",
-            subtitle = "Añade productos a tu lista para ver estadísticas"
-        )
+        EmptyState(emoji = "📊", title = "Sin datos", subtitle = "Añade productos para ver frecuencia")
     } else {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(products.sortedByDescending { it.timesPurchased }) { product ->
                 FrequencyCard(product = product, onClick = { onProductClick(product) })
@@ -232,55 +198,45 @@ private fun FrequencyTab(
 }
 
 @Composable
-private fun FrequencyCard(
-    product: ProductFrequencyEntity,
-    onClick: () -> Unit
-) {
-    val daysSinceLast = if (product.lastPurchaseDate > 0) {
-        val diffDays = (System.currentTimeMillis() - product.lastPurchaseDate) / (1000 * 60 * 60 * 24)
+private fun FrequencyCard(product: ProductFrequencyEntity, onClick: () -> Unit) {
+    val daysSince = if (product.lastPurchaseDate > 0) {
+        val diff = (System.currentTimeMillis() - product.lastPurchaseDate) / (1000 * 60 * 60 * 24)
         when {
-            diffDays == 0L -> "Hoy"
-            diffDays == 1L -> "Ayer"
-            diffDays < 7 -> "Hace $diffDays días"
-            diffDays < 30 -> "Hace ${diffDays / 7} sem"
-            else -> "Hace ${diffDays / 30} mes(es)"
+            diff == 0L -> "Hoy"
+            diff == 1L -> "Ayer"
+            diff < 7 -> "Hace $diff días"
+            diff < 30 -> "Hace ${diff / 7} sem"
+            else -> "Hace ${diff / 30} mes(es)"
         }
     } else "Nunca"
-    
-    val nextPurchase = if (product.estimatedNextDate != null && product.estimatedNextDate > 0) {
-        val diffDays = (product.estimatedNextDate - System.currentTimeMillis()) / (1000 * 60 * 60 * 24)
+
+    val nextDate = if (product.estimatedNextDate != null && product.estimatedNextDate > 0) {
+        val diff = (product.estimatedNextDate - System.currentTimeMillis()) / (1000 * 60 * 60 * 24)
         when {
-            diffDays < 0 -> "⚠️ Ya debería estar en la lista"
-            diffDays == 0L -> "Hoy"
-            diffDays == 1L -> "Mañana"
-            diffDays < 7 -> "En $diffDays días"
-            else -> "En ${diffDays / 7} semanas"
+            diff < 0 -> "⚠️ Atrasado"
+            diff == 0L -> "Hoy"
+            diff == 1L -> "Mañana"
+            diff < 7 -> "En $diff días"
+            else -> "En ${diff / 7} sem"
         }
     } else null
-    
+
     val isOverdue = product.estimatedNextDate != null && 
                    product.estimatedNextDate > 0 && 
                    product.estimatedNextDate < System.currentTimeMillis()
-    
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         onClick = onClick,
         colors = CardDefaults.cardColors(
-            containerColor = if (isOverdue) 
-                MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
-            else 
-                MaterialTheme.colorScheme.surface
+            containerColor = if (isOverdue) MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+            else MaterialTheme.colorScheme.surface
         )
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
+        Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
                     text = product.originalName,
@@ -288,11 +244,7 @@ private fun FrequencyCard(
                     fontWeight = FontWeight.Bold,
                     color = if (isOverdue) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
                 )
-                
-                Surface(
-                    shape = MaterialTheme.shapes.small,
-                    color = if (isOverdue) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.secondaryContainer
-                ) {
+                Surface(shape = MaterialTheme.shapes.small, color = MaterialTheme.colorScheme.secondaryContainer) {
                     Text(
                         text = "${product.timesPurchased}x",
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
@@ -301,9 +253,7 @@ private fun FrequencyCard(
                     )
                 }
             }
-            
             Spacer(modifier = Modifier.height(8.dp))
-            
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -312,23 +262,20 @@ private fun FrequencyCard(
                     Text("Frecuencia", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(
                         text = if (product.averageDaysBetween != null && product.averageDaysBetween > 0)
-                            "Cada ${product.averageDaysBetween.toInt()} días"
-                        else "Sin datos",
+                            "Cada ${product.averageDaysBetween.toInt()} días" else "Sin datos",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium
                     )
                 }
-                
                 Column {
                     Text("Última", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(daysSinceLast, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                    Text(daysSince, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
                 }
-                
-                if (nextPurchase != null) {
+                if (nextDate != null) {
                     Column {
                         Text("Próxima", style = MaterialTheme.typography.labelSmall,
                             color = if (isOverdue) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(nextPurchase, style = MaterialTheme.typography.bodyMedium,
+                        Text(nextDate, style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold,
                             color = if (isOverdue) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface)
                     }
@@ -338,8 +285,9 @@ private fun FrequencyCard(
     }
 }
 
+// ============ PESTAÑA 1: LISTA DE PRECIOS ============
 @Composable
-private fun PriceEvolutionTab(
+private fun PriceListTab(
     products: List<ProductFrequencyEntity>,
     selectedProduct: ProductFrequencyEntity?,
     priceHistory: List<ProductPriceHistoryEntity>,
@@ -349,188 +297,115 @@ private fun PriceEvolutionTab(
         if (products.isNotEmpty()) {
             ProductSelector(products, selectedProduct, onProductSelect)
         }
-        
         Spacer(modifier = Modifier.height(16.dp))
-        
+
         when {
-            selectedProduct == null -> EmptyStateTab(
-                emoji = "📈",
-                title = "Selecciona un producto",
-                subtitle = "Para ver su evolución de precios"
-            )
-            priceHistory.isEmpty() -> EmptyStateTab(
-                emoji = "📈",
-                title = "Sin historial",
-                subtitle = "para ${selectedProduct.originalName}"
-            )
-            else -> PriceChartContent(selectedProduct.originalName, priceHistory)
+            selectedProduct == null -> EmptyState(emoji = "📈", title = "Selecciona un producto", subtitle = "")
+            priceHistory.isEmpty() -> EmptyState(emoji = "📈", title = "Sin historial", subtitle = "para ${selectedProduct.originalName}")
+            else -> PriceHistoryList(priceHistory)
         }
     }
 }
 
 @Composable
-private fun MultiProductChartTab(
-    products: List<ProductFrequencyEntity>,
-    selectedProducts: List<ProductHistory>,
-    onAddProduct: (ProductFrequencyEntity) -> Unit,
-    onRemoveProduct: (ProductFrequencyEntity) -> Unit,
-    priceHistoryMap: Map<String, List<ProductPriceHistoryEntity>>
-) {
-    val colors = listOf(
-        Color(0xFF2196F3),
-        Color(0xFF4CAF50),
-        Color(0xFFFF9800),
-        Color(0xFF9C27B0),
-        Color(0xFFF44336),
-        Color(0xFF00BCD4)
-    )
-    
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
+private fun PriceHistoryList(history: List<ProductPriceHistoryEntity>) {
+    val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize().padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Título
-        Text(
-            text = "📉 Comparativa de precios",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
-        
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        // Productos seleccionados (chips)
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(selectedProducts) { ph ->
-                InputChip(
-                    selected = true,
-                    onClick = { onRemoveProduct(ph.product) },
-                    label = { Text(ph.product.originalName) },
-                    trailingIcon = {
-                        Icon(
-                            Icons.Default.Close,
-                            contentDescription = "Quitar",
-                            modifier = Modifier.size(18.dp)
-                        )
-                    },
-                    colors = InputChipDefaults.inputChipColors(
-                        containerColor = ph.color.copy(alpha = 0.2f),
-                        labelColor = ph.color
-                    )
-                )
-            }
-            
-            // Botón añadir
-            if (selectedProducts.size < 6) {
-                item {
-                    AssistChip(
-                        onClick = { /* Abrir selector */ },
-                        label = { Text("+ Añadir") },
-                        leadingIcon = {
-                            Icon(Icons.Default.Close, "+", modifier = Modifier.size(16.dp))
-                        }
-                    )
+        // Estadísticas
+        if (history.isNotEmpty()) {
+            val prices = history.map { it.price }
+            item {
+                Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f))) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        StatCol("Mín", "€${String.format("%.2f", prices.minOrNull()!!)}")
+                        StatCol("Máx", "€${String.format("%.2f", prices.maxOrNull()!!)}")
+                        StatCol("Media", "€${String.format("%.2f", prices.average())}")
+                        StatCol("Compras", "${history.size}x")
+                    }
                 }
             }
         }
-        
+
+        // Lista
+        items(history.sortedByDescending { it.fecha }) { record ->
+            Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text(dateFormat.format(Date(record.fecha)), fontWeight = FontWeight.Medium)
+                        Text("${record.quantity} uds", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Text("€${String.format("%.2f", record.price)}", style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                }
+            }
+        }
+    }
+}
+
+// ============ PESTAÑA 2: GRÁFICA 1 PRODUCTO ============
+@Composable
+private fun SingleChartTab(
+    products: List<ProductFrequencyEntity>,
+    selectedProduct: ProductFrequencyEntity?,
+    priceHistory: List<ProductPriceHistoryEntity>,
+    onProductSelect: (ProductFrequencyEntity) -> Unit
+) {
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        if (products.isNotEmpty()) {
+            ProductSelector(products, selectedProduct, onProductSelect)
+        }
+
         Spacer(modifier = Modifier.height(16.dp))
-        
-        // Selector de productos
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-        ) {
-            Column(modifier = Modifier.padding(12.dp)) {
+
+        when {
+            selectedProduct == null -> EmptyState(emoji = "📉", title = "Selecciona un producto", subtitle = "Para ver su gráfica")
+            priceHistory.isEmpty() -> EmptyState(emoji = "📉", title = "Sin datos", subtitle = "para ${selectedProduct.originalName}")
+            else -> {
+                // Título
                 Text(
-                    text = "Selecciona productos para comparar:",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = "📈 ${selectedProduct.originalName}",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+
+                // Gráfica
+                Card(
+                    modifier = Modifier.fillMaxWidth().height(280.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
-                    items(products.take(10)) { product ->
-                        val isSelected = selectedProducts.any { it.product.productName == product.productName }
-                        FilterChip(
-                            selected = isSelected,
-                            onClick = {
-                                if (isSelected) {
-                                    onRemoveProduct(product)
-                                } else if (selectedProducts.size < 6) {
-                                    onAddProduct(product)
-                                }
-                            },
-                            label = { Text(product.originalName) }
-                        )
-                    }
-                }
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // Gráfica
-        if (selectedProducts.isEmpty()) {
-            EmptyStateTab(
-                emoji = "📊",
-                title = "Selecciona productos",
-                subtitle = "Para comparar sus precios en la gráfica"
-            )
-        } else {
-            MultiLinePriceChart(
-                productsData = selectedProducts,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(300.dp)
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // Leyenda con estadísticas
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-                )
-            ) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Text(
-                        text = "Resumen",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold
+                    SingleLineChart(
+                        history = priceHistory.sortedBy { it.fecha },
+                        modifier = Modifier.fillMaxSize().padding(16.dp)
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    selectedProducts.forEach { ph ->
-                        val prices = ph.history.map { it.price }
-                        if (prices.isNotEmpty()) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(12.dp)
-                                            .background(ph.color, MaterialTheme.shapes.small)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(ph.product.originalName, style = MaterialTheme.typography.bodyMedium)
-                                }
-                                Text(
-                                    "€${String.format("%.2f", prices.minOrNull()!!)} - €${String.format("%.2f", prices.maxOrNull()!!)}",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                            Spacer(modifier = Modifier.height(4.dp))
-                        }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Estadísticas
+                val prices = priceHistory.map { it.price }
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        StatCol("Mín", "€${String.format("%.2f", prices.minOrNull()!!)}")
+                        StatCol("Máx", "€${String.format("%.2f", prices.maxOrNull()!!)}")
+                        StatCol("Media", "€${String.format("%.2f", prices.average())}")
                     }
                 }
             }
@@ -539,239 +414,347 @@ private fun MultiProductChartTab(
 }
 
 @Composable
-private fun MultiLinePriceChart(
-    productsData: List<ProductHistory>,
+private fun SingleLineChart(
+    history: List<ProductPriceHistoryEntity>,
     modifier: Modifier = Modifier
 ) {
-    if (productsData.isEmpty()) return
-    
-    // Combinar todos los datos para obtener rango de fechas y precios
-    val allHistory = productsData.flatMap { it.history }
-    if (allHistory.isEmpty()) return
-    
-    val minDate = allHistory.minOf { it.fecha }
-    val maxDate = allHistory.maxOf { it.fecha }
-    val maxPrice = allHistory.maxOf { it.price }
-    
+    if (history.isEmpty()) return
+
+    val prices = history.map { it.price }
+    val maxPrice = prices.maxOrNull() ?: 0f
+    val minTime = history.minOf { it.fecha }
+    val maxTime = history.maxOf { it.fecha }
+    val timeRange = maxTime - minTime
+
+    val primaryColor = MaterialTheme.colorScheme.primary
     val surfaceVariant = MaterialTheme.colorScheme.surfaceVariant
     val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
-    
+
     Canvas(modifier = modifier) {
         val canvasWidth = size.width
         val canvasHeight = size.height
-        val padding = 50f
+        val padding = 40f
         val chartWidth = canvasWidth - 2 * padding
         val chartHeight = canvasHeight - 2 * padding
-        
-        // Dibujar ejes
-        drawLine(
-            color = surfaceVariant,
-            start = Offset(padding, padding),
-            end = Offset(padding, canvasHeight - padding),
-            strokeWidth = 2f
-        )
-        drawLine(
-            color = surfaceVariant,
-            start = Offset(padding, canvasHeight - padding),
-            end = Offset(canvasWidth - padding, canvasHeight - padding),
-            strokeWidth = 2f
-        )
-        
-        // Dibujar líneas de grid y etiquetas de precio (eje Y)
-        val priceStep = maxPrice / 5
-        for (i in 0..5) {
-            val price = i * priceStep
+
+        // Ejes
+        drawLine(surfaceVariant, Offset(padding, padding), Offset(padding, canvasHeight - padding), 2f)
+        drawLine(surfaceVariant, Offset(padding, canvasHeight - padding), Offset(canvasWidth - padding, canvasHeight - padding), 2f)
+
+        // Etiquetas eje Y (precio)
+        val ySteps = 5
+        for (i in 0..ySteps) {
+            val price = maxPrice * i / ySteps
             val y = canvasHeight - padding - (price / maxPrice) * chartHeight
-            
-            // Línea de grid
-            drawLine(
-                color = surfaceVariant.copy(alpha = 0.3f),
-                start = Offset(padding, y),
-                end = Offset(canvasWidth - padding, y),
-                strokeWidth = 1f
-            )
-            
-            // Etiqueta de precio
+
+            // Grid line
+            if (i > 0) {
+                drawLine(surfaceVariant.copy(alpha = 0.3f), Offset(padding, y), Offset(canvasWidth - padding, y), 1f)
+            }
+
+            // Etiqueta
             drawContext.canvas.nativeCanvas.drawText(
                 "€${String.format("%.1f", price)}",
                 5f,
                 y + 5f,
                 android.graphics.Paint().apply {
                     color = onSurfaceVariant.hashCode()
-                    textSize = 24f
-                    textAlign = android.graphics.Paint.Align.LEFT
+                    textSize = 20f
                 }
             )
         }
-        
-        // Dibujar etiquetas de fecha (eje X)
-        val dateFormat = SimpleDateFormat("dd/MM", Locale.getDefault())
-        val dateRange = maxDate - minDate
-        for (i in 0..4) {
-            val date = minDate + (dateRange * i / 4)
-            val x = padding + (i.toFloat() / 4) * chartWidth
-            
-            drawContext.canvas.nativeCanvas.drawText(
-                dateFormat.format(Date(date)),
-                x,
-                canvasHeight - 20f,
-                android.graphics.Paint().apply {
-                    color = onSurfaceVariant.hashCode()
-                    textSize = 22f
-                    textAlign = android.graphics.Paint.Align.CENTER
-                }
-            )
+
+        // Calcular puntos
+        val points = history.map { record ->
+            val x = if (timeRange > 0) {
+                padding + ((record.fecha - minTime).toFloat() / timeRange) * chartWidth
+            } else {
+                canvasWidth / 2
+            }
+            val y = canvasHeight - padding - (record.price / maxPrice) * chartHeight
+            Offset(x, y)
         }
-        
-        // Dibujar líneas para cada producto
-        productsData.forEach { ph ->
-            if (ph.history.isNotEmpty()) {
-                val points = ph.history.sortedBy { it.fecha }.map { record ->
-                    val x = if (dateRange > 0) {
-                        padding + ((record.fecha - minDate).toFloat() / dateRange) * chartWidth
-                    } else {
-                        canvasWidth / 2
+
+        // Área bajo la curva
+        if (points.size >= 2) {
+            val areaPath = Path().apply {
+                moveTo(points.first().x, canvasHeight - padding)
+                points.forEach { lineTo(it.x, it.y) }
+                lineTo(points.last().x, canvasHeight - padding)
+                close()
+            }
+            drawPath(areaPath, primaryColor.copy(alpha = 0.1f))
+        }
+
+        // Línea
+        if (points.size >= 2) {
+            val linePath = Path().apply {
+                moveTo(points.first().x, points.first().y)
+                for (i in 1 until points.size) {
+                    lineTo(points[i].x, points[i].y)
+                }
+            }
+            drawPath(linePath, primaryColor, style = Stroke(width = 3f, pathEffect = PathEffect.cornerPathEffect(10f)))
+        }
+
+        // Puntos
+        points.forEach { point ->
+            drawCircle(primaryColor, 6f, point)
+            drawCircle(Color.White, 3f, point)
+        }
+    }
+}
+
+// ============ PESTAÑA 3: COMPARATIVA MULTIPRODUCTO ============
+@Composable
+private fun MultiProductCompareTab(
+    products: List<ProductFrequencyEntity>,
+    viewModel: HistoryViewModel
+) {
+    val colors = listOf(
+        Color(0xFF2196F3), // Azul
+        Color(0xFF4CAF50), // Verde
+        Color(0xFFFF9800), // Naranja
+        Color(0xFF9C27B0), // Púrpura
+        Color(0xFFF44336), // Rojo
+        Color(0xFF00BCD4)  // Cyan
+    )
+
+    // Estado local para productos seleccionados y sus historiales
+    var selectedProducts by remember { mutableStateOf<List<ProductChartData>>(emptyList()) }
+    val histories = remember { mutableStateMapOf<String, List<ProductPriceHistoryEntity>>() }
+
+    // Cargar historial cuando se añade un producto
+    LaunchedEffect(selectedProducts) {
+        selectedProducts.forEach { pd ->
+            if (!histories.containsKey(pd.product.productName)) {
+                val history = viewModel.getPriceHistoryForProduct(pd.product.productName)
+                histories[pd.product.productName] = history
+            }
+        }
+    }
+
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        Text(
+            text = "📊 Comparativa de productos",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Selector de productos
+        Text("Selecciona productos (máx 6):", style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Chips de productos disponibles
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            items(products.sortedBy { it.originalName }.take(12)) { product ->
+                val isSelected = selectedProducts.any { it.product.productName == product.productName }
+                FilterChip(
+                    selected = isSelected,
+                    onClick = {
+                        if (isSelected) {
+                            selectedProducts = selectedProducts.filter { it.product.productName != product.productName }
+                        } else if (selectedProducts.size < 6) {
+                            selectedProducts = selectedProducts + ProductChartData(
+                                product = product,
+                                history = histories[product.productName] ?: emptyList(),
+                                color = colors[selectedProducts.size % colors.size]
+                            )
+                        }
+                    },
+                    label = { Text(product.originalName, maxLines = 1) }
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Productos seleccionados
+        if (selectedProducts.isNotEmpty()) {
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(selectedProducts) { pd ->
+                    InputChip(
+                        selected = true,
+                        onClick = { },
+                        label = { Text(pd.product.originalName, color = pd.color, maxLines = 1) },
+                        trailingIcon = {
+                            IconButton(
+                                onClick = {
+                                    selectedProducts = selectedProducts.filter { it.product.productName != pd.product.productName }
+                                },
+                                modifier = Modifier.size(18.dp)
+                            ) {
+                                Icon(Icons.Default.Close, "Quitar", tint = pd.color, modifier = Modifier.size(14.dp))
+                            }
+                        }
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Gráfica
+        if (selectedProducts.isEmpty()) {
+            EmptyState(emoji = "📊", title = "Selecciona productos", subtitle = "Para comparar sus precios")
+        } else {
+            // Actualizar datos con historiales cargados
+            val updatedProducts = selectedProducts.map { pd ->
+                pd.copy(history = histories[pd.product.productName] ?: emptyList())
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth().height(280.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                MultiLineChart(
+                    productsData = updatedProducts,
+                    modifier = Modifier.fillMaxSize().padding(16.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Leyenda
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text("Leyenda:", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    updatedProducts.forEach { pd ->
+                        if (pd.history.isNotEmpty()) {
+                            val min = pd.history.minOf { it.price }
+                            val max = pd.history.maxOf { it.price }
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(modifier = Modifier.size(12.dp).background(pd.color, MaterialTheme.shapes.small))
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(pd.product.originalName, style = MaterialTheme.typography.bodySmall)
+                                }
+                                Text("€${String.format("%.2f", min)} - €${String.format("%.2f", max)}",
+                                    style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MultiLineChart(
+    productsData: List<ProductChartData>,
+    modifier: Modifier = Modifier
+) {
+    if (productsData.isEmpty()) return
+
+    // Obtener todos los datos combinados
+    val allHistory = productsData.flatMap { it.history }
+    if (allHistory.isEmpty()) {
+        Box(modifier = modifier, contentAlignment = Alignment.Center) {
+            Text("Sin datos para mostrar", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        return
+    }
+
+    val maxPrice = allHistory.maxOf { it.price }
+    val minTime = allHistory.minOf { it.fecha }
+    val maxTime = allHistory.maxOf { it.fecha }
+    val timeRange = maxTime - minTime
+
+    val surfaceVariant = MaterialTheme.colorScheme.surfaceVariant
+    val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
+
+    Canvas(modifier = modifier) {
+        val canvasWidth = size.width
+        val canvasHeight = size.height
+        val padding = 40f
+        val chartWidth = canvasWidth - 2 * padding
+        val chartHeight = canvasHeight - 2 * padding
+
+        // Ejes
+        drawLine(surfaceVariant, Offset(padding, padding), Offset(padding, canvasHeight - padding), 2f)
+        drawLine(surfaceVariant, Offset(padding, canvasHeight - padding), Offset(canvasWidth - padding, canvasHeight - padding), 2f)
+
+        // Etiquetas eje Y
+        for (i in 0..5) {
+            val price = maxPrice * i / 5
+            val y = canvasHeight - padding - (price / maxPrice) * chartHeight
+            if (i > 0) {
+                drawLine(surfaceVariant.copy(alpha = 0.2f), Offset(padding, y), Offset(canvasWidth - padding, y), 1f)
+            }
+            drawContext.canvas.nativeCanvas.drawText(
+                "€${String.format("%.1f", price)}",
+                5f, y + 5f,
+                android.graphics.Paint().apply { color = onSurfaceVariant.hashCode(); textSize = 18f }
+            )
+        }
+
+        // Dibujar línea por cada producto
+        productsData.forEach { pd ->
+            if (pd.history.isNotEmpty()) {
+                val points = pd.history.sortedBy { it.fecha }.map { record ->
+                    val x = if (timeRange > 0) {
+                        padding + ((record.fecha - minTime).toFloat() / timeRange) * chartWidth
+                    } else canvasWidth / 2
                     val y = canvasHeight - padding - (record.price / maxPrice) * chartHeight
                     Offset(x, y)
                 }
-                
+
                 // Línea
-                val path = Path().apply {
-                    if (points.isNotEmpty()) {
+                if (points.size >= 2) {
+                    val path = Path().apply {
                         moveTo(points.first().x, points.first().y)
                         for (i in 1 until points.size) {
                             lineTo(points[i].x, points[i].y)
                         }
                     }
+                    drawPath(path, pd.color, style = Stroke(width = 3f, pathEffect = PathEffect.cornerPathEffect(10f)))
                 }
-                
-                drawPath(
-                    path = path,
-                    color = ph.color,
-                    style = Stroke(
-                        width = 3f,
-                        pathEffect = PathEffect.cornerPathEffect(10f)
-                    )
-                )
-                
+
                 // Puntos
                 points.forEach { point ->
-                    drawCircle(
-                        color = ph.color,
-                        radius = 6f,
-                        center = point
-                    )
-                    drawCircle(
-                        color = Color.White,
-                        radius = 3f,
-                        center = point
-                    )
+                    drawCircle(pd.color, 5f, point)
+                    drawCircle(Color.White, 2f, point)
                 }
             }
         }
     }
 }
 
+// ============ COMPONENTES AUXILIARES ============
 @Composable
-private fun PriceChartContent(productName: String, history: List<ProductPriceHistoryEntity>) {
-    val dateFormat = SimpleDateFormat("dd MMM", Locale.getDefault())
-    
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        item {
-            Text(
-                text = "📈 $productName",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
-            )
-        }
-        
-        if (history.isNotEmpty()) {
-            val prices = history.map { it.price }
-            val min = prices.minOrNull() ?: 0f
-            val max = prices.maxOrNull() ?: 0f
-            val avg = prices.average().toFloat()
-            val current = prices.last()
-            
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-                    )
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Estadísticas", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                        Spacer(modifier = Modifier.height(12.dp))
-                        
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            StatItem(label = "Mínimo", value = "€${String.format("%.2f", min)}")
-                            StatItem(label = "Máximo", value = "€${String.format("%.2f", max)}")
-                            StatItem(label = "Media", value = "€${String.format("%.2f", avg)}")
-                        }
-                        
-                        Spacer(modifier = Modifier.height(8.dp))
-                        
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            StatItem(label = "Actual", value = "€${String.format("%.2f", current)}")
-                            StatItem(label = "Compras", value = "${history.size}x")
-                        }
-                    }
-                }
-            }
-        }
-        
-        item {
-            Text("Historial de compras", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-        }
-        
-        items(history.sortedByDescending { it.fecha }) { record ->
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(dateFormat.format(Date(record.fecha)), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-                        Text("${record.quantity} unidades", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    Text("€${String.format("%.2f", record.price)}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun EmptyStateTab(emoji: String, title: String, subtitle: String) {
+private fun EmptyState(emoji: String, title: String, subtitle: String = "") {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(emoji, style = MaterialTheme.typography.displayLarge)
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+            if (subtitle.isNotEmpty()) {
+                Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+            }
         }
     }
 }
 
 @Composable
-private fun StatItem(label: String, value: String) {
+private fun StatCol(label: String, value: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
@@ -786,23 +769,19 @@ private fun ProductSelector(
     onSelect: (ProductFrequencyEntity) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    
+
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = { expanded = it }
     ) {
         OutlinedTextField(
             value = selected?.originalName ?: "Seleccionar producto",
-            onValueChange = {},
+            onValueChange = { },
             readOnly = true,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).menuAnchor(),
+            modifier = Modifier.fillMaxWidth().menuAnchor(),
             label = { Text("Producto") }
         )
-        
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
+        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             products.sortedBy { it.originalName }.forEach { product ->
                 DropdownMenuItem(
                     text = { Text(product.originalName) },

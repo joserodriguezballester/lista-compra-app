@@ -82,4 +82,14 @@ class HistoryViewModel @Inject constructor(
             }
         }
     }
+    
+    // Método público para obtener historial de un producto específico (para comparativa)
+    suspend fun getPriceHistoryForProduct(productName: String): List<ProductPriceHistoryEntity> {
+        return try {
+            historyRepository.getPriceHistory(productName)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting price history for $productName", e)
+            emptyList()
+        }
+    }
 }
