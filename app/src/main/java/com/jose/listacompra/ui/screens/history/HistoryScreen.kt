@@ -1,5 +1,6 @@
 package com.jose.listacompra.ui.screens.history
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -7,6 +8,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -59,7 +65,6 @@ fun HistoryScreen(
                 },
                 onNavigateToHistory = {
                     scope.launch { drawerState.close() }
-                    // Ya estamos en historial
                 },
                 onNavigateToSupermarkets = {
                     scope.launch { drawerState.close() }
@@ -111,6 +116,11 @@ fun HistoryScreen(
                         onClick = { viewModel.selectTab(1) },
                         text = { Text("📈 Precios") }
                     )
+                    Tab(
+                        selected = uiState.selectedTab == 2,
+                        onClick = { viewModel.selectTab(2) },
+                        text = { Text("📉 Gráfica") }
+                    )
                 }
 
                 when (uiState.selectedTab) {
@@ -119,6 +129,12 @@ fun HistoryScreen(
                         onProductClick = { viewModel.selectProduct(it) }
                     )
                     1 -> PriceEvolutionTab(
+                        products = uiState.frequencyData,
+                        selectedProduct = uiState.selectedProduct,
+                        priceHistory = uiState.priceHistory,
+                        onProductSelect = { viewModel.selectProduct(it) }
+                    )
+                    2 -> PriceChartTab(
                         products = uiState.frequencyData,
                         selectedProduct = uiState.selectedProduct,
                         priceHistory = uiState.priceHistory,
@@ -370,6 +386,235 @@ private fun PriceEvolutionTab(
     }
 }
 
+@Composable
+private fun PriceChartTab(
+    products: List<ProductFrequencyEntity>,
+    selectedProduct: ProductFrequencyEntity?,
+    priceHistory: List<ProductPriceHistoryEntity>,
+    onProductSelect: (ProductFrequencyEntity) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        if (products.isNotEmpty()) {
+            ProductSelector(
+                products = products,
+                selected = selectedProduct,
+                onSelect = onProductSelect
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        if (selectedProduct == null) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    "Selecciona un producto para ver su gráfica",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        } else if (priceHistory.isEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("📉", style = MaterialTheme.typography.displayLarge)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        "Sin datos para graficar",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        } else {
+            // Gráfica de líneas
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(300.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        text = "📈 ${selectedProduct.originalName}",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    PriceLineChart(
+                        history = priceHistory.sortedBy { it.fecha },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(220.dp)
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Estadísticas rápidas
+            if (priceHistory.isNotEmpty()) {
+                val prices = priceHistory.map { it.price }
+                val min = prices.minOrNull() ?: 0f
+                val max = prices.maxOrNull() ?: 0f
+                val avg = prices.average().toFloat()
+                
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        StatItem(label = "Mínimo", value = "€${String.format("%.2f", min)}")
+                        StatItem(label = "Máximo", value = "€${String.format("%.2f", max)}")
+                        StatItem(label = "Media", value = "€${String.format("%.2f", avg)}")
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PriceLineChart(
+    history: List<ProductPriceHistoryEntity>,
+    modifier: Modifier = Modifier
+) {
+    if (history.isEmpty()) return
+    
+    val prices = history.map { it.price }
+    val minPrice = prices.minOrNull() ?: 0f
+    val maxPrice = prices.maxOrNull() ?: 0f
+    val priceRange = maxPrice - minPrice
+    
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val secondaryColor = MaterialTheme.colorScheme.secondary
+    val surfaceVariant = MaterialTheme.colorScheme.surfaceVariant
+    
+    val dateFormat = SimpleDateFormat("dd/MM", Locale.getDefault())
+    
+    Canvas(modifier = modifier) {
+        val canvasWidth = size.width
+        val canvasHeight = size.height
+        val padding = 40f
+        
+        // Dibujar ejes
+        drawLine(
+            color = surfaceVariant,
+            start = Offset(padding, canvasHeight - padding),
+            end = Offset(canvasWidth - padding, canvasHeight - padding),
+            strokeWidth = 2f
+        )
+        drawLine(
+            color = surfaceVariant,
+            start = Offset(padding, padding),
+            end = Offset(padding, canvasHeight - padding),
+            strokeWidth = 2f
+        )
+        
+        if (history.size < 2) {
+            // Solo un punto, dibujar un círculo
+            val x = canvasWidth / 2
+            val y = canvasHeight / 2
+            drawCircle(
+                color = primaryColor,
+                radius = 8f,
+                center = Offset(x, y)
+            )
+            return@Canvas
+        }
+        
+        // Calcular puntos
+        val points = history.mapIndexed { index, record ->
+            val x = padding + (index.toFloat() / (history.size - 1)) * (canvasWidth - 2 * padding)
+            val normalizedPrice = if (priceRange > 0) (record.price - minPrice) / priceRange else 0.5f
+            val y = canvasHeight - padding - normalizedPrice * (canvasHeight - 2 * padding)
+            Offset(x, y)
+        }
+        
+        // Dibujar área bajo la línea
+        val path = Path().apply {
+            moveTo(points.first().x, canvasHeight - padding)
+            points.forEach { point ->
+                lineTo(point.x, point.y)
+            }
+            lineTo(points.last().x, canvasHeight - padding)
+            close()
+        }
+        
+        drawPath(
+            path = path,
+            color = primaryColor.copy(alpha = 0.1f)
+        )
+        
+        // Dibujar línea
+        val linePath = Path().apply {
+            moveTo(points.first().x, points.first().y)
+            for (i in 1 until points.size) {
+                lineTo(points[i].x, points[i].y)
+            }
+        }
+        
+        drawPath(
+            path = linePath,
+            color = primaryColor,
+            style = Stroke(
+                width = 3f,
+                pathEffect = PathEffect.cornerPathEffect(10f)
+            )
+        )
+        
+        // Dibujar puntos
+        points.forEach { point ->
+            drawCircle(
+                color = primaryColor,
+                radius = 6f,
+                center = point
+            )
+            drawCircle(
+                color = Color.White,
+                radius = 3f,
+                center = point
+            )
+        }
+    }
+}
+
+@Composable
+private fun StatItem(label: String, value: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ProductSelector(
@@ -532,21 +777,5 @@ private fun PriceChart(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun StatItem(label: String, value: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold
-        )
     }
 }
