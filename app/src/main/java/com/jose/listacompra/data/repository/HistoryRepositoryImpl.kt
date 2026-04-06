@@ -55,6 +55,10 @@ class HistoryRepositoryImpl @Inject constructor(
         return frequencyDao.findSuggestions(query.lowercase())
     }
 
+    override suspend fun insertPurchaseHistory(purchaseHistory: PurchaseHistoryEntity) {
+        purchaseHistoryDao.insertPurchase(purchaseHistory)
+    }
+
     override suspend fun getSpendingStats(): SpendingStats {
         // TODO: Implementar estadísticas de gasto
         return SpendingStats(

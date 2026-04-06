@@ -450,13 +450,31 @@ class InitialDataSeeder @Inject constructor(
                 )
             )
             
-            // Insertar datos
+            // Insertar datos de frecuencia
             Log.d(TAG, "Inserting ${frequencyData.size} frequency records...")
             frequencyData.forEach { 
                 Log.d(TAG, "Inserting frequency: ${it.productName}")
                 historyRepository.insertFrequency(it) 
             }
             
+            // Crear registros de purchase_history primero (necesarios para foreign key)
+            val purchaseHistoryData = (1..21).map { i ->
+                com.jose.listacompra.data.local.entities.PurchaseHistoryEntity(
+                    id = i.toLong(),
+                    fecha = now - ((21 - i) * day),
+                    total = 30f + (i * 2),
+                    tienda = "Carrefour",
+                    numProductos = 5
+                )
+            }
+            
+            // Insertar purchase_history primero
+            purchaseHistoryData.forEach { 
+                historyRepository.insertPurchaseHistory(it)
+            }
+            Log.d(TAG, "Inserted ${purchaseHistoryData.size} purchase history records")
+            
+            // Ahora insertar price history con purchaseIds válidos
             Log.d(TAG, "Inserting ${priceHistoryData.size} price history records...")
             priceHistoryData.forEach { 
                 Log.d(TAG, "Inserting price history: ${it.productName} - €${it.price}")
