@@ -101,6 +101,12 @@ fun AppDrawer(
                 selected = false,
                 onClick = onNavigateToCategories
             )
+            NavigationDrawerItem(
+                icon = { Icon(Icons.Default.History, contentDescription = null) },
+                label = { Text("Historial") },
+                selected = false,
+                onClick = onNavigateToHistory
+            )
         }
 
         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
