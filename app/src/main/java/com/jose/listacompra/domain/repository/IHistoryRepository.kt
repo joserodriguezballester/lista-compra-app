@@ -10,6 +10,7 @@ interface IHistoryRepository {
     suspend fun getFrequency(productName: String): ProductFrequencyEntity?
     suspend fun updateFrequency(entity: ProductFrequencyEntity)
     suspend fun insertFrequency(entity: ProductFrequencyEntity)
+    suspend fun getAllFrequencies(): List<ProductFrequencyEntity>
 
     // Historial de precios
     suspend fun getPriceHistory(productName: String): List<ProductPriceHistoryEntity>

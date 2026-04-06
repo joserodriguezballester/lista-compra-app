@@ -25,6 +25,7 @@ fun HomeScreen(
     onNavigateToSupermarkets: () -> Unit = {},
     onNavigateToOffers: () -> Unit = {},
     onNavigateToCategories: () -> Unit = {},
+    onNavigateToHistory: () -> Unit = {},
     onChangeColor: () -> Unit = {},
 ) {
     val scope = rememberCoroutineScope()
@@ -44,6 +45,10 @@ fun HomeScreen(
                 onNavigateToCategories = {
                     scope.launch { drawerState.close() }
                     onNavigateToCategories()
+                },
+                onNavigateToHistory = {
+                    scope.launch { drawerState.close() }
+                    onNavigateToHistory()
                 },
                 onNavigateToSupermarkets = {
                     scope.launch { drawerState.close() }
@@ -149,11 +154,11 @@ fun HomeScreen(
                     HomeCard(
                         modifier = Modifier.weight(1f),
                         title = "Historial",
-                        subtitle = "Próximamente",
+                        subtitle = "Estadísticas",
                         icon = Icons.Default.History,
                         emoji = "📊",
-                        enabled = false,
-                        onClick = { }
+                        enabled = true,
+                        onClick = onNavigateToHistory
                     )
                 }
             }

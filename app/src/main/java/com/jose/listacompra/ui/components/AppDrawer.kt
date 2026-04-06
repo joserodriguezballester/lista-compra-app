@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Inventory
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.LocalOffer
@@ -148,6 +149,13 @@ fun AppDrawer(
         Text(
             text = "v1.0.0 • Jose Rodríguez",
             modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            fontSize = 12.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}         modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
             fontSize = 12.sp,

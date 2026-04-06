@@ -2,6 +2,7 @@ package com.jose.listacompra.ui.navigation
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Inventory
 import androidx.compose.material.icons.filled.LocalOffer
@@ -22,5 +23,7 @@ sealed class NavScreen(val route: String, val title: String, val icon: ImageVect
     // Rutas con argumentos
     object SupermarketAisles : NavScreen("supermercado/{supermarketId}/pasillos", "Pasillos", Icons.Default.Store) {
         fun createRoute(supermarketId: Long) = "supermercado/$supermarketId/pasillos"
+    }
+}marketId/pasillos"
     }
 }

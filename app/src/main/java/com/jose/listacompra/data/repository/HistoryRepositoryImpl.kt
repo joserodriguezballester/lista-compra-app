@@ -47,6 +47,10 @@ class HistoryRepositoryImpl @Inject constructor(
         priceHistoryDao.insertPriceHistory(priceHistory)
     }
 
+    override suspend fun getAllFrequencies(): List<ProductFrequencyEntity> {
+        return frequencyDao.getAllFrequencies()
+    }
+
     override suspend fun getProductSuggestions(query: String): List<ProductFrequencyEntity> {
         return frequencyDao.findSuggestions(query.lowercase())
     }
