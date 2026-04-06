@@ -1,6 +1,8 @@
 package com.jose.listacompra.ui.components
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -69,6 +71,34 @@ fun SupermarketBottomBar(
                 )
             }
         ) {
+            // Tab de Home (si está habilitado)
+            if (onHomeClick != null) {
+                Tab(
+                    selected = false,
+                    onClick = onHomeClick,
+                    text = {
+                        Text(
+                            text = "🏠 Home",
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            color = onSurfaceVariantColor
+                        )
+                    },
+                    selectedContentColor = primaryColor,
+                    unselectedContentColor = onSurfaceVariantColor,
+                    modifier = Modifier.drawBehind {
+                        val strokeWidth = 1.dp.toPx()
+                        drawLine(
+                            color = dividerColor,
+                            start = Offset(size.width, 12.dp.toPx()),
+                            end = Offset(size.width, size.height - 12.dp.toPx()),
+                            strokeWidth = strokeWidth
+                        )
+                    }
+                )
+            }
+            
+            // Tabs de supermercados
             supermarkets.forEachIndexed { index, supermarket ->
                 val isSelected = supermarket.id == selectedSupermarketId
                 
@@ -80,27 +110,6 @@ fun SupermarketBottomBar(
                             text = "${supermarket.emoji} ${supermarket.name}",
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            color = if (isSelected) primaryColor else onSurfaceVariantColor
-                        )
-                    },
-                    selectedContentColor = primaryColor,
-                    unselectedContentColor = onSurfaceVariantColor,
-                    modifier = Modifier.drawBehind {
-                        if (index < supermarkets.size - 1) {
-                            val strokeWidth = 1.dp.toPx()
-                            drawLine(
-                                color = dividerColor,
-                                start = Offset(size.width, 12.dp.toPx()),
-                                end = Offset(size.width, size.height - 12.dp.toPx()),
-                                strokeWidth = strokeWidth
-                            )
-                        }
-                    }
-                )
-            }
-        }
-    }
-}verflow = TextOverflow.Ellipsis,
                             color = if (isSelected) primaryColor else onSurfaceVariantColor
                         )
                     },

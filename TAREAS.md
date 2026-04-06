@@ -416,7 +416,7 @@ Diálogo: "¿Guardar en tu catálogo?"
 |---|-------|-------------|-----------|
 | T1 | **CRUD ofertas completo** | Añadir, editar y eliminar ofertas. Falta: delete | Alta |
 | T2 | **Pantalla añadir oferta** | Crear AddOfferScreen para añadir ofertas personalizadas | Media |
-| T3 | **Botón Home en BottomBar** | Añadir 🏠 Home a la izquierda en la bottom bar de cada pantalla | Media |
+| T3 | **Botón Home en BottomBar** | Añadir 🏠 Home a la izquierda en la bottom bar de cada pantalla | ✅ Hecho |
 | T4 | **Supermercado por producto** | Seleccionar supermercado al añadir/editar, filtrar lista por supermercado + "Cualquiera" | Alta |
 | T5 | **Mejorar micrófono** | 1) Solo instrucciones primera vez 2) En todas las TopBar 3) Buscar en artículos | Media |
 
