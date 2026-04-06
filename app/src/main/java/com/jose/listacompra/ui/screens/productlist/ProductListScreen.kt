@@ -61,6 +61,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun ProductListScreen(
     onNavigateBack: () -> Unit = {},
+    onNavigateToHome: () -> Unit = {},
     onNavigateToCatalogo: () -> Unit = {},
     onNavigateToOffers: () -> Unit = {},
     onNavigateToSupermarkets: () -> Unit = {},
@@ -383,5 +384,7 @@ private fun SwipeableProductCard(
         content = {
             ProductCard(product, offer, onClick, onTogglePurchased, Modifier.fillMaxWidth())
         }
+    )
+}    }
     )
 }

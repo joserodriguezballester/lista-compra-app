@@ -26,9 +26,13 @@ fun SupermarketBottomBar(
     supermarkets: List<Supermarket>,
     selectedSupermarketId: Long,
     onSupermarketSelected: (Long) -> Unit,
+    onHomeClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
-    val selectedIndex = supermarkets.indexOfFirst { it.id == selectedSupermarketId }.coerceAtLeast(0)
+    // Si hay onHomeClick, añadimos Home como primer tab
+    val homeTabIndex = if (onHomeClick != null) 1 else 0
+    val selectedIndex = supermarkets.indexOfFirst { it.id == selectedSupermarketId }
+        .let { if (it >= 0) it + homeTabIndex else homeTabIndex }
     
     val dividerColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
     val surfaceColor = MaterialTheme.colorScheme.surface
@@ -76,6 +80,27 @@ fun SupermarketBottomBar(
                             text = "${supermarket.emoji} ${supermarket.name}",
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
+                            color = if (isSelected) primaryColor else onSurfaceVariantColor
+                        )
+                    },
+                    selectedContentColor = primaryColor,
+                    unselectedContentColor = onSurfaceVariantColor,
+                    modifier = Modifier.drawBehind {
+                        if (index < supermarkets.size - 1) {
+                            val strokeWidth = 1.dp.toPx()
+                            drawLine(
+                                color = dividerColor,
+                                start = Offset(size.width, 12.dp.toPx()),
+                                end = Offset(size.width, size.height - 12.dp.toPx()),
+                                strokeWidth = strokeWidth
+                            )
+                        }
+                    }
+                )
+            }
+        }
+    }
+}verflow = TextOverflow.Ellipsis,
                             color = if (isSelected) primaryColor else onSurfaceVariantColor
                         )
                     },
