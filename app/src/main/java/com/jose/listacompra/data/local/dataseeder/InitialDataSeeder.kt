@@ -8,6 +8,7 @@ import com.jose.listacompra.domain.model.Offer
 import com.jose.listacompra.domain.repository.IAisleRepository
 import com.jose.listacompra.domain.repository.IArticuloRepository
 import com.jose.listacompra.domain.repository.ICategoryRepository
+import com.jose.listacompra.domain.repository.IHistoryRepository
 import com.jose.listacompra.domain.repository.IOfferRepository
 import com.jose.listacompra.domain.repository.IProductRepository
 import com.jose.listacompra.domain.repository.IShoppingListRepository
@@ -182,4 +183,234 @@ class InitialDataSeeder @Inject constructor(
      * Devuelve la lista transformada a objetos de dominio 'Articulo'
      */
     fun getInitialItems() = articulosBase.map { it.toArticulo() }
+    
+    /**
+     * Inserta datos de historial de ejemplo si la tabla está vacía
+     */
+    private suspend fun seedHistoryIfNeeded() {
+        val existingData = historyRepository.getAllFrequencies()
+        if (existingData.isEmpty()) {
+            Log.d(TAG, "Seeding history data...")
+            
+            val now = System.currentTimeMillis()
+            val day = 24 * 60 * 60 * 1000L // 1 día en ms
+            
+            // Datos de frecuencia de productos
+            val frequencyData = listOf(
+                com.jose.listacompra.data.local.entities.ProductFrequencyEntity(
+                    productName = "leche entera",
+                    originalName = "Leche entera",
+                    timesPurchased = 8,
+                    lastPurchaseDate = now - (2 * day),
+                    averageDaysBetween = 3.5f,
+                    estimatedNextDate = now + (1.5f * day).toLong(),
+                    lastQuantity = 2f,
+                    lastPrice = 1.35f,
+                    lastSupermarketId = 2 // Mercadona
+                ),
+                com.jose.listacompra.data.local.entities.ProductFrequencyEntity(
+                    productName = "pan de molde",
+                    originalName = "Pan de molde",
+                    timesPurchased = 5,
+                    lastPurchaseDate = now - (5 * day),
+                    averageDaysBetween = 4f,
+                    estimatedNextDate = now - (1 * day), // ¡Ya debería estar!
+                    lastQuantity = 1f,
+                    lastPrice = 1.50f,
+                    lastSupermarketId = 1 // Carrefour
+                ),
+                com.jose.listacompra.data.local.entities.ProductFrequencyEntity(
+                    productName = "huevos",
+                    originalName = "Huevos",
+                    timesPurchased = 6,
+                    lastPurchaseDate = now - (3 * day),
+                    averageDaysBetween = 5f,
+                    estimatedNextDate = now + (2 * day),
+                    lastQuantity = 12f,
+                    lastPrice = 2.10f,
+                    lastSupermarketId = 2 // Mercadona
+                ),
+                com.jose.listacompra.data.local.entities.ProductFrequencyEntity(
+                    productName = "yogur natural",
+                    originalName = "Yogur natural",
+                    timesPurchased = 4,
+                    lastPurchaseDate = now - (7 * day),
+                    averageDaysBetween = 7f,
+                    estimatedNextDate = now,
+                    lastQuantity = 1f,
+                    lastPrice = 1.80f,
+                    lastSupermarketId = 1 // Carrefour
+                ),
+                com.jose.listacompra.data.local.entities.ProductFrequencyEntity(
+                    productName = "café molido",
+                    originalName = "Café molido",
+                    timesPurchased = 3,
+                    lastPurchaseDate = now - (14 * day),
+                    averageDaysBetween = 14f,
+                    estimatedNextDate = now,
+                    lastQuantity = 1f,
+                    lastPrice = 3.50f,
+                    lastSupermarketId = 3 // Lidl
+                ),
+                com.jose.listacompra.data.local.entities.ProductFrequencyEntity(
+                    productName = "aceite de oliva",
+                    originalName = "Aceite de oliva",
+                    timesPurchased = 2,
+                    lastPurchaseDate = now - (30 * day),
+                    averageDaysBetween = 30f,
+                    estimatedNextDate = now,
+                    lastQuantity = 1f,
+                    lastPrice = 5.50f,
+                    lastSupermarketId = 1 // Carrefour
+                )
+            )
+            
+            // Historial de precios
+            val priceHistoryData = listOf(
+                // Leche entera - variación de precios
+                com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    productName = "leche entera",
+                    price = 1.25f,
+                    quantity = 2,
+                    fecha = now - (21 * day)
+                ),
+                com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    productName = "leche entera",
+                    price = 1.30f,
+                    quantity = 2,
+                    fecha = now - (17 * day)
+                ),
+                com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    productName = "leche entera",
+                    price = 1.35f,
+                    quantity = 2,
+                    fecha = now - (14 * day)
+                ),
+                com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    productName = "leche entera",
+                    price = 1.28f,
+                    quantity = 2,
+                    fecha = now - (10 * day)
+                ),
+                com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    productName = "leche entera",
+                    price = 1.35f,
+                    quantity = 2,
+                    fecha = now - (7 * day)
+                ),
+                com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    productName = "leche entera",
+                    price = 1.32f,
+                    quantity = 2,
+                    fecha = now - (2 * day)
+                ),
+                
+                // Pan de molde
+                com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    productName = "pan de molde",
+                    price = 1.45f,
+                    quantity = 1,
+                    fecha = now - (25 * day)
+                ),
+                com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    productName = "pan de molde",
+                    price = 1.50f,
+                    quantity = 1,
+                    fecha = now - (20 * day)
+                ),
+                com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    productName = "pan de molde",
+                    price = 1.48f,
+                    quantity = 1,
+                    fecha = now - (12 * day)
+                ),
+                com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    productName = "pan de molde",
+                    price = 1.50f,
+                    quantity = 1,
+                    fecha = now - (5 * day)
+                ),
+                
+                // Huevos
+                com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    productName = "huevos",
+                    price = 2.00f,
+                    quantity = 12,
+                    fecha = now - (18 * day)
+                ),
+                com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    productName = "huevos",
+                    price = 2.10f,
+                    quantity = 12,
+                    fecha = now - (10 * day)
+                ),
+                com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    productName = "huevos",
+                    price = 2.05f,
+                    quantity = 12,
+                    fecha = now - (3 * day)
+                ),
+                
+                // Yogur
+                com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    productName = "yogur natural",
+                    price = 1.75f,
+                    quantity = 1,
+                    fecha = now - (21 * day)
+                ),
+                com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    productName = "yogur natural",
+                    price = 1.80f,
+                    quantity = 1,
+                    fecha = now - (14 * day)
+                ),
+                com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    productName = "yogur natural",
+                    price = 1.85f,
+                    quantity = 1,
+                    fecha = now - (7 * day)
+                ),
+                
+                // Café
+                com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    productName = "café molido",
+                    price = 3.20f,
+                    quantity = 1,
+                    fecha = now - (45 * day)
+                ),
+                com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    productName = "café molido",
+                    price = 3.50f,
+                    quantity = 1,
+                    fecha = now - (28 * day)
+                ),
+                com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    productName = "café molido",
+                    price = 3.40f,
+                    quantity = 1,
+                    fecha = now - (14 * day)
+                ),
+                
+                // Aceite
+                com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    productName = "aceite de oliva",
+                    price = 5.00f,
+                    quantity = 1,
+                    fecha = now - (60 * day)
+                ),
+                com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity(
+                    productName = "aceite de oliva",
+                    price = 5.50f,
+                    quantity = 1,
+                    fecha = now - (30 * day)
+                )
+            )
+            
+            // Insertar datos
+            frequencyData.forEach { historyRepository.insertFrequency(it) }
+            priceHistoryData.forEach { historyRepository.savePriceHistory(it) }
+            
+            Log.d(TAG, "Inserted ${frequencyData.size} frequency records and ${priceHistoryData.size} price history records")
+        }
+    }
 }
