@@ -10,14 +10,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.jose.listacompra.ui.screens.SplashScreen
+import com.jose.listacompra.ui.screens.catalogo.CatalogoScreen
+import com.jose.listacompra.ui.screens.categories.CategoriesScreen
 import com.jose.listacompra.ui.screens.home.HomeScreen
+import com.jose.listacompra.ui.screens.offers.OffersScreen
 import com.jose.listacompra.ui.screens.productlist.ProductListScreen
 import com.jose.listacompra.ui.screens.scanner.BarcodeScannerScreen
 import com.jose.listacompra.ui.screens.supermarket.SupermarketAislesScreen
 import com.jose.listacompra.ui.screens.supermarket.SupermarketListScreen
-import com.jose.listacompra.ui.screens.catalogo.CatalogoScreen
-import com.jose.listacompra.ui.screens.offers.OffersScreen
-import com.jose.listacompra.ui.screens.categories.CategoriesScreen
 
 @Composable
 fun AppNavigation(
@@ -63,6 +63,7 @@ fun AppNavigation(
                 onNavigateToSupermarkets = { navController.navigate(NavScreen.Supermarkets.route) },
                 onNavigateToScanner = { navController.navigate(NavScreen.BarcodeScanner.route) },
                 onNavigateToCategories = { navController.navigate(NavScreen.Categories.route) },
+                onNavigateToHistory = { navController.navigate(NavScreen.History.route) },
                 isDarkMode = isDarkMode,
                 onToggleDarkMode = { onToggleTheme() },
                 navController = navController
@@ -126,10 +127,6 @@ fun AppNavigation(
             SupermarketAislesScreen(
                 supermarketId = supermarketId,
                 onNavigateBack = { navController.popBackStack() }
-            )
-        }
-    }
-}onNavigateBack = { navController.popBackStack() }
             )
         }
     }

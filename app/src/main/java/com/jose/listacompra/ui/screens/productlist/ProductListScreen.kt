@@ -17,10 +17,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
@@ -53,22 +50,11 @@ import com.jose.listacompra.domain.model.Product
 import com.jose.listacompra.ui.components.AisleHeader
 import com.jose.listacompra.ui.components.AppDrawer
 import com.jose.listacompra.ui.components.CommonTopBar
-import com.jose.listacompra.ui.components.PriceHistoryChart
-import com.jose.listacompra.ui.components.PriceStatsCard
 import com.jose.listacompra.ui.components.ProductCard
 import com.jose.listacompra.ui.components.SupermarketBottomBar
 import com.jose.listacompra.ui.components.VoiceInputButton
 import com.jose.listacompra.ui.screens.ColorSettingsDialog
 import com.jose.listacompra.ui.viewmodel.ProductListViewModel
-import com.jose.listacompra.ui.components.AisleHeader
-import com.jose.listacompra.ui.components.AppDrawer
-import com.jose.listacompra.ui.components.CommonTopBar
-import com.jose.listacompra.ui.components.PriceHistoryChart
-import com.jose.listacompra.ui.components.PriceStatsCard
-import com.jose.listacompra.ui.components.ProductCard
-import com.jose.listacompra.ui.components.SupermarketBottomBar
-import com.jose.listacompra.ui.components.VoiceInputButton
-import com.jose.listacompra.ui.screens.ColorSettingsDialog
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -80,6 +66,7 @@ fun ProductListScreen(
     onNavigateToSupermarkets: () -> Unit = {},
     onNavigateToScanner: () -> Unit = {},
     onNavigateToCategories: () -> Unit = {},
+    onNavigateToHistory: () -> Unit = {},
     isDarkMode: Boolean = false,
     onToggleDarkMode: (Boolean) -> Unit = {},
     navController: NavController? = null,
@@ -146,6 +133,9 @@ fun ProductListScreen(
                     scope.launch { drawerState.close() }
                     onNavigateToCategories()
                 },
+                onNavigateToHistory = {
+                    scope.launch { drawerState.close() }
+                    onNavigateToHistory() },
                 onChangeColor = {
                     scope.launch { drawerState.close() }
                     showColorDialog = true
@@ -358,43 +348,6 @@ fun ProductListScreen(
 @Composable
 private fun SwipeableProductCard(
     product: Product,
-    offer: com.jose.listacompra.domain.model.Offer?,
-    onClick: () -> Unit,
-    onTogglePurchased: () -> Unit,
-    onRemove: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val dismissState = rememberSwipeToDismissBoxState(
-        initialValue = SwipeToDismissBoxValue.Settled,
-        confirmValueChange = { newValue ->
-            if (newValue == SwipeToDismissBoxValue.EndToStart) {
-                onRemove()
-                true
-            } else false
-        },
-        positionalThreshold = { it * 0.5f }
-    )
-
-    SwipeToDismissBox(
-        state = dismissState,
-        modifier = modifier,
-        enableDismissFromStartToEnd = false,
-        enableDismissFromEndToStart = true,
-        backgroundContent = {
-            Box(
-                modifier = Modifier.fillMaxSize()
-                    .background(MaterialTheme.colorScheme.errorContainer, MaterialTheme.shapes.medium)
-                    .padding(horizontal = 16.dp),
-                contentAlignment = Alignment.CenterEnd
-            ) {
-                Icon(Icons.Default.Delete, "Eliminar", tint = MaterialTheme.colorScheme.onErrorContainer)
-            }
-        },
-        content = {
-            ProductCard(product, offer, onClick, onTogglePurchased, Modifier.fillMaxWidth())
-        }
-    )
-}  product: Product,
     offer: com.jose.listacompra.domain.model.Offer?,
     onClick: () -> Unit,
     onTogglePurchased: () -> Unit,
