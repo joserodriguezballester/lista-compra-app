@@ -15,18 +15,15 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -36,25 +33,41 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.jose.listacompra.domain.model.Category
+import com.jose.listacompra.ui.components.CommonBottomBar
+import com.jose.listacompra.ui.components.CommonTopBar
 import com.jose.listacompra.ui.viewmodel.CategoriesViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoriesScreen(
     onNavigateBack: () -> Unit = {},
+    onNavigateToHome: () -> Unit = {},
+    onNavigateToList: () -> Unit = {},
+    onOpenDrawer: () -> Unit = {},
+    onMicrophoneClick: (() -> Unit)? = null,
+    onChangeColor: () -> Unit = {},
+    onToggleDarkMode: () -> Unit = {},
+    isDarkMode: Boolean = false,
     viewModel: CategoriesViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("📂 Categorías") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, "Volver")
-                    }
-                }
+            CommonTopBar(
+                title = "📂 Categorías",
+                onOpenDrawer = onOpenDrawer,
+                onMicrophoneClick = onMicrophoneClick,
+                onChangeColor = onChangeColor,
+                onToggleDarkMode = onToggleDarkMode,
+                isDarkMode = isDarkMode
+            )
+        },
+        bottomBar = {
+            CommonBottomBar(
+                onNavigateToHome = onNavigateToHome,
+                onNavigateToList = onNavigateToList,
+                currentRoute = "categorias"
             )
         }
     ) { padding ->
@@ -95,7 +108,7 @@ fun CategoriesScreen(
                     .fillMaxSize()
                     .padding(padding),
                 contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(uiState.categories) { category ->
                     CategoryCard(category = category)
@@ -119,14 +132,15 @@ private fun CategoryCard(category: Category) {
         ) {
             Text(
                 text = category.icon,
-                style = MaterialTheme.typography.displaySmall
+                style = MaterialTheme.typography.headlineMedium
             )
+            
             Spacer(modifier = Modifier.width(16.dp))
+            
             Text(
                 text = category.name,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Medium
             )
         }
     }

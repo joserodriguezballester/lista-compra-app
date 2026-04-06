@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.jose.listacompra.ui.components.AppDrawer
+import com.jose.listacompra.ui.components.CommonBottomBar
 import com.jose.listacompra.ui.components.CommonTopBar
 import kotlinx.coroutines.launch
 
@@ -27,6 +28,8 @@ fun HomeScreen(
     onNavigateToCategories: () -> Unit = {},
     onNavigateToHistory: () -> Unit = {},
     onChangeColor: () -> Unit = {},
+    isDarkMode: Boolean = false,
+    onToggleDarkMode: () -> Unit = {},
 ) {
     val scope = rememberCoroutineScope()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -36,8 +39,11 @@ fun HomeScreen(
         gesturesEnabled = drawerState.isOpen,
         drawerContent = {
             AppDrawer(
-                isDarkMode = false,
-                onToggleDarkMode = { },
+                isDarkMode = isDarkMode,
+                onToggleDarkMode = {
+                    onToggleDarkMode()
+                    scope.launch { drawerState.close() }
+                },
                 onNavigateToOffers = {
                     scope.launch { drawerState.close() }
                     onNavigateToOffers()
@@ -71,7 +77,16 @@ fun HomeScreen(
                 CommonTopBar(
                     title = "Lista Compra",
                     onOpenDrawer = { scope.launch { drawerState.open() } },
-                    onChangeColor = onChangeColor
+                    onChangeColor = onChangeColor,
+                    onToggleDarkMode = onToggleDarkMode,
+                    isDarkMode = isDarkMode
+                )
+            },
+            bottomBar = {
+                CommonBottomBar(
+                    onNavigateToHome = { /* Ya estamos en Home */ },
+                    onNavigateToList = onNavigateToList,
+                    currentRoute = "home"
                 )
             }
         ) { paddingValues ->

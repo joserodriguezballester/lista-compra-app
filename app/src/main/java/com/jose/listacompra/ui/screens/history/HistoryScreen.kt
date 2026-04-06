@@ -1,34 +1,11 @@
 package com.jose.listacompra.ui.screens.history
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -40,6 +17,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.jose.listacompra.data.local.entities.ProductFrequencyEntity
 import com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity
+import com.jose.listacompra.ui.components.CommonBottomBar
+import com.jose.listacompra.ui.components.CommonTopBar
 import com.jose.listacompra.ui.viewmodel.HistoryViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -49,19 +28,33 @@ import java.util.Locale
 @Composable
 fun HistoryScreen(
     onNavigateBack: () -> Unit = {},
+    onNavigateToHome: () -> Unit = {},
+    onNavigateToList: () -> Unit = {},
+    onOpenDrawer: () -> Unit = {},
+    onMicrophoneClick: (() -> Unit)? = null,
+    onChangeColor: () -> Unit = {},
+    onToggleDarkMode: () -> Unit = {},
+    isDarkMode: Boolean = false,
     viewModel: HistoryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("📊 Historial") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, "Volver")
-                    }
-                }
+            CommonTopBar(
+                title = "📊 Historial",
+                onOpenDrawer = onOpenDrawer,
+                onMicrophoneClick = onMicrophoneClick,
+                onChangeColor = onChangeColor,
+                onToggleDarkMode = onToggleDarkMode,
+                isDarkMode = isDarkMode
+            )
+        },
+        bottomBar = {
+            CommonBottomBar(
+                onNavigateToHome = onNavigateToHome,
+                onNavigateToList = onNavigateToList,
+                currentRoute = "historial"
             )
         }
     ) { padding ->
@@ -147,7 +140,6 @@ private fun FrequencyCard(
     product: ProductFrequencyEntity,
     onClick: () -> Unit
 ) {
-    val dateFormat = SimpleDateFormat("dd MMM", Locale.getDefault())
     val daysSinceLastPurchase = if (product.lastPurchaseDate > 0) {
         val diffDays = (System.currentTimeMillis() - product.lastPurchaseDate) / (1000 * 60 * 60 * 24)
         when {
@@ -226,7 +218,6 @@ private fun FrequencyCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Frecuencia
                 Column {
                     Text(
                         text = "Frecuencia",
@@ -243,7 +234,6 @@ private fun FrequencyCard(
                     )
                 }
                 
-                // Última compra
                 Column {
                     Text(
                         text = "Última compra",
@@ -257,7 +247,6 @@ private fun FrequencyCard(
                     )
                 }
                 
-                // Próxima estimada
                 if (nextPurchaseText != null) {
                     Column {
                         Text(
@@ -294,7 +283,6 @@ private fun PriceEvolutionTab(
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
-        // Selector de producto
         if (products.isNotEmpty()) {
             ProductSelector(
                 products = products,
@@ -305,7 +293,6 @@ private fun PriceEvolutionTab(
         
         Spacer(modifier = Modifier.height(16.dp))
         
-        // Gráfico o mensaje
         if (selectedProduct == null) {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -328,11 +315,6 @@ private fun PriceEvolutionTab(
                     Text(
                         "Sin historial de precios para ${selectedProduct.originalName}",
                         style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        "Añade este producto varias veces con precio",
-                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -400,7 +382,6 @@ private fun PriceChart(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Título
         item {
             Text(
                 text = "📈 $productName",
@@ -410,7 +391,6 @@ private fun PriceChart(
             )
         }
         
-        // Estadísticas
         if (history.isNotEmpty()) {
             val prices = history.map { it.price }
             val min = prices.minOrNull() ?: 0f
@@ -468,7 +448,6 @@ private fun PriceChart(
             }
         }
         
-        // Lista de precios históricos
         item {
             Text(
                 text = "Historial de compras",

@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.LocalOffer
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -16,25 +15,41 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.jose.listacompra.domain.model.Offer
+import com.jose.listacompra.ui.components.CommonBottomBar
+import com.jose.listacompra.ui.components.CommonTopBar
 import com.jose.listacompra.ui.viewmodel.OffersViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OffersScreen(
     onNavigateBack: () -> Unit = {},
+    onNavigateToHome: () -> Unit = {},
+    onNavigateToList: () -> Unit = {},
+    onOpenDrawer: () -> Unit = {},
+    onMicrophoneClick: (() -> Unit)? = null,
+    onChangeColor: () -> Unit = {},
+    onToggleDarkMode: () -> Unit = {},
+    isDarkMode: Boolean = false,
     viewModel: OffersViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("🏷️ Ofertas") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, "Volver")
-                    }
-                }
+            CommonTopBar(
+                title = "🏷️ Ofertas",
+                onOpenDrawer = onOpenDrawer,
+                onMicrophoneClick = onMicrophoneClick,
+                onChangeColor = onChangeColor,
+                onToggleDarkMode = onToggleDarkMode,
+                isDarkMode = isDarkMode
+            )
+        },
+        bottomBar = {
+            CommonBottomBar(
+                onNavigateToHome = onNavigateToHome,
+                onNavigateToList = onNavigateToList,
+                currentRoute = "ofertas"
             )
         }
     ) { padding ->

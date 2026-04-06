@@ -28,6 +28,20 @@ fun AppNavigation(
     onToggleTheme: () -> Unit = {},
     onChangeColor: () -> Unit = {},
 ) {
+    // Función común para navegar a Home
+    val navigateToHome: () -> Unit = {
+        navController.navigate(NavScreen.Home.route) {
+            popUpTo(NavScreen.Home.route) { inclusive = true }
+        }
+    }
+    
+    // Función común para navegar a Lista
+    val navigateToList: () -> Unit = {
+        navController.navigate(NavScreen.ShoppingList.route) {
+            popUpTo(NavScreen.Home.route) { inclusive = false }
+        }
+    }
+
     NavHost(
         navController = navController,
         startDestination = NavScreen.Splash.route,
@@ -46,24 +60,22 @@ fun AppNavigation(
         
         composable(NavScreen.Home.route) {
             HomeScreen(
-                onNavigateToList = { navController.navigate(NavScreen.ShoppingList.route) },
+                onNavigateToList = navigateToList,
                 onNavigateToCatalogo = { navController.navigate(NavScreen.Catalogo.route) },
                 onNavigateToSupermarkets = { navController.navigate(NavScreen.Supermarkets.route) },
                 onNavigateToOffers = { navController.navigate(NavScreen.Offers.route) },
                 onNavigateToCategories = { navController.navigate(NavScreen.Categories.route) },
                 onNavigateToHistory = { navController.navigate(NavScreen.History.route) },
-                onChangeColor = onChangeColor
+                onChangeColor = onChangeColor,
+                isDarkMode = isDarkMode,
+                onToggleDarkMode = onToggleTheme
             )
         }
         
         composable(NavScreen.ShoppingList.route) {
             ProductListScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToHome = { 
-                    navController.navigate(NavScreen.Home.route) {
-                        popUpTo(NavScreen.Home.route) { inclusive = true }
-                    }
-                },
+                onNavigateToHome = navigateToHome,
                 onNavigateToCatalogo = { navController.navigate(NavScreen.Catalogo.route) },
                 onNavigateToOffers = { navController.navigate(NavScreen.Offers.route) },
                 onNavigateToSupermarkets = { navController.navigate(NavScreen.Supermarkets.route) },
@@ -79,20 +91,45 @@ fun AppNavigation(
         composable(NavScreen.Catalogo.route) {
             CatalogoScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToList = { navController.navigate(NavScreen.ShoppingList.route) },
+                onNavigateToHome = navigateToHome,
+                onNavigateToList = navigateToList,
+                onToggleDarkMode = onToggleTheme,
+                isDarkMode = isDarkMode,
+                onChangeColor = onChangeColor,
                 navController = navController
             )
         }
         
         composable(NavScreen.Offers.route) {
             OffersScreen(
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToHome = navigateToHome,
+                onNavigateToList = navigateToList,
+                onToggleDarkMode = onToggleTheme,
+                isDarkMode = isDarkMode,
+                onChangeColor = onChangeColor
             )
         }
         
         composable(NavScreen.Categories.route) {
             CategoriesScreen(
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToHome = navigateToHome,
+                onNavigateToList = navigateToList,
+                onToggleDarkMode = onToggleTheme,
+                isDarkMode = isDarkMode,
+                onChangeColor = onChangeColor
+            )
+        }
+        
+        composable(NavScreen.History.route) {
+            HistoryScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToHome = navigateToHome,
+                onNavigateToList = navigateToList,
+                onToggleDarkMode = onToggleTheme,
+                isDarkMode = isDarkMode,
+                onChangeColor = onChangeColor
             )
         }
         
@@ -122,11 +159,7 @@ fun AppNavigation(
                 }
             )
         }
-        composable(NavScreen.History.route) {
-            HistoryScreen(
-                onNavigateBack = { navController.popBackStack() }
-            )
-        }
+        
         composable(
             route = NavScreen.SupermarketAisles.route,
             arguments = listOf(
