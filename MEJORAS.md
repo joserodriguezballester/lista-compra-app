@@ -63,6 +63,27 @@
 
 ---
 
+## OFERTAS
+
+**O1** - Overflow: Añadir oferta
+- Añadir opción "Añadir oferta" en el menú overflow
+- Abrir diálogo para crear nueva oferta (nombre, código, descripción)
+- Funcionalidad completa: guardar en BD
+
+**O2** - Cards: Editar
+- Añadir botón lápiz para editar oferta
+- Abrir diálogo con datos actuales
+- Funcionalidad completa: actualizar en BD
+
+**O3** - Cards: Swipe para borrar
+- Implementar swipe para eliminar
+- Verificar restricciones de BD (productos que usan la oferta)
+- Mostrar diálogo de confirmación
+- Si tiene productos asociados: mostrar advertencia y no permitir borrar
+- Funcionalidad completa: eliminar de BD
+
+---
+
 ## ARQUITECTURA
 
 **A1** - Valores de UI en archivo aparte
