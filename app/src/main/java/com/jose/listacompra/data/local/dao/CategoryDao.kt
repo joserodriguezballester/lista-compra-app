@@ -28,6 +28,3 @@ interface CategoryDao {
     @Query("DELETE FROM categories")
     suspend fun deleteAll()
 }
-OM categories")
-    suspend fun deleteAll()
-}

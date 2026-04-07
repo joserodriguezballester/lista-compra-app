@@ -36,21 +36,21 @@ fun AddProductToListDialog(
     ) -> Unit,
     shoppingListId: Long,
     articulos: List<Articulo> = emptyList(),
-    selectedArticul
-
-o: Articulo? = null,
+    selectedArticulo: Articulo? = null,
     viewModel: ProductListViewModel = hiltViewModel()
 ) {
+    val uiState by viewModel.uiState.collectAsState()
+    
     var productName by remember { mutableStateOf(selectedArticulo?.name ?: "") }
-    var quantity by remember { mutableFloatStateOf(selectedArticulo?.quantity ?: 1f) }
-    var price by remember { mutableStateOf(selectedArticulo?.estimatedPrice?.toString() ?: "") }
+    var quantity by remember { mutableFloatStateOf(1f) }
+    var price by remember { mutableStateOf(selectedArticulo?.finalPrice?.toString() ?: "") }
     var notes by remember { mutableStateOf("") }
     var selectedAisle by remember { mutableStateOf<Long?>(null) }
     var selectedOffer by remember { mutableStateOf<Long?>(null) }
-    var photoUri by remember { mutableStateOf<Uri?>(selectedArticulo?.imageUrl?.let { Uri.parse(it) }) }
+    var photoUri by remember { mutableStateOf<Uri?>(selectedArticulo?.photoUri?.let { Uri.parse(it) }) }
     
-    val aisles by viewModel.aisles.collectAsState()
-    val offers by viewModel.offers.collectAsState()
+    val aisles = uiState.aisles
+    val offers = uiState.offers
     
     var showAisleDropdown by remember { mutableStateOf(false) }
     var showOfferDropdown by remember { mutableStateOf(false) }
@@ -270,9 +270,9 @@ o: Articulo? = null,
                         modifier = Modifier.fillMaxWidth(),
                         onClick = {
                             productName = articulo.name
-                            quantity = articulo.quantity
-                            price = articulo.estimatedPrice?.toString() ?: ""
-                            photoUri = articulo.imageUrl?.let { Uri.parse(it) }
+                            quantity = 1f // Articulo no tiene quantity
+                            price = articulo.finalPrice?.toString() ?: ""
+                            photoUri = articulo.photoUri?.let { Uri.parse(it) }
                             showArticuloSheet = false
                         }
                     ) {
@@ -282,7 +282,7 @@ o: Articulo? = null,
                                 .padding(12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            articulo.imageUrl?.let { url ->
+                            articulo.photoUri?.let { url ->
                                 AsyncImage(
                                     model = url,
                                     contentDescription = articulo.name,
@@ -293,7 +293,7 @@ o: Articulo? = null,
                             }
                             Column {
                                 Text(articulo.name, style = MaterialTheme.typography.bodyLarge)
-                                articulo.estimatedPrice?.let {
+                                articulo.finalPrice?.let {
                                     Text("€${String.format("%.2f", it)}", style = MaterialTheme.typography.bodySmall)
                                 }
                             }
