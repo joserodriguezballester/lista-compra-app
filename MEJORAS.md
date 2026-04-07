@@ -91,6 +91,7 @@
 - Quitar botones de editar y papelera de las cards
 - Añadir "Añadir supermercado" en overflow
 - Swipe para borrar (verificar restricciones: pasillos asociados)
+- Cambiar flecha atrás por drawer en TopBar
 
 **S2** - Cards: Usar logos en vez de emojis
 - Mostrar logo del supermercado (Carrefour, Mercadona, etc.)
@@ -101,6 +102,10 @@
 - Swipe hacia la derecha o menú contextual para editar
 - Abrir diálogo con datos actuales
 - Funcionalidad completa: actualizar en BD
+
+**S4** - Detail (pasillos): Mantener flecha atrás
+- En la pantalla de pasillos, usar flecha atrás en TopBar
+- No usar drawer aquí
 
 ---
 
