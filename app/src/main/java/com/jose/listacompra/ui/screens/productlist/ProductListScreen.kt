@@ -323,7 +323,6 @@ fun ProductListScreen(
                 aisles = uiState.aisles,
                 offers = uiState.offers,
                 suggestions = uiState.articleSuggestions,
-                historySuggestions = uiState.historySuggestions,
                 initialName = scannedName,
                 onSearch = { query -> viewModel.searchArticles(query) },
                 onOpenScanner = onNavigateToScanner,
@@ -335,7 +334,7 @@ fun ProductListScreen(
                     navController?.currentBackStackEntry?.savedStateHandle?.remove<String>("scannedName")
                 },
                 onAdd = { name, quantity, aisleId, price, offerId, notes, photoUri ->
-                    viewModel.addProduct(name, quantity, aisleId, price, offerId, notes, photoUri)
+                    viewModel.addProduct(name, quantity, aisleId, price, offerId, notes, photoUri?.let { Uri.parse(it) })
                     showAddProductDialog = false
                     scannedName = null
                     scannedPrice = null

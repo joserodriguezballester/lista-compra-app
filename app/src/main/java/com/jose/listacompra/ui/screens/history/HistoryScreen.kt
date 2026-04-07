@@ -744,14 +744,7 @@ private fun ProductSelectorCards(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    product.imageUrl?.let { url ->
-                        AsyncImage(
-                            model = url,
-                            contentDescription = product.originalName,
-                            modifier = Modifier.size(32.dp),
-                            contentScale = ContentScale.Fit
-                        )
-                    } ?: Text(
+                    Text(
                         text = "📦",
                         style = MaterialTheme.typography.headlineSmall
                     )

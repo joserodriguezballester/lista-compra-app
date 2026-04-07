@@ -242,7 +242,7 @@ private fun CategoryCard(
             
             Spacer(modifier = Modifier.width(8.dp))
             
-            Row(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 IconButton(onClick = onEdit) {
                     Icon(
                         Icons.Default.Edit,
