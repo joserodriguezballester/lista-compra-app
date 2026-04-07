@@ -18,13 +18,17 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SwipeToDismissBox
@@ -51,7 +55,7 @@ import com.jose.listacompra.ui.components.AisleHeader
 import com.jose.listacompra.ui.components.AppDrawer
 import com.jose.listacompra.ui.components.CommonTopBar
 import com.jose.listacompra.ui.components.ProductCard
-import com.jose.listacompra.ui.components.SupermarketBottomBar
+import com.jose.listacompra.ui.components.ListBottomBar
 import com.jose.listacompra.ui.components.VoiceInputButton
 import com.jose.listacompra.ui.screens.ColorSettingsDialog
 import com.jose.listacompra.ui.viewmodel.ProductListViewModel
@@ -82,6 +86,7 @@ fun ProductListScreen(
     var productToEdit by remember { mutableStateOf<Product?>(null) }
     var showColorDialog by remember { mutableStateOf(false) }
     var showVoiceDialog by remember { mutableStateOf(false) }
+    var showClearConfirmDialog by remember { mutableStateOf(false) }
     
     // Datos del scanner
     var scannedName by remember { mutableStateOf<String?>(null) }
@@ -148,26 +153,55 @@ fun ProductListScreen(
         Scaffold(
             topBar = {
                 CommonTopBar(
-                    title = "Mi Lista de la Compra",
+                    title = "Mi lista",
                     onOpenDrawer = { scope.launch { drawerState.open() } },
                     onMicrophoneClick = { showVoiceDialog = true },
-                    onChangeColor = { showColorDialog = true }
+                    onAddClick = { showAddProductDialog = true },
+                    onChangeColor = { showColorDialog = true },
+                    overflowActions = { expanded, onDismiss ->
+                        DropdownMenuItem(
+                            text = { Text("Añadir manual") },
+                            onClick = {
+                                showAddProductDialog = true
+                                onDismiss()
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Default.Edit, contentDescription = null)
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Añadir por scanner") },
+                            onClick = {
+                                onNavigateToScanner()
+                                onDismiss()
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Default.QrCodeScanner, contentDescription = null)
+                            }
+                        )
+                        HorizontalDivider()
+                        DropdownMenuItem(
+                            text = { Text("Vaciar lista") },
+                            onClick = {
+                                showClearConfirmDialog = true
+                                onDismiss()
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Default.Delete, contentDescription = null)
+                            },
+                            colors = MenuDefaults.itemColors(
+                                textColor = MaterialTheme.colorScheme.error
+                            )
+                        )
+                    }
                 )
             },
             bottomBar = {
-                SupermarketBottomBar(
+                ListBottomBar(
                     supermarkets = uiState.supermarkets,
                     selectedSupermarketId = uiState.selectedSupermarketId ?: 0L,
-                    onSupermarketSelected = { viewModel.selectSupermarket(it) }
-                )
-            },
-            floatingActionButton = {
-                ExtendedFloatingActionButton(
-                    onClick = { showAddProductDialog = true },
-                    icon = { Icon(Icons.Default.Add, contentDescription = "Añadir") },
-                    text = { Text("Añadir producto") },
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    onSupermarketSelected = { viewModel.selectSupermarket(it) },
+                    onHomeClick = onNavigateToHome
                 )
             }
         ) { paddingValues ->
@@ -337,6 +371,33 @@ fun ProductListScreen(
                 },
                 confirmButton = {
                     TextButton(onClick = { showVoiceDialog = false }) {
+                        Text("Cancelar")
+                    }
+                }
+            )
+        }
+        
+        // Diálogo confirmar vaciar lista
+        if (showClearConfirmDialog) {
+            AlertDialog(
+                onDismissRequest = { showClearConfirmDialog = false },
+                title = { Text("Vaciar lista") },
+                text = { Text("¿Estás seguro de que quieres eliminar todos los productos de la lista?") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            viewModel.clearAllProducts()
+                            showClearConfirmDialog = false
+                        },
+                        colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error
+                        )
+                    ) {
+                        Text("Vaciar")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showClearConfirmDialog = false }) {
                         Text("Cancelar")
                     }
                 }

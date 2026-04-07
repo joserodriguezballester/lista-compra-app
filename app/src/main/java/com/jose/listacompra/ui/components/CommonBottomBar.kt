@@ -6,13 +6,12 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 /**
  * Bottom bar simple con Home y Mi Lista
- * Para usar en pantallas que no tienen SupermarketBottomBar
+ * Solo iconos, sin texto, más compacta
  */
 @Composable
 fun CommonBottomBar(
@@ -22,7 +21,7 @@ fun CommonBottomBar(
     modifier: Modifier = Modifier
 ) {
     NavigationBar(
-        modifier = modifier,
+        modifier = modifier.height(56.dp),
         tonalElevation = 8.dp
     ) {
         NavigationBarItem(
@@ -33,8 +32,7 @@ fun CommonBottomBar(
                     Icons.Default.Home, 
                     contentDescription = "Home"
                 ) 
-            },
-            label = { Text("Home") }
+            }
         )
         
         NavigationBarItem(
@@ -45,8 +43,7 @@ fun CommonBottomBar(
                     Icons.Default.ShoppingCart, 
                     contentDescription = "Mi Lista"
                 ) 
-            },
-            label = { Text("Mi Lista") }
+            }
         )
     }
 }

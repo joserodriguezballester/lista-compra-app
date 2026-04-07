@@ -20,6 +20,7 @@ fun CommonTopBar(
     onNavigateBack: (() -> Unit)? = null,
     onOpenDrawer: () -> Unit = {},
     onMicrophoneClick: (() -> Unit)? = null,
+    onAddClick: (() -> Unit)? = null,
     onChangeColor: () -> Unit = {},
     onToggleDarkMode: (() -> Unit)? = null,
     isDarkMode: Boolean = false,
@@ -46,6 +47,13 @@ fun CommonTopBar(
             }
         },
         actions = {
+            // Botón + (si está disponible)
+            if (onAddClick != null) {
+                IconButton(onClick = onAddClick) {
+                    Icon(Icons.Default.Add, contentDescription = "Añadir")
+                }
+            }
+            
             // Micrófono (si está disponible)
             if (onMicrophoneClick != null) {
                 IconButton(onClick = onMicrophoneClick) {
