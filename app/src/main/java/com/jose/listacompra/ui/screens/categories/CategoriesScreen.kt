@@ -1,38 +1,12 @@
 package com.jose.listacompra.ui.screens.categories
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Category
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.rememberDrawerState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -63,6 +37,10 @@ fun CategoriesScreen(
     val scope = rememberCoroutineScope()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val uiState by viewModel.uiState.collectAsState()
+    
+    var showAddDialog by remember { mutableStateOf(false) }
+    var categoryToEdit by remember { mutableStateOf<Category?>(null) }
+    var categoryToDelete by remember { mutableStateOf<Category?>(null) }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -98,7 +76,17 @@ fun CategoriesScreen(
                     onOpenDrawer = { scope.launch { drawerState.open() } },
                     onChangeColor = onChangeColor,
                     onToggleDarkMode = onToggleDarkMode,
-                    isDarkMode = isDarkMode
+                    isDarkMode = isDarkMode,
+                    overflowActions = { expanded, onDismiss ->
+                        DropdownMenuItem(
+                            text = { Text("Añadir categoría") },
+                            onClick = {
+                                showAddDialog = true
+                                onDismiss()
+                            },
+                            leadingIcon = { Icon(Icons.Default.Add, contentDescription = null) }
+                        )
+                    }
                 )
             },
             bottomBar = {
@@ -138,6 +126,12 @@ fun CategoriesScreen(
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(onClick = { showAddDialog = true }) {
+                            Icon(Icons.Default.Add, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Añadir categoría")
+                        }
                     }
                 }
             } else {
@@ -148,17 +142,75 @@ fun CategoriesScreen(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(uiState.categories) { category ->
-                        CategoryCard(category = category)
+                    items(uiState.categories, key = { it.id }) { category ->
+                        CategoryCard(
+                            category = category,
+                            onEdit = { categoryToEdit = category },
+                            onDelete = { categoryToDelete = category }
+                        )
                     }
                 }
             }
         }
     }
+    
+    // Diálogo añadir
+    if (showAddDialog) {
+        CategoryDialog(
+            onDismiss = { showAddDialog = false },
+            onSave = { category ->
+                viewModel.addCategory(category)
+                showAddDialog = false
+            }
+        )
+    }
+    
+    // Diálogo editar
+    if (categoryToEdit != null) {
+        CategoryDialog(
+            category = categoryToEdit,
+            onDismiss = { categoryToEdit = null },
+            onSave = { category ->
+                viewModel.updateCategory(category)
+                categoryToEdit = null
+            }
+        )
+    }
+    
+    // Diálogo confirmar borrado
+    if (categoryToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { categoryToDelete = null },
+            title = { Text("Eliminar categoría") },
+            text = { Text("¿Seguro que quieres eliminar \"${categoryToDelete?.name}\"?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        categoryToDelete?.id?.let { viewModel.deleteCategory(it) }
+                        categoryToDelete = null
+                    },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Eliminar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { categoryToDelete = null }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
 }
 
 @Composable
-private fun CategoryCard(category: Category) {
+private fun CategoryCard(
+    category: Category,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -167,20 +219,120 @@ private fun CategoryCard(category: Category) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = category.icon,
-                style = MaterialTheme.typography.headlineMedium
-            )
+            Row(
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = category.icon,
+                    style = MaterialTheme.typography.headlineMedium
+                )
+                
+                Spacer(modifier = Modifier.width(16.dp))
+                
+                Text(
+                    text = category.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium
+                )
+            }
             
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(8.dp))
             
-            Text(
-                text = category.name,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Medium
-            )
+            Row(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                IconButton(onClick = onEdit) {
+                    Icon(
+                        Icons.Default.Edit,
+                        contentDescription = "Editar",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+                IconButton(onClick = onDelete) {
+                    Icon(
+                        Icons.Default.Delete,
+                        contentDescription = "Eliminar",
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CategoryDialog(
+    category: Category? = null,
+    onDismiss: () -> Unit,
+    onSave: (Category) -> Unit
+) {
+    var name by remember { mutableStateOf(category?.name ?: "") }
+    var icon by remember { mutableStateOf(category?.icon ?: "📦") }
+    
+    val commonIcons = listOf("🍎", "🥩", "🐟", "🥛", "🍞", "🥤", "🥫", "🧊", "🧴", "🧼", "🐕", "👶", "🏠", "📦", "🧀", "🥚", "🍚", "☕", "🍪", "🧻")
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(if (category == null) "Nueva categoría" else "Editar categoría") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Nombre") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+                
+                Text(
+                    text = "Icono:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+                
+                Text(
+                    text = icon,
+                    style = MaterialTheme.typography.displayMedium
+                )
+                
+                // Selector de iconos comunes
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    commonIcons.forEach { emoji ->
+                        FilterChip(
+                            selected = icon == emoji,
+                            onClick = { icon = emoji },
+                            label = { Text(emoji, fontSize = androidx.compose.ui.unit.TextUnit.Unspecified) }
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    onSave(
+                        Category(
+                            id = category?.id ?: 0,
+                            name = name,
+                            icon = icon
+                        )
+                    )
+                },
+                enabled = name.isNotBlank()
+            ) {
+                Text("Guardar")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
 }

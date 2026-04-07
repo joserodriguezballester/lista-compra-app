@@ -4,12 +4,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.LocalOffer
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -40,6 +37,10 @@ fun OffersScreen(
     val scope = rememberCoroutineScope()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val uiState by viewModel.uiState.collectAsState()
+    
+    var showAddDialog by remember { mutableStateOf(false) }
+    var offerToEdit by remember { mutableStateOf<Offer?>(null) }
+    var offerToDelete by remember { mutableStateOf<Offer?>(null) }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -48,7 +49,6 @@ fun OffersScreen(
             AppDrawer(
                 onNavigateToOffers = {
                     scope.launch { drawerState.close() }
-                    // Ya estamos en ofertas
                 },
                 onNavigateToCategories = {
                     scope.launch { drawerState.close() }
@@ -76,7 +76,17 @@ fun OffersScreen(
                     onOpenDrawer = { scope.launch { drawerState.open() } },
                     onChangeColor = onChangeColor,
                     onToggleDarkMode = onToggleDarkMode,
-                    isDarkMode = isDarkMode
+                    isDarkMode = isDarkMode,
+                    overflowActions = { expanded, onDismiss ->
+                        DropdownMenuItem(
+                            text = { Text("Añadir oferta") },
+                            onClick = {
+                                showAddDialog = true
+                                onDismiss()
+                            },
+                            leadingIcon = { Icon(Icons.Default.Add, contentDescription = null) }
+                        )
+                    }
                 )
             },
             bottomBar = {
@@ -112,10 +122,16 @@ fun OffersScreen(
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            "No hay ofertas disponibles",
+                            "No hay ofertas",
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(onClick = { showAddDialog = true }) {
+                            Icon(Icons.Default.Add, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Añadir oferta")
+                        }
                     }
                 }
             } else {
@@ -126,61 +142,211 @@ fun OffersScreen(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(uiState.offers) { offer ->
-                        OfferCard(offer = offer)
+                    items(uiState.offers, key = { it.id }) { offer ->
+                        OfferCard(
+                            offer = offer,
+                            onEdit = { offerToEdit = offer },
+                            onDelete = { offerToDelete = offer }
+                        )
                     }
+                }
+            }
+        }
+    }
+    
+    // Diálogo añadir
+    if (showAddDialog) {
+        OfferDialog(
+            onDismiss = { showAddDialog = false },
+            onSave = { offer ->
+                viewModel.addOffer(offer)
+                showAddDialog = false
+            }
+        )
+    }
+    
+    // Diálogo editar
+    if (offerToEdit != null) {
+        OfferDialog(
+            offer = offerToEdit,
+            onDismiss = { offerToEdit = null },
+            onSave = { offer ->
+                viewModel.updateOffer(offer)
+                offerToEdit = null
+            }
+        )
+    }
+    
+    // Diálogo confirmar borrado
+    if (offerToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { offerToDelete = null },
+            title = { Text("Eliminar oferta") },
+            text = { Text("¿Seguro que quieres eliminar \"${offerToDelete?.name}\"?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        offerToDelete?.let { viewModel.deleteOffer(it) }
+                        offerToDelete = null
+                    },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Eliminar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { offerToDelete = null }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun OfferCard(
+    offer: Offer,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Top
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = offer.name,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    
+                    Surface(
+                        shape = MaterialTheme.shapes.small,
+                        color = MaterialTheme.colorScheme.primaryContainer
+                    ) {
+                        Text(
+                            text = offer.code,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = offer.description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            
+            Spacer(modifier = Modifier.width(8.dp))
+            
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                IconButton(onClick = onEdit) {
+                    Icon(
+                        Icons.Default.Edit,
+                        contentDescription = "Editar",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+                IconButton(onClick = onDelete) {
+                    Icon(
+                        Icons.Default.Delete,
+                        contentDescription = "Eliminar",
+                        tint = MaterialTheme.colorScheme.error
+                    )
                 }
             }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun OfferCard(offer: Offer) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = offer.name,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+fun OfferDialog(
+    offer: Offer? = null,
+    onDismiss: () -> Unit,
+    onSave: (Offer) -> Unit
+) {
+    var name by remember { mutableStateOf(offer?.name ?: "") }
+    var code by remember { mutableStateOf(offer?.code ?: "") }
+    var description by remember { mutableStateOf(offer?.description ?: "") }
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(if (offer == null) "Nueva oferta" else "Editar oferta") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = code,
+                    onValueChange = { code = it.uppercase() },
+                    label = { Text("Código") },
+                    placeholder = { Text("3x2, 2nd_50...") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
                 )
-                
-                Surface(
-                    shape = MaterialTheme.shapes.small,
-                    color = MaterialTheme.colorScheme.primaryContainer
-                ) {
-                    Text(
-                        text = offer.code,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Nombre") },
+                    placeholder = { Text("3x2, 2ª unidad -50%...") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    value = description,
+                    onValueChange = { description = it },
+                    label = { Text("Descripción") },
+                    placeholder = { Text("Lleva 3, paga 2") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
             }
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Text(
-                text = offer.description,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    onSave(
+                        Offer(
+                            id = offer?.id ?: 0,
+                            code = code,
+                            name = name,
+                            description = description,
+                            isDefault = offer?.isDefault ?: false,
+                            formula = offer?.formula ?: ""
+                        )
+                    )
+                },
+                enabled = name.isNotBlank() && code.isNotBlank()
+            ) {
+                Text("Guardar")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
         }
-    }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

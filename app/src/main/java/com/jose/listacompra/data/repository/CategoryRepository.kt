@@ -26,6 +26,10 @@ class CategoryRepository @Inject constructor(
         return dao.insertCategory(CategoryEntity.fromDomain(category))
     }
     
+    override suspend fun updateCategory(category: Category) {
+        dao.updateCategory(CategoryEntity.fromDomain(category))
+    }
+    
     override suspend fun insertAll(categories: List<Category>) {
         dao.insertAll(categories.map { CategoryEntity.fromDomain(it) })
     }

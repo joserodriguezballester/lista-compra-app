@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 import com.jose.listacompra.data.local.entities.CategoryEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -25,5 +26,8 @@ interface CategoryDao {
     suspend fun deleteCategory(id: Long)
     
     @Query("DELETE FROM categories")
+    suspend fun deleteAll()
+}
+OM categories")
     suspend fun deleteAll()
 }
