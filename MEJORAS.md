@@ -131,6 +131,32 @@
 
 ---
 
+## CATÁLOGO
+
+**CA1** - TopBar: Usar drawer
+- Cambiar flecha atrás por drawer
+
+**CA2** - Overflow: Opciones
+- Añadir "Añadir manual" (abrir diálogo)
+- Añadir "Añadir por scanner" (abrir cámara)
+
+**CA3** - BottomBar: Iconos funcionales
+- Home: navegar a Home
+- Buscar: abrir campo de búsqueda
+- Filtrar: abrir panel de filtros
+- Scanner: abrir cámara
+- Añadir: abrir diálogo de nuevo artículo
+- Solo iconos, sin texto
+
+**CA4** - Quitar FAB
+- Ya están las acciones en BottomBar y Overflow
+
+**CA5** - Filtro: Implementar funcionalidad
+- El filtro actual no funciona
+- Filtrar por categoría, supermercado, etc.
+
+---
+
 ## ARQUITECTURA
 
 **A1** - Valores de UI en archivo aparte
