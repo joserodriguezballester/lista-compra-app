@@ -119,11 +119,6 @@ fun ProductListScreen(
         gesturesEnabled = drawerState.isOpen,
         drawerContent = {
             AppDrawer(
-                isDarkMode = isDarkMode,
-                onToggleDarkMode = { newMode ->
-                    onToggleDarkMode(newMode)
-                    scope.launch { drawerState.close() }
-                },
                 onNavigateToOffers = {
                     scope.launch { drawerState.close() }
                     onNavigateToOffers()
@@ -142,12 +137,8 @@ fun ProductListScreen(
                 },
                 onNavigateToHistory = {
                     scope.launch { drawerState.close() }
-                    onNavigateToHistory() },
-                onChangeColor = {
-                    scope.launch { drawerState.close() }
-                    showColorDialog = true
-                },
-                onClose = { scope.launch { drawerState.close() } }
+                    onNavigateToHistory()
+                }
             )
         }
     ) {

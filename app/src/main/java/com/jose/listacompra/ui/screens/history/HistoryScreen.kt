@@ -61,11 +61,6 @@ fun HistoryScreen(
         gesturesEnabled = drawerState.isOpen,
         drawerContent = {
             AppDrawer(
-                isDarkMode = isDarkMode,
-                onToggleDarkMode = {
-                    onToggleDarkMode()
-                    scope.launch { drawerState.close() }
-                },
                 onNavigateToOffers = {
                     scope.launch { drawerState.close() }
                     onNavigateToOffers()
@@ -84,12 +79,7 @@ fun HistoryScreen(
                 onNavigateToCatalogo = {
                     scope.launch { drawerState.close() }
                     onNavigateToCatalogo()
-                },
-                onChangeColor = {
-                    scope.launch { drawerState.close() }
-                    onChangeColor()
-                },
-                onClose = { scope.launch { drawerState.close() } }
+                }
             )
         }
     ) {

@@ -69,18 +69,12 @@ fun CategoriesScreen(
         gesturesEnabled = drawerState.isOpen,
         drawerContent = {
             AppDrawer(
-                isDarkMode = isDarkMode,
-                onToggleDarkMode = {
-                    onToggleDarkMode()
-                    scope.launch { drawerState.close() }
-                },
                 onNavigateToOffers = {
                     scope.launch { drawerState.close() }
                     onNavigateToOffers()
                 },
                 onNavigateToCategories = {
                     scope.launch { drawerState.close() }
-                    // Ya estamos en categorías
                 },
                 onNavigateToHistory = {
                     scope.launch { drawerState.close() }
@@ -93,12 +87,7 @@ fun CategoriesScreen(
                 onNavigateToCatalogo = {
                     scope.launch { drawerState.close() }
                     onNavigateToCatalogo()
-                },
-                onChangeColor = {
-                    scope.launch { drawerState.close() }
-                    onChangeColor()
-                },
-                onClose = { scope.launch { drawerState.close() } }
+                }
             )
         }
     ) {
