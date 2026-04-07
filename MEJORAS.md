@@ -84,6 +84,48 @@
 
 ---
 
+## SUPERMERCADOS
+
+**S1** - Lista: Coherencia UI
+- Quitar FAB de añadir
+- Quitar botones de editar y papelera de las cards
+- Añadir "Añadir supermercado" en overflow
+- Swipe para borrar (verificar restricciones: pasillos asociados)
+
+**S2** - Cards: Usar logos en vez de emojis
+- Mostrar logo del supermercado (Carrefour, Mercadona, etc.)
+- Preparar para eliminar emojis de BD en el futuro
+- Mantener compatibilidad mientras tanto
+
+**S3** - Cards: Editar
+- Swipe hacia la derecha o menú contextual para editar
+- Abrir diálogo con datos actuales
+- Funcionalidad completa: actualizar en BD
+
+---
+
+## PASILLOS (dentro de supermercado)
+
+**P1** - Overflow: Añadir pasillo
+- Añadir opción "Añadir pasillo" en el menú overflow
+- Abrir diálogo para crear nuevo pasillo
+
+**P2** - Cards: Editar
+- Añadir botón lápiz para editar pasillo
+- Abrir diálogo con nombre actual
+- Funcionalidad completa: actualizar en BD
+
+**P3** - Cards: Swipe para borrar
+- Implementar swipe para eliminar
+- Verificar restricciones de BD (productos asociados)
+- Mostrar diálogo de confirmación
+
+**P4** - Ordenar pasillos: Arreglar
+- El botón de ordenar no funciona
+- Implementar reordenamiento con drag & drop o flechas
+
+---
+
 ## ARQUITECTURA
 
 **A1** - Valores de UI en archivo aparte
