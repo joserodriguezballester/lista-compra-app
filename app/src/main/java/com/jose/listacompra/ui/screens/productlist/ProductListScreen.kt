@@ -119,6 +119,14 @@ fun ProductListScreen(
         gesturesEnabled = drawerState.isOpen,
         drawerContent = {
             AppDrawer(
+                onNavigateToHome = {
+                    scope.launch { drawerState.close() }
+                    onNavigateToHome()
+                },
+                onNavigateToList = {
+                    scope.launch { drawerState.close() }
+                    onNavigateToList()
+                },
                 onNavigateToOffers = {
                     scope.launch { drawerState.close() }
                     onNavigateToOffers()

@@ -52,6 +52,14 @@ fun SupermarketListScreen(
         gesturesEnabled = drawerState.isOpen,
         drawerContent = {
             AppDrawer(
+                onNavigateToHome = {
+                    scope.launch { drawerState.close() }
+                    onNavigateToHome()
+                },
+                onNavigateToList = {
+                    scope.launch { drawerState.close() }
+                    onNavigateToList()
+                },
                 onNavigateToOffers = {
                     scope.launch { drawerState.close() }
                     onNavigateToOffers()
@@ -66,6 +74,7 @@ fun SupermarketListScreen(
                 },
                 onNavigateToSupermarkets = {
                     scope.launch { drawerState.close() }
+                    // Ya estamos en supermercados
                 },
                 onNavigateToCatalogo = {
                     scope.launch { drawerState.close() }

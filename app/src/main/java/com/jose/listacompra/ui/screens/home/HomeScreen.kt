@@ -39,6 +39,14 @@ fun HomeScreen(
         gesturesEnabled = drawerState.isOpen,
         drawerContent = {
             AppDrawer(
+                onNavigateToHome = {
+                    scope.launch { drawerState.close() }
+                    // Ya estamos en Home
+                },
+                onNavigateToList = {
+                    scope.launch { drawerState.close() }
+                    onNavigateToList()
+                },
                 onNavigateToOffers = {
                     scope.launch { drawerState.close() }
                     onNavigateToOffers()

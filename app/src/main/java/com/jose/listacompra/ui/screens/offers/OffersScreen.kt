@@ -47,8 +47,17 @@ fun OffersScreen(
         gesturesEnabled = drawerState.isOpen,
         drawerContent = {
             AppDrawer(
+                onNavigateToHome = {
+                    scope.launch { drawerState.close() }
+                    onNavigateToHome()
+                },
+                onNavigateToList = {
+                    scope.launch { drawerState.close() }
+                    onNavigateToList()
+                },
                 onNavigateToOffers = {
                     scope.launch { drawerState.close() }
+                    // Ya estamos en ofertas
                 },
                 onNavigateToCategories = {
                     scope.launch { drawerState.close() }
