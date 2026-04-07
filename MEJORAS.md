@@ -162,6 +162,7 @@
 **ML1** - TopBar: Cambios
 - Cambiar título a "Mi lista"
 - Añadir botón + para añadir productos
+- El botón + abre el mismo diálogo de añadir manual
 
 **ML2** - BottomBar: Supermercados
 - Mostrar iconos de supermercados
@@ -170,9 +171,24 @@
 **ML3** - Quitar FAB
 - Ya está el + en TopBar y opciones en overflow
 
-**ML4** - Overflow: Opciones
-- Añadir "Añadir manual"
-- Añadir "Añadir por scanner"
+**ML4** - Overflow: Opciones organizadas por categorías
+- 📁 Añadir productos: Manual, Scanner, Desde historial (placeholder)
+- 📁 Lista: Vaciar
+- 📁 Ajustes: Modo oscuro, Cambiar color
+
+---
+
+## PRODUCT_CARD (componente)
+
+**PC1** - Layout con oferta: Reorganizar líneas
+- Cuando el producto tiene oferta, la última línea queda: unidades, precio, total sin oferta tachado y total final
+- Cambio propuesto: Poner el total sin oferta tachado en la línea de arriba
+- Línea superior: oferta (badge a la izquierda) y total sin oferta tachado (a la derecha)
+- Línea inferior: unidades, precio, total final
+
+**PC2** - Imagen no se guarda al añadir desde artículo
+- Al añadir un producto desde el catálogo de artículos, el artículo tiene imagen pero el producto creado no la guarda
+- Verificar AddProductToListDialog y ProductListViewModel: se debe pasar y guardar la imagen del artículo seleccionado
 
 ---
 
