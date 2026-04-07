@@ -1,5 +1,6 @@
 package com.jose.listacompra.ui.screens.supermarket
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -13,8 +14,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.jose.listacompra.domain.model.Aisle
-import com.jose.listacompra.domain.model.Supermarket
 import com.jose.listacompra.ui.components.CommonTopBar
+import kotlinx.coroutines.launch
+
+data class AislesUiState(
+    val supermarket: com.jose.listacompra.domain.model.Supermarket? = null,
+    val aisles: List<Aisle> = emptyList(),
+    val usesCategories: Boolean = false,
+    val isLoading: Boolean = true,
+    val isReordering: Boolean = false
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -23,7 +32,9 @@ fun SupermarketAislesScreen(
     onNavigateBack: () -> Unit,
     viewModel: SupermarketAislesViewModel = hiltViewModel()
 ) {
+    val scope = rememberCoroutineScope()
     val uiState by viewModel.uiState.collectAsState()
+    
     var showAddAisleDialog by remember { mutableStateOf(false) }
     var aisleToEdit by remember { mutableStateOf<Aisle?>(null) }
     var showDeleteConfirm by remember { mutableStateOf<Aisle?>(null) }
@@ -36,17 +47,37 @@ fun SupermarketAislesScreen(
         topBar = {
             CommonTopBar(
                 title = uiState.supermarket?.name ?: "Pasillos",
-                onNavigateBack = onNavigateBack
+                onNavigateBack = onNavigateBack,
+                overflowActions = { expanded, onDismiss ->
+                    DropdownMenuItem(
+                        text = { Text("Añadir pasillo") },
+                        onClick = {
+                            showAddAisleDialog = true
+                            onDismiss()
+                        },
+                        leadingIcon = { Icon(Icons.Default.Add, contentDescription = null) }
+                    )
+                    if (uiState.aisles.isNotEmpty()) {
+                        DropdownMenuItem(
+                            text = { Text(if (uiState.isReordering) "Guardar orden" else "Reordenar pasillos") },
+                            onClick = {
+                                if (uiState.isReordering) {
+                                    viewModel.saveReorder()
+                                } else {
+                                    viewModel.startReordering()
+                                }
+                                onDismiss()
+                            },
+                            leadingIcon = { 
+                                Icon(
+                                    if (uiState.isReordering) Icons.Default.Check else Icons.Default.Sort, 
+                                    contentDescription = null 
+                                ) 
+                            }
+                        )
+                    }
+                }
             )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { showAddAisleDialog = true },
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Añadir pasillo")
-            }
         }
     ) { paddingValues ->
         Column(
@@ -79,22 +110,49 @@ fun SupermarketAislesScreen(
                 }
             }
 
+            // Modo reordenar
+            if (uiState.isReordering && uiState.aisles.isNotEmpty()) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = MaterialTheme.colorScheme.secondaryContainer
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.DragHandle, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            "Arrastra para reordenar. Pulsa ✓ al terminar.",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+            }
+
             // Lista de pasillos
             if (uiState.aisles.isEmpty() && !uiState.usesCategories) {
                 EmptyState(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(16.dp)
+                        .padding(16.dp),
+                    onAddClick = { showAddAisleDialog = true }
                 )
-            } else {
+            } else if (uiState.aisles.isNotEmpty()) {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(uiState.aisles, key = { it.id }) { aisle ->
+                    items(
+                        items = if (uiState.isReordering) uiState.reorderedAisles else uiState.aisles,
+                        key = { it.id }
+                    ) { aisle ->
                         AisleItem(
                             aisle = aisle,
+                            isReordering = uiState.isReordering,
+                            onMoveUp = { viewModel.moveAisleUp(aisle) },
+                            onMoveDown = { viewModel.moveAisleDown(aisle) },
                             onEdit = { aisleToEdit = aisle },
                             onDelete = { showDeleteConfirm = aisle }
                         )
@@ -163,13 +221,21 @@ fun SupermarketAislesScreen(
 @Composable
 private fun AisleItem(
     aisle: Aisle,
+    isReordering: Boolean,
+    onMoveUp: () -> Unit,
+    onMoveDown: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .animateContentSize(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            containerColor = if (isReordering)
+                MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
+            else
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
         )
     ) {
         Row(
@@ -193,32 +259,67 @@ private fun AisleItem(
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Medium
                 )
-                Text(
-                    text = "Orden: ${aisle.orderIndex}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                if (!isReordering) {
+                    Text(
+                        text = "Orden: ${aisle.orderIndex}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
 
-            // Drag handle (visual)
-            Icon(
-                Icons.Default.DragHandle,
-                contentDescription = "Arrastrar",
-                tint = MaterialTheme.colorScheme.outline
-            )
-
-            IconButton(onClick = onEdit) {
-                Icon(Icons.Default.Edit, contentDescription = "Editar")
-            }
-            IconButton(onClick = onDelete) {
-                Icon(Icons.Default.Delete, contentDescription = "Eliminar")
+            // Controles de reordenar
+            if (isReordering) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    IconButton(
+                        onClick = onMoveUp,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.KeyboardArrowUp,
+                            contentDescription = "Subir",
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    IconButton(
+                        onClick = onMoveDown,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.KeyboardArrowDown,
+                            contentDescription = "Bajar",
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            } else {
+                // Botones normales
+                Row(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    IconButton(onClick = onEdit) {
+                        Icon(
+                            Icons.Default.Edit,
+                            contentDescription = "Editar",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    IconButton(onClick = onDelete) {
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = "Eliminar",
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-private fun EmptyState(modifier: Modifier = Modifier) {
+private fun EmptyState(
+    modifier: Modifier = Modifier,
+    onAddClick: () -> Unit
+) {
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -238,10 +339,16 @@ private fun EmptyState(modifier: Modifier = Modifier) {
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "Pulsa + para añadir pasillos personalizados",
+            text = "Define los pasillos de este supermercado",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(onClick = onAddClick) {
+            Icon(Icons.Default.Add, contentDescription = null)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Añadir pasillo")
+        }
     }
 }
 
@@ -257,42 +364,39 @@ private fun AisleDialog(
     var emoji by remember { mutableStateOf(aisle?.emoji ?: "") }
     var orderIndex by remember { mutableStateOf(aisle?.orderIndex ?: nextOrderIndex) }
 
-    val emojiOptions = listOf("🧴", "🍎", "🥓", "🥩", "🥫", "🧻", "🧼", "🥤", "🧀", "🧊", "🥛", "🍞")
+    val emojiOptions = listOf("🧴", "🍎", "🥓", "🥩", "🥫", "🧻", "🧼", "🥤", "🧀", "🧊", "🥛", "🍞", "🥚", "🍚", "☕")
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(if (aisle == null) "Nuevo pasillo" else "Editar pasillo") },
         text = {
-            Column {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
                     label = { Text("Nombre") },
+                    placeholder = { Text("Frutas, Lácteos...") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
-
-                Spacer(modifier = Modifier.height(12.dp))
 
                 OutlinedTextField(
                     value = orderIndex.toString(),
                     onValueChange = { orderIndex = it.toIntOrNull() ?: orderIndex },
-                    label = { Text("Orden") },
+                    label = { Text("Orden (posición)") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
-
                 Text(
                     text = "Emoji:",
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
                 )
-                Spacer(modifier = Modifier.height(8.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     emojiOptions.forEach { option ->
                         FilterChip(
@@ -302,8 +406,6 @@ private fun AisleDialog(
                         )
                     }
                 }
-
-                Spacer(modifier = Modifier.height(8.dp))
 
                 OutlinedTextField(
                     value = emoji,

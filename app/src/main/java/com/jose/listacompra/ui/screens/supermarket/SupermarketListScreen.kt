@@ -1,5 +1,7 @@
 package com.jose.listacompra.ui.screens.supermarket
 
+import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -9,78 +11,120 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.jose.listacompra.R
 import com.jose.listacompra.domain.model.Supermarket
+import com.jose.listacompra.ui.components.AppDrawer
 import com.jose.listacompra.ui.components.CommonBottomBar
 import com.jose.listacompra.ui.components.CommonTopBar
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SupermarketListScreen(
-    onNavigateBack: () -> Unit,
+    onNavigateBack: () -> Unit = {},
     onNavigateToAisles: (Long) -> Unit,
     onNavigateToHome: () -> Unit = {},
     onNavigateToList: () -> Unit = {},
+    onNavigateToOffers: () -> Unit = {},
+    onNavigateToCategories: () -> Unit = {},
+    onNavigateToHistory: () -> Unit = {},
+    onNavigateToCatalogo: () -> Unit = {},
     onToggleDarkMode: () -> Unit = {},
     isDarkMode: Boolean = false,
     onChangeColor: () -> Unit = {},
     viewModel: SupermarketListViewModel = hiltViewModel()
 ) {
+    val scope = rememberCoroutineScope()
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val supermarkets by viewModel.supermarkets.collectAsState()
+    
     var showAddDialog by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf<Supermarket?>(null) }
     var supermarketToEdit by remember { mutableStateOf<Supermarket?>(null) }
 
-    Scaffold(
-        topBar = {
-            CommonTopBar(
-                title = "🏪 Supermercados",
-                onNavigateBack = onNavigateBack,
-                onChangeColor = onChangeColor,
-                onToggleDarkMode = onToggleDarkMode,
-                isDarkMode = isDarkMode
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        gesturesEnabled = drawerState.isOpen,
+        drawerContent = {
+            AppDrawer(
+                onNavigateToOffers = {
+                    scope.launch { drawerState.close() }
+                    onNavigateToOffers()
+                },
+                onNavigateToCategories = {
+                    scope.launch { drawerState.close() }
+                    onNavigateToCategories()
+                },
+                onNavigateToHistory = {
+                    scope.launch { drawerState.close() }
+                    onNavigateToHistory()
+                },
+                onNavigateToSupermarkets = {
+                    scope.launch { drawerState.close() }
+                },
+                onNavigateToCatalogo = {
+                    scope.launch { drawerState.close() }
+                    onNavigateToCatalogo()
+                }
             )
-        },
-        bottomBar = {
-            CommonBottomBar(
-                onNavigateToHome = onNavigateToHome,
-                onNavigateToList = onNavigateToList,
-                currentRoute = "supermercados"
-            )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { showAddDialog = true },
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Añadir supermercado")
-            }
         }
-    ) { paddingValues ->
-        if (supermarkets.isEmpty()) {
-            EmptyState(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-            )
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(supermarkets, key = { it.id }) { supermarket ->
-                    SupermarketCard(
-                        supermarket = supermarket,
-                        onEdit = { supermarketToEdit = supermarket },
-                        onDelete = { showDeleteConfirm = supermarket },
-                        onClick = { onNavigateToAisles(supermarket.id) }
-                    )
+    ) {
+        Scaffold(
+            topBar = {
+                CommonTopBar(
+                    title = "🏪 Supermercados",
+                    onOpenDrawer = { scope.launch { drawerState.open() } },
+                    onChangeColor = onChangeColor,
+                    onToggleDarkMode = onToggleDarkMode,
+                    isDarkMode = isDarkMode,
+                    overflowActions = { expanded, onDismiss ->
+                        DropdownMenuItem(
+                            text = { Text("Añadir supermercado") },
+                            onClick = {
+                                showAddDialog = true
+                                onDismiss()
+                            },
+                            leadingIcon = { Icon(Icons.Default.Add, contentDescription = null) }
+                        )
+                    }
+                )
+            },
+            bottomBar = {
+                CommonBottomBar(
+                    onNavigateToHome = onNavigateToHome,
+                    onNavigateToList = onNavigateToList,
+                    currentRoute = "supermercados"
+                )
+            }
+        ) { paddingValues ->
+            if (supermarkets.isEmpty()) {
+                EmptyState(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    onAddClick = { showAddDialog = true }
+                )
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(supermarkets, key = { it.id }) { supermarket ->
+                        SupermarketCard(
+                            supermarket = supermarket,
+                            onEdit = { supermarketToEdit = supermarket },
+                            onDelete = { showDeleteConfirm = supermarket },
+                            onClick = { onNavigateToAisles(supermarket.id) }
+                        )
+                    }
                 }
             }
         }
@@ -138,6 +182,22 @@ fun SupermarketListScreen(
     }
 }
 
+/**
+ * Obtiene el resource ID del logo basado en el nombre del supermercado
+ */
+private fun getSupermarketLogo(name: String): Int? {
+    val lowerName = name.lowercase()
+    return when {
+        lowerName.contains("carrefour") -> R.drawable.logo_carrefour
+        lowerName.contains("mercadona") -> R.drawable.logo_mercadona
+        lowerName.contains("lidl") -> R.drawable.logo_lidl
+        lowerName.contains("aldi") -> R.drawable.logo_aldi
+        lowerName.contains("dia") -> R.drawable.logo_dia
+        lowerName.contains("consum") -> R.drawable.logo_consum
+        else -> null
+    }
+}
+
 @Composable
 private fun SupermarketCard(
     supermarket: Supermarket,
@@ -145,8 +205,12 @@ private fun SupermarketCard(
     onDelete: () -> Unit,
     onClick: () -> Unit
 ) {
+    val logoRes = getSupermarketLogo(supermarket.name)
+    
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .animateContentSize(),
         onClick = onClick,
         colors = CardDefaults.cardColors(
             containerColor = if (supermarket.isDefault)
@@ -161,10 +225,30 @@ private fun SupermarketCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = supermarket.emoji,
-                style = MaterialTheme.typography.headlineMedium
-            )
+            // Logo o emoji
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(MaterialTheme.shapes.small)
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                contentAlignment = Alignment.Center
+            ) {
+                if (logoRes != null) {
+                    Icon(
+                        painter = painterResource(id = logoRes),
+                        contentDescription = supermarket.name,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(8.dp),
+                        tint = androidx.compose.ui.graphics.Color.Unspecified
+                    )
+                } else {
+                    Text(
+                        text = supermarket.emoji,
+                        style = MaterialTheme.typography.headlineMedium
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.width(16.dp))
 
@@ -183,18 +267,33 @@ private fun SupermarketCard(
                 }
             }
 
-            IconButton(onClick = onEdit) {
-                Icon(Icons.Default.Edit, contentDescription = "Editar")
-            }
-            IconButton(onClick = onDelete) {
-                Icon(Icons.Default.Delete, contentDescription = "Eliminar")
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Row(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                IconButton(onClick = onEdit) {
+                    Icon(
+                        Icons.Default.Edit,
+                        contentDescription = "Editar",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+                IconButton(onClick = onDelete) {
+                    Icon(
+                        Icons.Default.Delete,
+                        contentDescription = "Eliminar",
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-private fun EmptyState(modifier: Modifier = Modifier) {
+private fun EmptyState(
+    modifier: Modifier = Modifier,
+    onAddClick: () -> Unit
+) {
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -214,10 +313,16 @@ private fun EmptyState(modifier: Modifier = Modifier) {
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "Pulsa + para añadir uno nuevo",
+            text = "Añade tu supermercado favorito",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(onClick = onAddClick) {
+            Icon(Icons.Default.Add, contentDescription = null)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Añadir supermercado")
+        }
     }
 }
 
@@ -241,6 +346,7 @@ private fun SupermarketDialog(
                     value = name,
                     onValueChange = { name = it },
                     label = { Text("Nombre") },
+                    placeholder = { Text("Carrefour, Mercadona...") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
@@ -248,7 +354,7 @@ private fun SupermarketDialog(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "Emoji:",
+                    text = "Emoji (si no hay logo):",
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -281,4 +387,10 @@ private fun SupermarketDialog(
             }
         }
     )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun rememberDrawerState(initialValue: DrawerValue): androidx.compose.material3.DrawerState {
+    return androidx.compose.material3.rememberDrawerState(initialValue = initialValue)
 }

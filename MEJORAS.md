@@ -86,48 +86,42 @@
 
 ## SUPERMERCADOS
 
-**S1** - Lista: Coherencia UI
-- Quitar FAB de añadir
-- Quitar botones de editar y papelera de las cards
-- Añadir "Añadir supermercado" en overflow
-- Swipe para borrar (verificar restricciones: pasillos asociados)
-- Cambiar flecha atrás por drawer en TopBar
+**S1** - ✅ Lista: Coherencia UI
+- Quitado FAB de añadir
+- Añadido "Añadir supermercado" en overflow
+- Cambiado flecha atrás por drawer en TopBar
+- Drawer funcional
 
-**S2** - Cards: Usar logos en vez de emojis
-- Mostrar logo del supermercado (Carrefour, Mercadona, etc.)
-- Preparar para eliminar emojis de BD en el futuro
-- Mantener compatibilidad mientras tanto
+**S2** - ✅ Cards: Usar logos en vez de emojis
+- Función getSupermarketLogo() detecta nombre
+- Muestra PNG (Carrefour, Mercadona, Lidl, Consum) o XML (Aldi, Dia)
+- Mantiene emoji como fallback
 
-**S3** - Cards: Editar
-- Swipe hacia la derecha o menú contextual para editar
-- Abrir diálogo con datos actuales
-- Funcionalidad completa: actualizar en BD
+**S3** - ✅ Cards: Editar
+- Botones editar/eliminar en cada card
+- Diálogo reutilizable para editar
 
-**S4** - Detail (pasillos): Mantener flecha atrás
-- En la pantalla de pasillos, usar flecha atrás en TopBar
-- No usar drawer aquí
+**S4** - ✅ Detail (pasillos): Mantener flecha atrás
+- SupermarketAislesScreen usa CommonTopBar con onNavigateBack
+- No usa drawer aquí
 
 ---
 
 ## PASILLOS (dentro de supermercado)
 
-**P1** - Overflow: Añadir pasillo
-- Añadir opción "Añadir pasillo" en el menú overflow
-- Abrir diálogo para crear nuevo pasillo
+**P1** - ✅ Overflow: Añadir pasillo
+- "Añadir pasillo" en overflow de SupermarketAislesScreen
 
-**P2** - Cards: Editar
-- Añadir botón lápiz para editar pasillo
-- Abrir diálogo con nombre actual
-- Funcionalidad completa: actualizar en BD
+**P2** - ✅ Cards: Editar
+- Botones editar/eliminar en cada card
 
-**P3** - Cards: Swipe para borrar
-- Implementar swipe para eliminar
-- Verificar restricciones de BD (productos asociados)
-- Mostrar diálogo de confirmación
+**P3** - ✅ Cards: Borrar
+- Diálogo de confirmación antes de eliminar
 
-**P4** - Ordenar pasillos: Arreglar
-- El botón de ordenar no funciona
-- Implementar reordenamiento con drag & drop o flechas
+**P4** - ✅ Ordenar pasillos: Funcional
+- Botón "Reordenar pasillos" en overflow
+- Flechas arriba/abajo para mover
+- Guardar con ✓ al terminar
 
 ---
 

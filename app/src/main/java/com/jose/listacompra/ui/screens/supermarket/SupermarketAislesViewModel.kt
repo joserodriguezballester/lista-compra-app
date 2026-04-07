@@ -17,7 +17,10 @@ import javax.inject.Inject
 data class SupermarketAislesUiState(
     val supermarket: Supermarket? = null,
     val aisles: List<Aisle> = emptyList(),
-    val usesCategories: Boolean = false
+    val usesCategories: Boolean = false,
+    val isLoading: Boolean = true,
+    val isReordering: Boolean = false,
+    val reorderedAisles: List<Aisle> = emptyList()
 )
 
 @HiltViewModel
@@ -38,7 +41,10 @@ class SupermarketAislesViewModel @Inject constructor(
                 state.copy(
                     supermarket = supermarket,
                     aisles = aisles.sortedBy { it.orderIndex },
-                    usesCategories = aisles.isEmpty()
+                    usesCategories = aisles.isEmpty(),
+                    isLoading = false,
+                    isReordering = false,
+                    reorderedAisles = emptyList()
                 )
             }
         }
@@ -71,6 +77,55 @@ class SupermarketAislesViewModel @Inject constructor(
         viewModelScope.launch {
             aisleRepository.deleteAisle(aisle)
             loadSupermarket(aisle.supermarketId)
+        }
+    }
+    
+    fun startReordering() {
+        _uiState.update { state ->
+            state.copy(
+                isReordering = true,
+                reorderedAisles = state.aisles.mapIndexed { index, aisle -> 
+                    aisle.copy(orderIndex = index)
+                }
+            )
+        }
+    }
+    
+    fun moveAisleUp(aisle: Aisle) {
+        val aisles = _uiState.value.reorderedAisles.toMutableList()
+        val currentIndex = aisles.indexOfFirst { it.id == aisle.id }
+        
+        if (currentIndex > 0) {
+            // Swap with previous
+            val temp = aisles[currentIndex]
+            aisles[currentIndex] = aisles[currentIndex - 1].copy(orderIndex = currentIndex)
+            aisles[currentIndex - 1] = temp.copy(orderIndex = currentIndex - 1)
+            
+            _uiState.update { it.copy(reorderedAisles = aisles) }
+        }
+    }
+    
+    fun moveAisleDown(aisle: Aisle) {
+        val aisles = _uiState.value.reorderedAisles.toMutableList()
+        val currentIndex = aisles.indexOfFirst { it.id == aisle.id }
+        
+        if (currentIndex < aisles.size - 1) {
+            // Swap with next
+            val temp = aisles[currentIndex]
+            aisles[currentIndex] = aisles[currentIndex + 1].copy(orderIndex = currentIndex)
+            aisles[currentIndex + 1] = temp.copy(orderIndex = currentIndex + 1)
+            
+            _uiState.update { it.copy(reorderedAisles = aisles) }
+        }
+    }
+    
+    fun saveReorder() {
+        val reorderedAisles = _uiState.value.reorderedAisles
+        
+        viewModelScope.launch {
+            aisleRepository.updateAisles(reorderedAisles)
+            val supermarketId = _uiState.value.supermarket?.id ?: return@launch
+            loadSupermarket(supermarketId)
         }
     }
 }

@@ -161,12 +161,15 @@ fun AppNavigation(
         
         composable(NavScreen.Supermarkets.route) {
             SupermarketListScreen(
-                onNavigateBack = { navController.popBackStack() },
                 onNavigateToAisles = { supermarketId ->
                     navController.navigate(NavScreen.SupermarketAisles.createRoute(supermarketId))
                 },
                 onNavigateToHome = navigateToHome,
                 onNavigateToList = navigateToList,
+                onNavigateToOffers = { navController.navigate(NavScreen.Offers.route) },
+                onNavigateToCategories = { navController.navigate(NavScreen.Categories.route) },
+                onNavigateToHistory = { navController.navigate(NavScreen.History.route) },
+                onNavigateToCatalogo = { navController.navigate(NavScreen.Catalogo.route) },
                 onToggleDarkMode = onToggleTheme,
                 isDarkMode = isDarkMode,
                 onChangeColor = onChangeColor
