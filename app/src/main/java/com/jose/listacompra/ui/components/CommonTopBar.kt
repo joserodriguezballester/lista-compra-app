@@ -76,10 +76,20 @@ fun CommonTopBar(
                 // Divider si hay acciones específicas
                 HorizontalDivider()
                 
-                // Ajustes comunes
+                // 📁 Ajustes
+                DropdownMenuItem(
+                    text = { Text("📁 Ajustes") },
+                    onClick = { /* Header, no action */ },
+                    enabled = false,
+                    colors = MenuDefaults.itemColors(
+                        textColor = MaterialTheme.colorScheme.primary,
+                        disabledTextColor = MaterialTheme.colorScheme.primary
+                    )
+                )
+                
                 if (onToggleDarkMode != null) {
                     DropdownMenuItem(
-                        text = { Text(if (isDarkMode) "Modo claro" else "Modo oscuro") },
+                        text = { Text("    " + if (isDarkMode) "Modo claro" else "Modo oscuro") },
                         onClick = {
                             onToggleDarkMode()
                             showMenu = false
@@ -94,7 +104,7 @@ fun CommonTopBar(
                 }
                 
                 DropdownMenuItem(
-                    text = { Text("Cambiar color") },
+                    text = { Text("    Cambiar color") },
                     onClick = {
                         onChangeColor()
                         showMenu = false
