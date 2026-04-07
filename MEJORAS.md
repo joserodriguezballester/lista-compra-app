@@ -157,6 +157,25 @@
 
 ---
 
+## MI LISTA
+
+**ML1** - TopBar: Cambios
+- Cambiar título a "Mi lista"
+- Añadir botón + para añadir productos
+
+**ML2** - BottomBar: Supermercados
+- Mostrar iconos de supermercados
+- Sin nombre, solo iconos
+
+**ML3** - Quitar FAB
+- Ya está el + en TopBar y opciones en overflow
+
+**ML4** - Overflow: Opciones
+- Añadir "Añadir manual"
+- Añadir "Añadir por scanner"
+
+---
+
 ## ARQUITECTURA
 
 **A1** - Valores de UI en archivo aparte
