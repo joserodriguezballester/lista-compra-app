@@ -1,138 +1,68 @@
 package com.jose.listacompra.ui.screens.productlist
 
-import android.Manifest
-import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat
-import androidx.core.content.FileProvider
+import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
-import com.jose.listacompra.data.local.entities.ProductFrequencyEntity
-import com.jose.listacompra.domain.model.Aisle
 import com.jose.listacompra.domain.model.Articulo
-import com.jose.listacompra.domain.model.Offer
-import com.jose.listacompra.ui.utils.getCategoryEmoji
-import kotlinx.coroutines.delay
-import android.util.Log
-import android.widget.Toast
-import java.io.File
+import com.jose.listacompra.ui.viewmodel.ProductListViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddProductToListDialog(
-    aisles: List<Aisle>,
-    offers: List<Offer> = emptyList(),
-    suggestions: List<Articulo> = emptyList(),
-    historySuggestions: List<ProductFrequencyEntity> = emptyList(),
-    initialName: String? = null,
-    onSearch: (String) -> Unit = {},
-    onOpenScanner: () -> Unit = {},
-    onImageSelected: (Uri?) -> Unit = {},
     onDismiss: () -> Unit,
-    onAdd: (name: String, quantity: Float, aisleId: Long?, price: Float?, offerId: Long?, notes: String?, photoUri: String?) -> Unit
+    onAddProduct: (
+        name: String,
+        quantity: Float,
+        aisleId: Long?,
+        price: Float?,
+        offerId: Long?,
+        notes: String?,
+        photoUri: Uri?
+    ) -> Unit,
+    shoppingListId: Long,
+    articulos: List<Articulo> = emptyList(),
+    selectedArticul
+
+o: Articulo? = null,
+    viewModel: ProductListViewModel = hiltViewModel()
 ) {
-    val TAG = "AddProductDialog"
-    val context = LocalContext.current
-    
-    Log.d(TAG, "📊 Dialog recibió ${offers.size} offers: ${offers.map { it.name }}")
-    
-    var name by remember { mutableStateOf(initialName ?: "") }
-    var quantity by remember { mutableStateOf("1") }
-    var price by remember { mutableStateOf("") }
+    var productName by remember { mutableStateOf(selectedArticulo?.name ?: "") }
+    var quantity by remember { mutableFloatStateOf(selectedArticulo?.quantity ?: 1f) }
+    var price by remember { mutableStateOf(selectedArticulo?.estimatedPrice?.toString() ?: "") }
     var notes by remember { mutableStateOf("") }
-    var selectedAisleId by remember { mutableStateOf<Long?>(null) }
-    var selectedOfferId by remember { mutableStateOf<Long?>(null) }
-    var photoUri by remember { mutableStateOf<Uri?>(null) }
+    var selectedAisle by remember { mutableStateOf<Long?>(null) }
+    var selectedOffer by remember { mutableStateOf<Long?>(null) }
+    var photoUri by remember { mutableStateOf<Uri?>(selectedArticulo?.imageUrl?.let { Uri.parse(it) }) }
     
-    var aisleExpanded by remember { mutableStateOf(false) }
-    var offerExpanded by remember { mutableStateOf(false) }
-    var showSuggestions by remember { mutableStateOf(false) }
-    var showImagePicker by remember { mutableStateOf(false) }
-
-    val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicture()
-    ) { success ->
-        if (success) {
-            Log.d(TAG, "Foto tomada: $photoUri")
-        } else {
-            Log.w(TAG, "Foto cancelada")
-            photoUri = null
-        }
-    }
-
-    val galleryLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
+    val aisles by viewModel.aisles.collectAsState()
+    val offers by viewModel.offers.collectAsState()
+    
+    var showAisleDropdown by remember { mutableStateOf(false) }
+    var showOfferDropdown by remember { mutableStateOf(false) }
+    var showArticuloSheet by remember { mutableStateOf(false) }
+    
+    // Launcher para seleccionar imagen
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
         photoUri = uri
-        Log.d(TAG, "Imagen seleccionada: $uri")
-    }
-
-    val cameraPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            val photoFile = File.createTempFile(
-                "product_${System.currentTimeMillis()}",
-                ".jpg",
-                context.cacheDir
-            )
-            photoUri = FileProvider.getUriForFile(
-                context,
-                "${context.packageName}.fileprovider",
-                photoFile
-            )
-            cameraLauncher.launch(photoUri)
-        } else {
-            Toast.makeText(context, "Permiso de cámara denegado", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    LaunchedEffect(name) {
-        if (name.length >= 2) {
-            delay(300)
-            onSearch(name)
-            showSuggestions = true
-        } else {
-            showSuggestions = false
-        }
     }
     
-    // Auto-seleccionar pasillo del historial si coincide exactamente
-    LaunchedEffect(historySuggestions, name) {
-        val normalizedName = name.lowercase().trim()
-        val matchingHistory = historySuggestions.find { 
-            it.productName.equals(normalizedName, ignoreCase = true) 
-        }
-        
-        matchingHistory?.let { h ->
-            if (h.lastAisleId > 0 && selectedAisleId == null) {
-                selectedAisleId = h.lastAisleId
-                Log.d(TAG, "Auto-seleccionado pasillo ${h.lastAisleId} para '$name'")
-            }
-        }
-    }
-
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Añadir producto") },
@@ -140,295 +70,181 @@ fun AddProductToListDialog(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .verticalScroll(rememberScrollState()),
+                    .padding(vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Imagen + Botones
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(80.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant)
-                            .clickable { showImagePicker = true },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (photoUri != null) {
-                            AsyncImage(
-                                model = photoUri,
-                                contentDescription = "Foto",
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
-                            )
-                        } else {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Icon(
-                                    Icons.Default.AddAPhoto,
-                                    contentDescription = "Añadir foto",
-                                    modifier = Modifier.size(32.dp),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                                )
-                                Text(
-                                    "Añadir foto",
-                                    fontSize = 10.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                                )
-                            }
-                        }
-                    }
-
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(
-                            onClick = onOpenScanner,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(Icons.Default.QrCodeScanner, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Escanear", fontSize = 12.sp)
-                        }
-                        
-                        OutlinedButton(
-                            onClick = { galleryLauncher.launch("image/*") },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(Icons.Default.PhotoLibrary, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Galería", fontSize = 12.sp)
-                        }
-                    }
-                }
-
-                // Nombre con sugerencias
-                ExposedDropdownMenuBox(
-                    expanded = showSuggestions && suggestions.isNotEmpty(),
-                    onExpandedChange = { }
-                ) {
+                // Selector de artículo existente
+                if (articulos.isNotEmpty()) {
                     OutlinedTextField(
-                        value = name,
-                        onValueChange = { name = it },
-                        label = { Text("Nombre del producto") },
+                        value = if (selectedArticulo != null) "📝 ${selectedArticulo.name}" else "Seleccionar del catálogo",
+                        onValueChange = { },
+                        readOnly = true,
+                        label = { Text("Del catálogo") },
+                        trailingIcon = {
+                            IconButton(onClick = { showArticuloSheet = true }) {
+                                Icon(Icons.Default.Search, "Buscar")
+                            }
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .menuAnchor()
-                            .onFocusChanged { focusState ->
-                                showSuggestions = focusState.isFocused && suggestions.isNotEmpty()
-                            },
-                        singleLine = true,
-                        leadingIcon = {
-                            Icon(Icons.Default.ShoppingCart, contentDescription = null)
-                        },
-                        trailingIcon = {
-                            if (name.isNotEmpty()) {
-                                IconButton(onClick = { name = "" }) {
-                                    Icon(Icons.Default.Close, "Limpiar")
-                                }
-                            }
-                        }
+                            .clickable { showArticuloSheet = true }
                     )
-
-                    ExposedDropdownMenu(
-                        expanded = showSuggestions && suggestions.isNotEmpty(),
-                        onDismissRequest = { showSuggestions = false }
-                    ) {
-                        suggestions.forEach { articulo ->
-                            val history = historySuggestions.find { 
-                                it.productName.equals(articulo.name, ignoreCase = true) 
-                            }
-                            
-                            DropdownMenuItem(
-                                text = {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Text(
-                                            text = getCategoryEmoji(articulo.name),
-                                            fontSize = 20.sp
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(articulo.name, fontWeight = FontWeight.Medium)
-                                            articulo.finalPrice?.let {
-                                                Text(
-                                                    "${String.format("%.2f", it)} €",
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = MaterialTheme.colorScheme.primary
-                                                )
-                                            }
-                                        }
-                                        
-                                        history?.let { h ->
-                                            val aisle = aisles.find { it.id == h.lastAisleId }
-                                            if (aisle != null && h.lastAisleId > 0) {
-                                                Surface(
-                                                    shape = MaterialTheme.shapes.small,
-                                                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
-                                                ) {
-                                                    Row(
-                                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                                        verticalAlignment = Alignment.CenterVertically
-                                                    ) {
-                                                        Text(
-                                                            "📍 ${aisle.emoji} ${aisle.name}",
-                                                            style = MaterialTheme.typography.labelSmall,
-                                                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                                                        )
-                                                        Spacer(modifier = Modifier.width(4.dp))
-                                                        Text(
-                                                            "📊${h.timesPurchased}x",
-                                                            style = MaterialTheme.typography.labelSmall,
-                                                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                                                        )
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                },
-                                onClick = {
-                                    name = articulo.name
-                                    articulo.finalPrice?.let { price = it.toString() }
-                                    
-                                    history?.let { h ->
-                                        if (h.lastAisleId > 0) {
-                                            selectedAisleId = h.lastAisleId
-                                            quantity = h.lastQuantity.toString()
-                                        }
-                                    }
-                                    
-                                    showSuggestions = false
-                                }
-                            )
-                        }
-                    }
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
-
-                // Cantidad
+                
+                // Nombre del producto
                 OutlinedTextField(
-                    value = quantity,
-                    onValueChange = { quantity = it },
-                    label = { Text("Cantidad") },
+                    value = productName,
+                    onValueChange = { productName = it },
+                    label = { Text("Nombre") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
-
-                // Precio
-                OutlinedTextField(
-                    value = price,
-                    onValueChange = { price = it },
-                    label = { Text("Precio unitario (€)") },
+                
+                // Cantidad y precio en fila
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    leadingIcon = {
-                        Icon(Icons.Default.Euro, contentDescription = null)
-                    }
-                )
-
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = quantity.toString(),
+                        onValueChange = { quantity = it.toFloatOrNull() ?: 1f },
+                        label = { Text("Cantidad") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true
+                    )
+                    
+                    OutlinedTextField(
+                        value = price,
+                        onValueChange = { price = it },
+                        label = { Text("Precio €") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true
+                    )
+                }
+                
                 // Pasillo
                 ExposedDropdownMenuBox(
-                    expanded = aisleExpanded,
-                    onExpandedChange = { aisleExpanded = it }
+                    expanded = showAisleDropdown,
+                    onExpandedChange = { showAisleDropdown = it }
                 ) {
-                    val selectedAisle = aisles.find { it.id == selectedAisleId }
                     OutlinedTextField(
-                        value = selectedAisle?.let { "${it.emoji} ${it.name}" } ?: "Sin pasillo",
-                        onValueChange = {},
+                        value = aisles.find { it.id == selectedAisle }?.name ?: "Sin pasillo",
+                        onValueChange = { },
                         readOnly = true,
                         label = { Text("Pasillo") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = aisleExpanded) },
-                        modifier = Modifier.fillMaxWidth().menuAnchor()
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showAisleDropdown) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor()
                     )
-
+                    
                     ExposedDropdownMenu(
-                        expanded = aisleExpanded,
-                        onDismissRequest = { aisleExpanded = false }
+                        expanded = showAisleDropdown,
+                        onDismissRequest = { showAisleDropdown = false }
                     ) {
                         DropdownMenuItem(
                             text = { Text("Sin pasillo") },
-                            onClick = { selectedAisleId = null; aisleExpanded = false }
+                            onClick = { selectedAisle = null; showAisleDropdown = false }
                         )
                         aisles.forEach { aisle ->
                             DropdownMenuItem(
-                                text = { Text("${aisle.emoji} ${aisle.name}") },
-                                onClick = { selectedAisleId = aisle.id; aisleExpanded = false }
+                                text = { Text(aisle.name) },
+                                onClick = { selectedAisle = aisle.id; showAisleDropdown = false }
                             )
                         }
                     }
                 }
-
+                
                 // Oferta
                 ExposedDropdownMenuBox(
-                    expanded = offerExpanded,
-                    onExpandedChange = { offerExpanded = it }
+                    expanded = showOfferDropdown,
+                    onExpandedChange = { showOfferDropdown = it }
                 ) {
-                    val selectedOffer = offers.find { it.id == selectedOfferId }
                     OutlinedTextField(
-                        value = selectedOffer?.let { "🏷️ ${it.name}" } ?: "Sin oferta",
-                        onValueChange = {},
+                        value = offers.find { it.id == selectedOffer }?.let { "${it.code} - ${it.name}" } ?: "Sin oferta",
+                        onValueChange = { },
                         readOnly = true,
                         label = { Text("Oferta") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = offerExpanded) },
-                        leadingIcon = { Icon(Icons.Default.LocalOffer, contentDescription = null) },
-                        modifier = Modifier.fillMaxWidth().menuAnchor()
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showOfferDropdown) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor()
                     )
-
+                    
                     ExposedDropdownMenu(
-                        expanded = offerExpanded,
-                        onDismissRequest = { offerExpanded = false }
+                        expanded = showOfferDropdown,
+                        onDismissRequest = { showOfferDropdown = false }
                     ) {
                         DropdownMenuItem(
                             text = { Text("Sin oferta") },
-                            onClick = { selectedOfferId = null; offerExpanded = false }
+                            onClick = { selectedOffer = null; showOfferDropdown = false }
                         )
                         offers.forEach { offer ->
                             DropdownMenuItem(
-                                text = {
-                                    Column {
-                                        Text("🏷️ ${offer.name}", fontWeight = FontWeight.Medium)
-                                        Text(
-                                            offer.description,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                },
-                                onClick = { selectedOfferId = offer.id; offerExpanded = false }
+                                text = { Text("${offer.code} - ${offer.name}") },
+                                onClick = { selectedOffer = offer.id; showOfferDropdown = false }
                             )
                         }
                     }
                 }
-
+                
                 // Notas
                 OutlinedTextField(
                     value = notes,
                     onValueChange = { notes = it },
                     label = { Text("Notas") },
-                    placeholder = { Text("Ej: del Mercadona, marca Hacendado...") },
                     modifier = Modifier.fillMaxWidth(),
-                    maxLines = 2,
-                    leadingIcon = { Icon(Icons.Default.Notes, contentDescription = null) }
+                    singleLine = true
                 )
+                
+                // Imagen
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Imagen:", style = MaterialTheme.typography.bodyMedium)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        IconButton(onClick = { imagePickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }) {
+                            Icon(Icons.Default.Image, "Seleccionar imagen")
+                        }
+                        if (photoUri != null) {
+                            IconButton(onClick = { photoUri = null }) {
+                                Icon(Icons.Default.Close, "Quitar imagen")
+                            }
+                        }
+                    }
+                }
+                
+                // Preview de imagen
+                if (photoUri != null) {
+                    AsyncImage(
+                        model = photoUri,
+                        contentDescription = "Imagen del producto",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(120.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                }
             }
         },
         confirmButton = {
             Button(
                 onClick = {
-                    Log.d(TAG, "Añadiendo: name=$name, photoUri=$photoUri")
-                    onAdd(
-                        name,
-                        quantity.toFloatOrNull() ?: 1f,
-                        selectedAisleId,
+                    onAddProduct(
+                        productName,
+                        quantity,
+                        selectedAisle,
                         price.toFloatOrNull(),
-                        selectedOfferId,
+                        selectedOffer,
                         notes.ifBlank { null },
-                        photoUri?.toString()
+                        photoUri
                     )
                 },
-                enabled = name.isNotBlank()
+                enabled = productName.isNotBlank() && quantity > 0
             ) {
-                Icon(Icons.Default.Add, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
                 Text("Añadir")
             }
         },
@@ -438,62 +254,53 @@ fun AddProductToListDialog(
             }
         }
     )
-
-    if (showImagePicker) {
-        AlertDialog(
-            onDismissRequest = { showImagePicker = false },
-            title = { Text("Seleccionar imagen") },
-            text = {
-                Column {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                showImagePicker = false
-                                galleryLauncher.launch("image/*")
-                            }
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
+    
+    // Sheet para seleccionar artículo del catálogo
+    if (showArticuloSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showArticuloSheet = false }
+        ) {
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(articulos.sortedBy { it.name }) { articulo ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            productName = articulo.name
+                            quantity = articulo.quantity
+                            price = articulo.estimatedPrice?.toString() ?: ""
+                            photoUri = articulo.imageUrl?.let { Uri.parse(it) }
+                            showArticuloSheet = false
+                        }
                     ) {
-                        Icon(Icons.Default.PhotoLibrary, contentDescription = null)
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text("Galería")
-                    }
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                showImagePicker = false
-                                val permission = Manifest.permission.CAMERA
-                                if (ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED) {
-                                    val photoFile = File.createTempFile(
-                                        "product_${System.currentTimeMillis()}",
-                                        ".jpg",
-                                        context.cacheDir
-                                    )
-                                    photoUri = FileProvider.getUriForFile(
-                                        context,
-                                        "${context.packageName}.fileprovider",
-                                        photoFile
-                                    )
-                                } else {
-                                    cameraPermissionLauncher.launch(permission)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            articulo.imageUrl?.let { url ->
+                                AsyncImage(
+                                    model = url,
+                                    contentDescription = articulo.name,
+                                    modifier = Modifier.size(48.dp),
+                                    contentScale = ContentScale.Fit
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                            }
+                            Column {
+                                Text(articulo.name, style = MaterialTheme.typography.bodyLarge)
+                                articulo.estimatedPrice?.let {
+                                    Text("€${String.format("%.2f", it)}", style = MaterialTheme.typography.bodySmall)
                                 }
                             }
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Default.PhotoCamera, contentDescription = null)
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text("Cámara")
+                        }
                     }
                 }
-            },
-            confirmButton = {
-                TextButton(onClick = { showImagePicker = false }) {
-                    Text("Cancelar")
-                }
             }
-        )
+        }
     }
 }
