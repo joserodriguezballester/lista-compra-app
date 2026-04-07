@@ -17,15 +17,14 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -56,8 +55,8 @@ import com.jose.listacompra.domain.model.Product
 import com.jose.listacompra.ui.components.AisleHeader
 import com.jose.listacompra.ui.components.AppDrawer
 import com.jose.listacompra.ui.components.CommonTopBar
-import com.jose.listacompra.ui.components.ProductCard
 import com.jose.listacompra.ui.components.ListBottomBar
+import com.jose.listacompra.ui.components.ProductCard
 import com.jose.listacompra.ui.components.VoiceInputButton
 import com.jose.listacompra.ui.screens.ColorSettingsDialog
 import com.jose.listacompra.ui.viewmodel.ProductListViewModel
@@ -335,7 +334,8 @@ fun ProductListScreen(
                     navController?.currentBackStackEntry?.savedStateHandle?.remove<String>("scannedName")
                 },
                 onAdd = { name, quantity, aisleId, price, offerId, notes, photoUri ->
-                    viewModel.addProduct(name, quantity, aisleId, price, offerId, notes, photoUri?.let { Uri.parse(it) })
+                    viewModel.addProduct(name, quantity, aisleId, price, offerId, notes,
+                        photoUri?.let { Uri.parse(it) } as String?)
                     showAddProductDialog = false
                     scannedName = null
                     scannedPrice = null

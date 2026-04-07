@@ -302,3 +302,12 @@
 
 **Total completado:** 38 items
 **Total pendiente:** 11 items
+
+Ofertas.- Borrar con swipe no con papelera. resto ok
+Categorias .- Borrar con swipe no con papelera. resto ok
+Supermercados .- Borrar con swipe no con papelera. resto ok
+Catalogo home ok, buscar ok, filtro mejorable, scanner ok, añadir no lo hace bien . Modificar card
+Historial. Tamaño fuente Eje Y mas grande aun
+Bottombar, hacerla aun mas estrecha. 
+overflow correcto
+Drawer. Por orden Home, mi lista, catalogo, categorias, supermercados, ofertas, historial. Ahora creo que faltan algunas
