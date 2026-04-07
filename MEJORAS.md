@@ -180,13 +180,23 @@
 
 ## PRODUCT_CARD (componente)
 
-**PC1** - Layout con oferta: Reorganizar líneas
-- Cuando el producto tiene oferta, la última línea queda: unidades, precio, total sin oferta tachado y total final
-- Cambio propuesto: Poner el total sin oferta tachado en la línea de arriba
-- Línea superior: oferta (badge a la izquierda) y total sin oferta tachado (a la derecha)
-- Línea inferior: unidades, precio, total final
+**PC1** - ✅ Layout con oferta: Reorganizar líneas
+- Línea superior: badge oferta + total sin oferta tachado
+- Línea inferior: unidades x precio + total final
+- Commit: 8a644d8
 
-**PC2** - Imagen no se guarda al añadir desde artículo
+**PC2** - ✅ Imagen se guarda al añadir desde artículo
+- AddProductToListDialog: asigna photoUri del artículo seleccionado
+- Commit: 018127b
+
+---
+
+## ARQUITECTURA
+
+**A1** - Valores de UI en archivo aparte
+- Ubicación: ui/theme/Dimensions.kt
+- Incluir: tamaños de fuente, alturas, paddings comunes
+rtículo
 - Al añadir un producto desde el catálogo de artículos, el artículo tiene imagen pero el producto creado no la guarda
 - Verificar AddProductToListDialog y ProductListViewModel: se debe pasar y guardar la imagen del artículo seleccionado
 
