@@ -294,7 +294,7 @@ private fun AisleItem(
                 }
             } else {
                 // Botones normales
-                Row(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     IconButton(onClick = onEdit) {
                         Icon(
                             Icons.Default.Edit,

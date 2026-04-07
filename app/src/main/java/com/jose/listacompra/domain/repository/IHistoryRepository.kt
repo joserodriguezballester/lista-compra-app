@@ -3,6 +3,7 @@ package com.jose.listacompra.domain.repository
 import com.jose.listacompra.data.local.dao.PriceStats
 import com.jose.listacompra.data.local.entities.ProductFrequencyEntity
 import com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity
+import com.jose.listacompra.data.local.entities.PurchaseHistoryEntity
 import com.jose.listacompra.domain.model.SpendingStats
 
 interface IHistoryRepository {
