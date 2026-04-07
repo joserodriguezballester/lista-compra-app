@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
@@ -159,8 +160,18 @@ fun ProductListScreen(
                     onAddClick = { showAddProductDialog = true },
                     onChangeColor = { showColorDialog = true },
                     overflowActions = { expanded, onDismiss ->
+                        // 📁 Añadir productos
                         DropdownMenuItem(
-                            text = { Text("Añadir manual") },
+                            text = { Text("📁 Añadir productos") },
+                            onClick = { /* Header, no action */ },
+                            enabled = false,
+                            colors = MenuDefaults.itemColors(
+                                textColor = MaterialTheme.colorScheme.primary,
+                                disabledTextColor = MaterialTheme.colorScheme.primary
+                            )
+                        )
+                        DropdownMenuItem(
+                            text = { Text("    Manual") },
                             onClick = {
                                 showAddProductDialog = true
                                 onDismiss()
@@ -170,7 +181,7 @@ fun ProductListScreen(
                             }
                         )
                         DropdownMenuItem(
-                            text = { Text("Añadir por scanner") },
+                            text = { Text("    Scanner") },
                             onClick = {
                                 onNavigateToScanner()
                                 onDismiss()
@@ -179,9 +190,32 @@ fun ProductListScreen(
                                 Icon(Icons.Default.QrCodeScanner, contentDescription = null)
                             }
                         )
-                        HorizontalDivider()
                         DropdownMenuItem(
-                            text = { Text("Vaciar lista") },
+                            text = { Text("    Desde historial") },
+                            onClick = {
+                                // TODO: Placeholder
+                                onDismiss()
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Default.History, contentDescription = null)
+                            },
+                            enabled = false
+                        )
+                        
+                        HorizontalDivider()
+                        
+                        // 📁 Lista
+                        DropdownMenuItem(
+                            text = { Text("📁 Lista") },
+                            onClick = { /* Header, no action */ },
+                            enabled = false,
+                            colors = MenuDefaults.itemColors(
+                                textColor = MaterialTheme.colorScheme.primary,
+                                disabledTextColor = MaterialTheme.colorScheme.primary
+                            )
+                        )
+                        DropdownMenuItem(
+                            text = { Text("    Vaciar") },
                             onClick = {
                                 showClearConfirmDialog = true
                                 onDismiss()
