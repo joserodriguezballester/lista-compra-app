@@ -17,6 +17,7 @@ import androidx.navigation.NavHostController
 import com.jose.listacompra.domain.model.Articulo
 import com.jose.listacompra.ui.components.*
 import com.jose.listacompra.ui.navigation.NavScreen
+import com.jose.listacompra.ui.viewmodel.ArticuloViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -303,10 +304,10 @@ fun CatalogoScreen(
 
     if (showFilterDialog) {
         CategoryFilterDialog(
-            categorias.map { it.id.toString() to it.name }.toMap(),
-            selectedCategory,
-            { showFilterDialog = false },
-            { selectedCategory = it }
+            categories = categorias.map { it.name },
+            selectedCategory = selectedCategory,
+            onDismiss = { showFilterDialog = false },
+            onCategorySelected = { selectedCategory = it }
         )
     }
 
