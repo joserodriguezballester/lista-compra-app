@@ -1,26 +1,36 @@
 package com.jose.listacompra.ui.screens.history
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import com.jose.listacompra.data.local.entities.ProductFrequencyEntity
 import com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity
 import com.jose.listacompra.ui.components.AppDrawer
@@ -114,22 +124,22 @@ fun HistoryScreen(
                     Tab(
                         selected = uiState.selectedTab == 0,
                         onClick = { viewModel.selectTab(0) },
-                        text = { Text("📊 Frecuencia", maxLines = 1) }
+                        text = { Text("📊 Frecuencia", maxLines = 1, style = MaterialTheme.typography.labelSmall) }
                     )
                     Tab(
                         selected = uiState.selectedTab == 1,
                         onClick = { viewModel.selectTab(1) },
-                        text = { Text("📈 Precios", maxLines = 1) }
+                        text = { Text("📈 Precios", maxLines = 1, style = MaterialTheme.typography.labelSmall) }
                     )
                     Tab(
                         selected = uiState.selectedTab == 2,
                         onClick = { viewModel.selectTab(2) },
-                        text = { Text("📉 Gráfica", maxLines = 1) }
+                        text = { Text("📉 Gráfica", maxLines = 1, style = MaterialTheme.typography.labelSmall) }
                     )
                     Tab(
                         selected = uiState.selectedTab == 3,
                         onClick = { viewModel.selectTab(3) },
-                        text = { Text("📊 Comparar", maxLines = 1) }
+                        text = { Text("📊 Comparar", maxLines = 1, style = MaterialTheme.typography.labelSmall) }
                     )
                 }
 
@@ -200,17 +210,6 @@ private fun FrequencyCard(product: ProductFrequencyEntity, onClick: () -> Unit) 
         }
     } else "Nunca"
 
-    val nextDate = if (product.estimatedNextDate != null && product.estimatedNextDate > 0) {
-        val diff = (product.estimatedNextDate - System.currentTimeMillis()) / (1000 * 60 * 60 * 24)
-        when {
-            diff < 0 -> "⚠️ Atrasado"
-            diff == 0L -> "Hoy"
-            diff == 1L -> "Mañana"
-            diff < 7 -> "En $diff días"
-            else -> "En ${diff / 7} sem"
-        }
-    } else null
-
     val isOverdue = product.estimatedNextDate != null && 
                    product.estimatedNextDate > 0 && 
                    product.estimatedNextDate < System.currentTimeMillis()
@@ -232,7 +231,9 @@ private fun FrequencyCard(product: ProductFrequencyEntity, onClick: () -> Unit) 
                     text = product.originalName,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = if (isOverdue) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                    color = if (isOverdue) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Surface(shape = MaterialTheme.shapes.small, color = MaterialTheme.colorScheme.secondaryContainer) {
                     Text(
@@ -261,15 +262,6 @@ private fun FrequencyCard(product: ProductFrequencyEntity, onClick: () -> Unit) 
                     Text("Última", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(daysSince, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
                 }
-                if (nextDate != null) {
-                    Column {
-                        Text("Próxima", style = MaterialTheme.typography.labelSmall,
-                            color = if (isOverdue) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(nextDate, style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = if (isOverdue) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface)
-                    }
-                }
             }
         }
     }
@@ -285,7 +277,7 @@ private fun PriceListTab(
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
         if (products.isNotEmpty()) {
-            ProductSelector(products, selectedProduct, onProductSelect)
+            ProductSelectorCards(products, selectedProduct, onProductSelect)
         }
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -305,7 +297,6 @@ private fun PriceHistoryList(history: List<ProductPriceHistoryEntity>) {
         modifier = Modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Estadísticas
         if (history.isNotEmpty()) {
             val prices = history.map { it.price }
             item {
@@ -323,7 +314,6 @@ private fun PriceHistoryList(history: List<ProductPriceHistoryEntity>) {
             }
         }
 
-        // Lista
         items(history.sortedByDescending { it.fecha }) { record ->
             Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)) {
                 Row(
@@ -331,7 +321,7 @@ private fun PriceHistoryList(history: List<ProductPriceHistoryEntity>) {
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Column {
-                        Text(dateFormat.format(Date(record.fecha)), fontWeight = FontWeight.Medium)
+                        Text(dateFormat.format(Date(record.fecha)), fontWeight = FontWeight.Medium, style = MaterialTheme.typography.labelSmall)
                         Text("${record.quantity} uds", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Text("€${String.format("%.2f", record.price)}", style = MaterialTheme.typography.titleMedium,
@@ -352,7 +342,7 @@ private fun SingleChartTab(
 ) {
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         if (products.isNotEmpty()) {
-            ProductSelector(products, selectedProduct, onProductSelect)
+            ProductSelectorCards(products, selectedProduct, onProductSelect)
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -361,16 +351,16 @@ private fun SingleChartTab(
             selectedProduct == null -> EmptyState(emoji = "📉", title = "Selecciona un producto", subtitle = "Para ver su gráfica")
             priceHistory.isEmpty() -> EmptyState(emoji = "📉", title = "Sin datos", subtitle = "para ${selectedProduct.originalName}")
             else -> {
-                // Título
                 Text(
                     text = "📈 ${selectedProduct.originalName}",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Gráfica
                 Card(
                     modifier = Modifier.fillMaxWidth().height(280.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -383,7 +373,6 @@ private fun SingleChartTab(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Estadísticas
                 val prices = priceHistory.map { it.price }
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -431,30 +420,27 @@ private fun SingleLineChart(
         drawLine(surfaceVariant, Offset(padding, padding), Offset(padding, canvasHeight - padding), 2f)
         drawLine(surfaceVariant, Offset(padding, canvasHeight - padding), Offset(canvasWidth - padding, canvasHeight - padding), 2f)
 
-        // Etiquetas eje Y (precio)
+        // Etiquetas eje Y (precio) - H1: textSize = 24f
         val ySteps = 5
         for (i in 0..ySteps) {
             val price = maxPrice * i / ySteps
             val y = canvasHeight - padding - (price / maxPrice) * chartHeight
 
-            // Grid line
             if (i > 0) {
                 drawLine(surfaceVariant.copy(alpha = 0.3f), Offset(padding, y), Offset(canvasWidth - padding, y), 1f)
             }
 
-            // Etiqueta
             drawContext.canvas.nativeCanvas.drawText(
                 "€${String.format("%.1f", price)}",
                 5f,
                 y + 5f,
                 android.graphics.Paint().apply {
                     color = onSurfaceVariant.hashCode()
-                    textSize = 20f
+                    textSize = 24f // H1
                 }
             )
         }
 
-        // Calcular puntos
         val points = history.map { record ->
             val x = if (timeRange > 0) {
                 padding + ((record.fecha - minTime).toFloat() / timeRange) * chartWidth
@@ -465,7 +451,6 @@ private fun SingleLineChart(
             Offset(x, y)
         }
 
-        // Área bajo la curva
         if (points.size >= 2) {
             val areaPath = Path().apply {
                 moveTo(points.first().x, canvasHeight - padding)
@@ -474,10 +459,7 @@ private fun SingleLineChart(
                 close()
             }
             drawPath(areaPath, primaryColor.copy(alpha = 0.1f))
-        }
 
-        // Línea
-        if (points.size >= 2) {
             val linePath = Path().apply {
                 moveTo(points.first().x, points.first().y)
                 for (i in 1 until points.size) {
@@ -487,7 +469,6 @@ private fun SingleLineChart(
             drawPath(linePath, primaryColor, style = Stroke(width = 3f, pathEffect = PathEffect.cornerPathEffect(10f)))
         }
 
-        // Puntos
         points.forEach { point ->
             drawCircle(primaryColor, 6f, point)
             drawCircle(Color.White, 3f, point)
@@ -502,19 +483,13 @@ private fun MultiProductCompareTab(
     viewModel: HistoryViewModel
 ) {
     val colors = listOf(
-        Color(0xFF2196F3), // Azul
-        Color(0xFF4CAF50), // Verde
-        Color(0xFFFF9800), // Naranja
-        Color(0xFF9C27B0), // Púrpura
-        Color(0xFFF44336), // Rojo
-        Color(0xFF00BCD4)  // Cyan
+        Color(0xFF2196F3), Color(0xFF4CAF50), Color(0xFFFF9800),
+        Color(0xFF9C27B0), Color(0xFFF44336), Color(0xFF00BCD4)
     )
 
-    // Estado local para productos seleccionados y sus historiales
     var selectedProducts by remember { mutableStateOf<List<ProductChartData>>(emptyList()) }
     val histories = remember { mutableStateMapOf<String, List<ProductPriceHistoryEntity>>() }
 
-    // Cargar historial cuando se añade un producto
     LaunchedEffect(selectedProducts) {
         selectedProducts.forEach { pd ->
             if (!histories.containsKey(pd.product.productName)) {
@@ -526,7 +501,7 @@ private fun MultiProductCompareTab(
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Text(
-            text = "📊 Comparativa de productos",
+            text = "📊 Comparativa de productos (máx 6)",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary
@@ -534,14 +509,11 @@ private fun MultiProductCompareTab(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Selector de productos
-        Text("Selecciona productos (máx 6):", style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Chips de productos disponibles
-        LazyRow(
+        // H3: Grid de 2 columnas para productos disponibles
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            modifier = Modifier.height(120.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             items(products.sortedBy { it.originalName }.take(12)) { product ->
@@ -559,7 +531,14 @@ private fun MultiProductCompareTab(
                             )
                         }
                     },
-                    label = { Text(product.originalName, maxLines = 1) }
+                    label = { 
+                        Text(
+                            product.originalName,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.labelSmall // H5
+                        )
+                    }
                 )
             }
         }
@@ -575,12 +554,10 @@ private fun MultiProductCompareTab(
                     InputChip(
                         selected = true,
                         onClick = { },
-                        label = { Text(pd.product.originalName, color = pd.color, maxLines = 1) },
+                        label = { Text(pd.product.originalName, color = pd.color, maxLines = 1, style = MaterialTheme.typography.labelSmall) },
                         trailingIcon = {
                             IconButton(
-                                onClick = {
-                                    selectedProducts = selectedProducts.filter { it.product.productName != pd.product.productName }
-                                },
+                                onClick = { selectedProducts = selectedProducts.filter { it.product.productName != pd.product.productName } },
                                 modifier = Modifier.size(18.dp)
                             ) {
                                 Icon(Icons.Default.Close, "Quitar", tint = pd.color, modifier = Modifier.size(14.dp))
@@ -593,11 +570,9 @@ private fun MultiProductCompareTab(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Gráfica
         if (selectedProducts.isEmpty()) {
             EmptyState(emoji = "📊", title = "Selecciona productos", subtitle = "Para comparar sus precios")
         } else {
-            // Actualizar datos con historiales cargados
             val updatedProducts = selectedProducts.map { pd ->
                 pd.copy(history = histories[pd.product.productName] ?: emptyList())
             }
@@ -614,27 +589,32 @@ private fun MultiProductCompareTab(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Leyenda
+            // H4: Leyenda con scroll
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().height(150.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
             ) {
-                Column(modifier = Modifier.padding(12.dp)) {
+                Column(
+                    modifier = Modifier.padding(12.dp).fillMaxSize()
+                ) {
                     Text("Leyenda:", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(8.dp))
-                    updatedProducts.forEach { pd ->
-                        if (pd.history.isNotEmpty()) {
+                    
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        items(updatedProducts.filter { it.history.isNotEmpty() }) { pd ->
                             val min = pd.history.minOf { it.price }
                             val max = pd.history.maxOf { it.price }
                             Row(
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                                modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Box(modifier = Modifier.size(12.dp).background(pd.color, MaterialTheme.shapes.small))
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    Text(pd.product.originalName, style = MaterialTheme.typography.bodySmall)
+                                    Text(pd.product.originalName, style = MaterialTheme.typography.labelSmall, maxLines = 1, overflow = TextOverflow.Ellipsis) // H5
                                 }
                                 Text("€${String.format("%.2f", min)} - €${String.format("%.2f", max)}",
                                     style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -654,7 +634,6 @@ private fun MultiLineChart(
 ) {
     if (productsData.isEmpty()) return
 
-    // Obtener todos los datos combinados
     val allHistory = productsData.flatMap { it.history }
     if (allHistory.isEmpty()) {
         Box(modifier = modifier, contentAlignment = Alignment.Center) {
@@ -678,11 +657,10 @@ private fun MultiLineChart(
         val chartWidth = canvasWidth - 2 * padding
         val chartHeight = canvasHeight - 2 * padding
 
-        // Ejes
         drawLine(surfaceVariant, Offset(padding, padding), Offset(padding, canvasHeight - padding), 2f)
         drawLine(surfaceVariant, Offset(padding, canvasHeight - padding), Offset(canvasWidth - padding, canvasHeight - padding), 2f)
 
-        // Etiquetas eje Y
+        // H1: textSize = 24f para eje Y
         for (i in 0..5) {
             val price = maxPrice * i / 5
             val y = canvasHeight - padding - (price / maxPrice) * chartHeight
@@ -692,11 +670,10 @@ private fun MultiLineChart(
             drawContext.canvas.nativeCanvas.drawText(
                 "€${String.format("%.1f", price)}",
                 5f, y + 5f,
-                android.graphics.Paint().apply { color = onSurfaceVariant.hashCode(); textSize = 18f }
+                android.graphics.Paint().apply { color = onSurfaceVariant.hashCode(); textSize = 24f } // H1
             )
         }
 
-        // Dibujar línea por cada producto
         productsData.forEach { pd ->
             if (pd.history.isNotEmpty()) {
                 val points = pd.history.sortedBy { it.fecha }.map { record ->
@@ -707,7 +684,6 @@ private fun MultiLineChart(
                     Offset(x, y)
                 }
 
-                // Línea
                 if (points.size >= 2) {
                     val path = Path().apply {
                         moveTo(points.first().x, points.first().y)
@@ -718,10 +694,74 @@ private fun MultiLineChart(
                     drawPath(path, pd.color, style = Stroke(width = 3f, pathEffect = PathEffect.cornerPathEffect(10f)))
                 }
 
-                // Puntos
                 points.forEach { point ->
                     drawCircle(pd.color, 5f, point)
                     drawCircle(Color.White, 2f, point)
+                }
+            }
+        }
+    }
+}
+
+// ============ SELECTOR TIPO CARDS (H6) ============
+@Composable
+private fun ProductSelectorCards(
+    products: List<ProductFrequencyEntity>,
+    selected: ProductFrequencyEntity?,
+    onSelect: (ProductFrequencyEntity) -> Unit
+) {
+    LazyRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp)
+    ) {
+        items(products.sortedBy { it.originalName }) { product ->
+            val isSelected = selected?.productName == product.productName
+            
+            Card(
+                modifier = Modifier
+                    .width(100.dp)
+                    .height(80.dp)
+                    .then(
+                        if (isSelected) Modifier.border(
+                            2.dp,
+                            MaterialTheme.colorScheme.primary,
+                            RoundedCornerShape(8.dp)
+                        ) else Modifier
+                    ),
+                onClick = { onSelect(product) },
+                colors = CardDefaults.cardColors(
+                    containerColor = if (isSelected)
+                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                    else
+                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    product.imageUrl?.let { url ->
+                        AsyncImage(
+                            model = url,
+                            contentDescription = product.originalName,
+                            modifier = Modifier.size(32.dp),
+                            contentScale = ContentScale.Fit
+                        )
+                    } ?: Text(
+                        text = "📦",
+                        style = MaterialTheme.typography.headlineSmall
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = product.originalName,
+                        style = MaterialTheme.typography.labelSmall, // H5
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Center
+                    )
                 }
             }
         }
@@ -769,12 +809,12 @@ private fun ProductSelector(
             onValueChange = { },
             readOnly = true,
             modifier = Modifier.fillMaxWidth().menuAnchor(),
-            label = { Text("Producto") }
+            label = { Text("Producto", style = MaterialTheme.typography.labelSmall) }
         )
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             products.sortedBy { it.originalName }.forEach { product ->
                 DropdownMenuItem(
-                    text = { Text(product.originalName) },
+                    text = { Text(product.originalName, style = MaterialTheme.typography.labelSmall) },
                     onClick = { onSelect(product); expanded = false }
                 )
             }

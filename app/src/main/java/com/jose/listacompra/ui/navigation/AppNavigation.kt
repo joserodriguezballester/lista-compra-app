@@ -90,9 +90,16 @@ fun AppNavigation(
         
         composable(NavScreen.Catalogo.route) {
             CatalogoScreen(
-                onNavigateBack = { navController.popBackStack() },
                 onNavigateToList = navigateToList,
-                navController = navController
+                onNavigateToHome = navigateToHome,
+                onNavigateToOffers = { navController.navigate(NavScreen.Offers.route) },
+                onNavigateToCategories = { navController.navigate(NavScreen.Categories.route) },
+                onNavigateToHistory = { navController.navigate(NavScreen.History.route) },
+                onNavigateToSupermarkets = { navController.navigate(NavScreen.Supermarkets.route) },
+                navController = navController,
+                onToggleDarkMode = onToggleTheme,
+                isDarkMode = isDarkMode,
+                onChangeColor = onChangeColor
             )
         }
         

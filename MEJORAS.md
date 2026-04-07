@@ -2,29 +2,30 @@
 
 ## HISTORIAL - Gráficas
 
-**H1** - Pestañas 3 y 4: Fuente eje Y más grande
-- Ahora: textSize = 20f y 18f
-- Cambiar a: textSize = 24f
+**H1** - ✅ Pestañas 3 y 4: Fuente eje Y más grande
+- textSize = 24f (antes 18f/20f)
+- Commit: 88a2655
 
-**H2** - Pestaña 4: Eliminar texto redundante
-- Quitar: "Selecciona productos (máx 6)"
-- Añadir "(máx 6)" al título
+**H2** - ✅ Pestaña 4: Eliminar texto redundante
+- Título: "📊 Comparativa de productos (máx 6)"
+- Commit: 88a2655
 
-**H3** - Pestaña 4: Productos en 2 filas
-- Ahora: LazyRow (1 fila)
-- Cambiar: LazyVerticalGrid o 2 filas
+**H3** - ✅ Pestaña 4: Productos en grid 2 columnas
+- LazyVerticalGrid con GridCells.Fixed(2)
+- Commit: 88a2655
 
-**H4** - Pestaña 4: Leyenda cortada
-- Solución: Scroll en la columna
+**H4** - ✅ Pestaña 4: Leyenda con scroll
+- LazyColumn dentro de Card con altura fija
+- Commit: 88a2655
 
-**H5** - Todas las pestañas: Tamaño fuente nombres
-- Aplicar: labelSmall (11sp, estilo BottomBar)
+**H5** - ✅ Todas las pestañas: Tamaño fuente nombres
+- labelSmall (11sp) para todos los textos de producto
+- Commit: 88a2655
 
-**H6** - Pestaña 2: Dropdown visual
-- Opción B: Cards horizontales con imagen y nombre
-- Cards pequeñas con icono/emoji arriba y nombre abajo
+**H6** - ✅ Pestaña 2: Dropdown visual tipo cards
+- ProductSelectorCards: Cards horizontales con imagen/emoji
 - Borde coloreado cuando está seleccionado
-- Grid horizontal (2 filas)
+- Commit: 88a2655
 
 ---
 
