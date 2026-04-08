@@ -107,6 +107,8 @@
 | T2 | Pantalla añadir oferta personalizada | Media | |
 | T4 | Supermercado por producto | Alta | Ver plan detallado |
 | T5 | Mejorar micrófono | Media | ✅ Completado | Beeps + selección múltiple |
+| T7 | Exportar BD | Media | JSON/CSV para backup |
+| T8 | Importar BD | Media | Restaurar desde backup |
 
 ### Catálogo
 
@@ -351,3 +353,45 @@ Bottombar, hacerla aun mas estrecha.
 overflow correcto
 Drawer. Por orden Home, mi lista, catalogo, categorias, supermercados, ofertas, historial. Ahora creo que faltan algunas
 istorial. Ahora creo que faltan algunas
+
+---
+
+### T7 - Exportar BD
+
+**Objetivo:** Permitir exportar todos los datos de la app a archivo JSON/CSV
+
+**Datos a exportar:**
+- Artículos del catálogo
+- Productos de listas
+- Categorías
+- Supermercados y pasillos
+- Ofertas
+- Historial de precios
+
+**Implementación:**
+| Paso | Archivo | Cambio |
+|------|---------|--------|
+| 1 | ExportImportRepository.kt | Nuevo repositorio |
+| 2 | ExportImportUseCase.kt | Lógica de exportación |
+| 3 | SettingsScreen.kt | Botón "Exportar datos" |
+| 4 | StorageAccessFramework | Permiso escritura |
+
+**Formato:** JSON estructurado con versionado
+
+---
+
+### T8 - Importar BD
+
+**Objetivo:** Restaurar datos desde backup
+
+**Implementación:**
+| Paso | Archivo | Cambio |
+|------|---------|--------|
+| 1 | ExportImportRepository.kt | Método import() |
+| 2 | ExportImportUseCase.kt | Validación + importación |
+| 3 | SettingsScreen.kt | Botón "Importar datos" |
+| 4 | ConflictDialog.kt | Resolución de conflictos |
+
+**Conflictos:**
+- Duplicados: preguntar (sobrescribir/saltar/renombrar)
+- IDs: regenerar si hay conflicto
