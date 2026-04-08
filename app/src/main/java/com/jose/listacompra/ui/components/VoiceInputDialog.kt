@@ -26,6 +26,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.jose.listacompra.domain.model.Articulo
 import com.jose.listacompra.ui.utils.BeepHelper
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 
 /**
  * Datos del reconocimiento de voz
