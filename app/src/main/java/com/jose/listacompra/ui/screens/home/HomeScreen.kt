@@ -7,15 +7,21 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.jose.listacompra.ui.components.AppDrawer
 import com.jose.listacompra.ui.components.CommonBottomBar
 import com.jose.listacompra.ui.components.CommonTopBar
+import com.jose.listacompra.ui.components.VoiceInputDialog
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -30,9 +36,11 @@ fun HomeScreen(
     onChangeColor: () -> Unit = {},
     isDarkMode: Boolean = false,
     onToggleDarkMode: () -> Unit = {},
+    productListViewModel: com.jose.listacompra.ui.viewmodel.ProductListViewModel = hiltViewModel()
 ) {
     val scope = rememberCoroutineScope()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    var showVoiceDialog by remember { mutableStateOf(false) }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -41,7 +49,6 @@ fun HomeScreen(
             AppDrawer(
                 onNavigateToHome = {
                     scope.launch { drawerState.close() }
-                    // Ya estamos en Home
                 },
                 onNavigateToList = {
                     scope.launch { drawerState.close() }
@@ -83,7 +90,7 @@ fun HomeScreen(
             },
             bottomBar = {
                 CommonBottomBar(
-                    onNavigateToHome = { /* Ya estamos en Home */ },
+                    onNavigateToHome = { },
                     onNavigateToList = onNavigateToList,
                     currentRoute = "home"
                 )
@@ -136,7 +143,6 @@ fun HomeScreen(
                         subtitle = "Gestionar",
                         icon = Icons.Default.Store,
                         emoji = "🏪",
-                        enabled = true,
                         onClick = onNavigateToSupermarkets
                     )
                     
@@ -146,7 +152,6 @@ fun HomeScreen(
                         subtitle = "Ver ofertas",
                         icon = Icons.Default.LocalOffer,
                         emoji = "🏷️",
-                        enabled = true,
                         onClick = onNavigateToOffers
                     )
                 }
@@ -161,7 +166,6 @@ fun HomeScreen(
                         subtitle = "Ver categorías",
                         icon = Icons.Default.Category,
                         emoji = "📂",
-                        enabled = true,
                         onClick = onNavigateToCategories
                     )
                     
@@ -171,7 +175,6 @@ fun HomeScreen(
                         subtitle = "Estadísticas",
                         icon = Icons.Default.History,
                         emoji = "📊",
-                        enabled = true,
                         onClick = onNavigateToHistory
                     )
                 }
@@ -179,10 +182,9 @@ fun HomeScreen(
         }
     }
     
-    // Diálogo de voz
     if (showVoiceDialog) {
-        com.jose.listacompra.ui.components.VoiceInputDialog(
-            viewModel = viewModel,
+        VoiceInputDialog(
+            viewModel = productListViewModel,
             onDismiss = { showVoiceDialog = false }
         )
     }

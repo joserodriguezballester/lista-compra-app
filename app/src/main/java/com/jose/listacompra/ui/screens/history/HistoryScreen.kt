@@ -67,6 +67,7 @@ fun HistoryScreen(
     val scope = rememberCoroutineScope()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val uiState by viewModel.uiState.collectAsState()
+    var showVoiceDialog by remember { mutableStateOf(false) } // T5 refactor
 
     ModalNavigationDrawer(
         drawerState = drawerState,

@@ -47,6 +47,7 @@ fun SupermarketListScreen(
     var showAddDialog by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf<Supermarket?>(null) }
     var supermarketToEdit by remember { mutableStateOf<Supermarket?>(null) }
+    var showVoiceDialog by remember { mutableStateOf(false) } // T5 refactor
 
     ModalNavigationDrawer(
         drawerState = drawerState,

@@ -42,6 +42,7 @@ fun OffersScreen(
     var showAddDialog by remember { mutableStateOf(false) }
     var offerToEdit by remember { mutableStateOf<Offer?>(null) }
     var offerToDelete by remember { mutableStateOf<Offer?>(null) }
+    var showVoiceDialog by remember { mutableStateOf(false) } // T5 refactor
 
     ModalNavigationDrawer(
         drawerState = drawerState,
