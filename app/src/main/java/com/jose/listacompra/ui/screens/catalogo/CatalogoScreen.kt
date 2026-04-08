@@ -32,6 +32,7 @@ fun CatalogoScreen(
     onNavigateToSupermarkets: () -> Unit = {},
     navController: NavHostController? = null,
     viewModel: ArticuloViewModel = hiltViewModel(),
+    productListViewModel: com.jose.listacompra.ui.viewmodel.ProductListViewModel = androidx.hilt.navigation.compose.hiltViewModel(),
     onToggleDarkMode: () -> Unit = {},
     isDarkMode: Boolean = false,
     onChangeColor: () -> Unit = {}
@@ -48,6 +49,7 @@ fun CatalogoScreen(
     var showAddDialog by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf<Articulo?>(null) }
     var selectedCategory by remember { mutableStateOf<String?>(null) }
+    var showVoiceDialog by remember { mutableStateOf(false) }
     var scannedEan by remember { mutableStateOf<String?>(null) }
     var scannedName by remember { mutableStateOf<String?>(null) }
     var scannedImageUrl by remember { mutableStateOf<String?>(null) }

@@ -111,7 +111,7 @@ fun HistoryScreen(
                     onChangeColor = onChangeColor,
                     onToggleDarkMode = onToggleDarkMode,
                     isDarkMode = isDarkMode,
-                    onMicrophoneClick = onNavigateToList
+                    onMicrophoneClick = { showVoiceDialog = true }
                 )
             },
             bottomBar = {
@@ -819,6 +819,13 @@ private fun ProductSelector(
             products.sortedBy { it.originalName }.forEach { product ->
                 DropdownMenuItem(
                     text = { Text(product.originalName, style = MaterialTheme.typography.labelSmall) },
+                    onClick = { onSelect(product); expanded = false }
+                )
+            }
+        }
+    }
+}
+ct.originalName, style = MaterialTheme.typography.labelSmall) },
                     onClick = { onSelect(product); expanded = false }
                 )
             }

@@ -91,7 +91,7 @@ fun SupermarketListScreen(
                     onChangeColor = onChangeColor,
                     onToggleDarkMode = onToggleDarkMode,
                     isDarkMode = isDarkMode,
-                    onMicrophoneClick = onNavigateToList,
+                    onMicrophoneClick = { showVoiceDialog = true },
                     overflowActions = { expanded, onDismiss ->
                         DropdownMenuItem(
                             text = { Text("Añadir supermercado") },

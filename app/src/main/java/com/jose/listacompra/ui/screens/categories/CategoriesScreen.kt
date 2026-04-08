@@ -86,7 +86,7 @@ fun CategoriesScreen(
                     onChangeColor = onChangeColor,
                     onToggleDarkMode = onToggleDarkMode,
                     isDarkMode = isDarkMode,
-                    onMicrophoneClick = onNavigateToList,
+                    onMicrophoneClick = { showVoiceDialog = true },
                     overflowActions = { expanded, onDismiss ->
                         DropdownMenuItem(
                             text = { Text("Añadir categoría") },
@@ -270,6 +270,14 @@ private fun CategoryCard(
             }
         }
     }
+    
+    // Diálogo de voz
+    if (showVoiceDialog) {
+        com.jose.listacompra.ui.components.VoiceInputDialog(
+            viewModel = productListViewModel,
+            onDismiss = { showVoiceDialog = false }
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -337,6 +345,16 @@ fun CategoryDialog(
                 enabled = name.isNotBlank()
             ) {
                 Text("Guardar")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
+}
+       Text("Guardar")
             }
         },
         dismissButton = {
