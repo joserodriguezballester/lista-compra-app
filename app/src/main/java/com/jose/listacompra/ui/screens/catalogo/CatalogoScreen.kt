@@ -185,7 +185,7 @@ fun CatalogoScreen(
                         onChangeColor = onChangeColor,
                         onToggleDarkMode = onToggleDarkMode,
                         isDarkMode = isDarkMode,
-                        onMicrophoneClick = onNavigateToList,
+                        onMicrophoneClick = { showVoiceDialog = true },
                         overflowActions = { expanded, onDismiss ->
                             DropdownMenuItem(
                                 text = { Text("Añadir manual") },
@@ -348,12 +348,18 @@ fun CatalogoScreen(
             dismissButton = { TextButton({ showDeleteConfirm = null }) { Text("Cancelar") } }
         )
     }
+
+    // Diálogo de voz (T5 refactor)
+    if (showVoiceDialog) {
+        com.jose.listacompra.ui.components.VoiceInputDialog(
+            viewModel = productListViewModel,
+            onDismiss = { showVoiceDialog = false }
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun rememberDrawerState(initialValue: DrawerValue): androidx.compose.material3.DrawerState {
     return androidx.compose.material3.rememberDrawerState(initialValue = initialValue)
-}
-turn androidx.compose.material3.rememberDrawerState(initialValue = initialValue)
 }

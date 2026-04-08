@@ -32,7 +32,8 @@ fun OffersScreen(
     onToggleDarkMode: () -> Unit = {},
     isDarkMode: Boolean = false,
     onChangeColor: () -> Unit = {},
-    viewModel: OffersViewModel = hiltViewModel()
+    viewModel: OffersViewModel = hiltViewModel(),
+    productListViewModel: com.jose.listacompra.ui.viewmodel.ProductListViewModel = hiltViewModel() // T5 refactor
 ) {
     val scope = rememberCoroutineScope()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -211,6 +212,14 @@ fun OffersScreen(
                     Text("Cancelar")
                 }
             }
+        )
+    }
+
+    // Diálogo de voz (T5 refactor)
+    if (showVoiceDialog) {
+        com.jose.listacompra.ui.components.VoiceInputDialog(
+            viewModel = productListViewModel,
+            onDismiss = { showVoiceDialog = false }
         )
     }
 }

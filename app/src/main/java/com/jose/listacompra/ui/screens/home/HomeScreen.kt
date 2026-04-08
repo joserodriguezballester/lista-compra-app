@@ -245,10 +245,3 @@ private fun HomeCard(
         }
     }
 }
-                else
-                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-                textAlign = TextAlign.Center
-            )
-        }
-    }
-}

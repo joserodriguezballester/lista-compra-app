@@ -32,7 +32,8 @@ fun CategoriesScreen(
     onToggleDarkMode: () -> Unit = {},
     isDarkMode: Boolean = false,
     onChangeColor: () -> Unit = {},
-    viewModel: CategoriesViewModel = hiltViewModel()
+    viewModel: CategoriesViewModel = hiltViewModel(),
+    productListViewModel: com.jose.listacompra.ui.viewmodel.ProductListViewModel = hiltViewModel() // T5 refactor
 ) {
     val scope = rememberCoroutineScope()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)

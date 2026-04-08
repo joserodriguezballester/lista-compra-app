@@ -61,7 +61,8 @@ fun HistoryScreen(
     onToggleDarkMode: () -> Unit = {},
     isDarkMode: Boolean = false,
     onChangeColor: () -> Unit = {},
-    viewModel: HistoryViewModel = hiltViewModel()
+    viewModel: HistoryViewModel = hiltViewModel(),
+    productListViewModel: com.jose.listacompra.ui.viewmodel.ProductListViewModel = hiltViewModel() // T5 refactor
 ) {
     val scope = rememberCoroutineScope()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -178,6 +179,14 @@ fun HistoryScreen(
                 }
             }
         }
+    }
+
+    // Diálogo de voz (T5 refactor)
+    if (showVoiceDialog) {
+        com.jose.listacompra.ui.components.VoiceInputDialog(
+            viewModel = productListViewModel,
+            onDismiss = { showVoiceDialog = false }
+        )
     }
 }
 
@@ -819,13 +828,6 @@ private fun ProductSelector(
             products.sortedBy { it.originalName }.forEach { product ->
                 DropdownMenuItem(
                     text = { Text(product.originalName, style = MaterialTheme.typography.labelSmall) },
-                    onClick = { onSelect(product); expanded = false }
-                )
-            }
-        }
-    }
-}
-ct.originalName, style = MaterialTheme.typography.labelSmall) },
                     onClick = { onSelect(product); expanded = false }
                 )
             }
