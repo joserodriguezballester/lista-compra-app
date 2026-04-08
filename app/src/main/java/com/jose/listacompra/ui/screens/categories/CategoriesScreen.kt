@@ -355,13 +355,3 @@ fun CategoryDialog(
         }
     )
 }
-       Text("Guardar")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancelar")
-            }
-        }
-    )
-}
