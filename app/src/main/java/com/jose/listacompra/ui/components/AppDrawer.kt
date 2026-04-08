@@ -119,7 +119,4 @@ fun AppDrawer(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
-}</think><tool_call>write<arg_key>content</arg_key><arg_value>package com.jose.listacompra.ui.components
-
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
+}
