@@ -364,4 +364,100 @@ class ProductListViewModel @Inject constructor(
             }
         }
     }
+    
+    /**
+     * Busca artículos por texto de voz y devuelve resultados para manejar:
+     * - 1 coincidencia → añadir directo
+     * - >1 coincidencias → mostrar diálogo
+     * - 0 coincidencias → añadir genérico
+     */
+    suspend fun searchVoiceProducts(voiceText: String): List<com.jose.listacompra.domain.model.Articulo> {
+        val parsed = com.jose.listacompra.ui.components.parseVoiceCommand(voiceText)
+        val cleanName = parsed.productName
+        
+        if (cleanName.isBlank()) return emptyList()
+        
+        return searchArticulosUseCase(cleanName.lowercase())
+    }
+    
+    /**
+     * Añade un producto directamente desde el resultado de voz
+     */
+    fun addProductFromVoice(
+        articulo: com.jose.listacompra.domain.model.Articulo,
+        quantity: Float
+    ) {
+        viewModelScope.launch {
+            if (currentListId == 0L) {
+                Log.e(TAG, "Cannot add product: currentListId is 0")
+                _uiState.update { it.copy(error = "Error: no hay lista activa") }
+                return@launch
+            }
+
+            val selectedSupermarketId = _uiState.value.selectedSupermarketId ?: 1L
+            
+            val product = Product(
+                shoppingListId = currentListId,
+                name = articulo.name,
+                quantity = quantity,
+                aisleId = 0L, // Sin supermercado específico por ahora
+                supermarketId = selectedSupermarketId,
+                estimatedPrice = articulo.finalPrice,
+                finalPrice = articulo.finalPrice,
+                offerId = null,
+                notes = "",
+                photoUri = articulo.photoUri
+            )
+            
+            addProductUseCase(product)
+            Log.d(TAG, "Product added from voice: ${articulo.name} x$quantity")
+            
+            updateProductFrequencyUseCase(
+                name = articulo.name,
+                aisleId = 0L,
+                quantity = quantity,
+                price = articulo.finalPrice,
+                supermarketId = selectedSupermarketId
+            )
+        }
+    }
+    
+    /**
+     * Añade un producto genérico cuando no hay coincidencias
+     * TODO: Política de añadir producto sin artículo pendiente de definir
+     */
+    fun addGenericProductFromVoice(
+        productName: String,
+        quantity: Float
+    ) {
+        viewModelScope.launch {
+            if (currentListId == 0L) {
+                Log.e(TAG, "Cannot add product: currentListId is 0")
+                return@launch
+            }
+            
+            val selectedSupermarketId = _uiState.value.selectedSupermarketId ?: 1L
+            
+            // TODO: Política de añadir producto sin artículo
+            // - ¿Crear artículo nuevo automáticamente?
+            // - ¿Buscar en OpenFoodFacts?
+            // - ¿Mostrar diálogo de edición?
+            
+            val product = Product(
+                shoppingListId = currentListId,
+                name = productName,
+                quantity = quantity,
+                aisleId = 0L,
+                supermarketId = selectedSupermarketId,
+                estimatedPrice = null,
+                finalPrice = null,
+                offerId = null,
+                notes = "",
+                photoUri = null
+            )
+            
+            addProductUseCase(product)
+            Log.d(TAG, "Generic product added from voice: $productName x$quantity")
+        }
+    }
 }
