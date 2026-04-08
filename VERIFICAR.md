@@ -1,7 +1,21 @@
 # 🔍 VERIFICAR - Pruebas Manuales
 
 **Fecha:** 2026-04-08
-**Sesión:** T4 + CA5 + mejoras voz
+**Sesión:** T4 + CA5 + T5 refactor + voz con supermercado
+
+---
+
+## 🎤 T5 Refactor - Voz directa en todas las pantallas
+
+| Pantalla | Click 🎤 | Esperado | Estado |
+|----------|----------|----------|--------|
+| Home | Abre diálogo voz | Sin navegar | ⬜ OK / ❌ NO OK |
+| Mi Lista | Abre diálogo voz | Sin navegar | ⬜ OK / ❌ NO OK |
+| Catálogo | Abre diálogo voz | Sin navegar | ⬜ OK / ❌ NO OK |
+| Categorías | Abre diálogo voz | Sin navegar | ⬜ OK / ❌ NO OK |
+| Ofertas | Abre diálogo voz | Sin navegar | ⬜ OK / ❌ NO OK |
+| Historial | Abre diálogo voz | Sin navegar | ⬜ OK / ❌ NO OK |
+| Supermercados | Abre diálogo voz | Sin navegar | ⬜ OK / ❌ NO OK |
 
 ---
 
@@ -115,6 +129,7 @@
 
 ## ✅ Checklist final
 
+- [ ] T5: Voz directa en TODAS las pantallas (sin navegación)
 - [ ] CA5: Categoría visible en cards
 - [ ] CA5: Filtro funcional
 - [ ] T4: Voz parsea supermercado
