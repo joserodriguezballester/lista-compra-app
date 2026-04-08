@@ -330,9 +330,73 @@ fun ProductListScreen(
                 }
             }
         }
+        
+        // Resumen de totales
+        if (uiState.productsByAisle.isNotEmpty()) {
+            val allProducts = uiState.productsByAisle.flatMap { it.value }
+            val purchasedProducts = allProducts.filter { it.isPurchased }
+            val totalProducts = allProducts.size
+            val purchasedCount = purchasedProducts.size
+            
+            // Calcular totales
+            val purchasedTotal = purchasedProducts.sumOf { product ->
+                val offer = uiState.offers.find { it.id == product.offerId }
+                val unitPrice = product.finalPrice ?: product.estimatedPrice ?: 0f
+                val finalPrice = when {
+                    offer != null -> calculateOfferPrice(unitPrice, product.quantity, offer)
+                    else -> unitPrice * product.quantity
+                }
+                finalPrice.toDouble()
+            }
+            
+            val listTotal = allProducts.sumOf { product ->
+                val offer = uiState.offers.find { it.id == product.offerId }
+                val unitPrice = product.finalPrice ?: product.estimatedPrice ?: 0f
+                finalPrice = when {
+                    offer != null -> calculateOfferPrice(unitPrice, product.quantity, offer)
+                    else -> unitPrice * product.quantity
+                }
+                finalPrice.toDouble()
+            }
+            
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "Comprados: $purchasedCount/$totalProducts",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        if (purchasedCount > 0) {
+                            Text(
+                                text = "Llevas: €${String.format("%.2f", purchasedTotal)}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                    Text(
+                        text = "Total: €${String.format("%.2f", listTotal)}",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+        }
+    }
 
-        // Diálogo añadir
-        if (showAddProductDialog) {
+    // Diálogo añadir
+    if (showAddProductDialog) {
             AddProductToListDialog(
                 aisles = uiState.aisles,
                 offers = uiState.offers,
@@ -495,4 +559,26 @@ private fun SwipeableProductCard(
             ProductCard(product, offer, onClick, onTogglePurchased, Modifier.fillMaxWidth())
         }
     )
+}
+
+/**
+ * Calcula el precio final aplicando una oferta
+ */
+private fun calculateOfferPrice(unitPrice: Float, quantity: Float, offer: com.jose.listacompra.domain.model.Offer): Float {
+    return when (offer.code) {
+        "3x2" -> unitPrice * (quantity.toInt() / 3 * 2 + quantity.toInt() % 3)
+        "2x1" -> unitPrice * (quantity.toInt() / 2 + quantity.toInt() % 2)
+        "2nd_50" -> {
+            val fullPrice = quantity.toInt() / 2 * unitPrice
+            val halfPrice = quantity.toInt() / 2 * unitPrice * 0.5f
+            fullPrice + halfPrice + (quantity.toInt() % 2) * unitPrice
+        }
+        "2nd_70" -> {
+            val fullPrice = quantity.toInt() / 2 * unitPrice
+            val discountedPrice = quantity.toInt() / 2 * unitPrice * 0.3f
+            fullPrice + discountedPrice + (quantity.toInt() % 2) * unitPrice
+        }
+        "4x3" -> unitPrice * (quantity.toInt() / 4 * 3 + quantity.toInt() % 4)
+        else -> unitPrice * quantity
+    }
 }
