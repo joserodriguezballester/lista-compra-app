@@ -57,7 +57,7 @@ import com.jose.listacompra.ui.components.AppDrawer
 import com.jose.listacompra.ui.components.CommonTopBar
 import com.jose.listacompra.ui.components.ListBottomBar
 import com.jose.listacompra.ui.components.ProductCard
-import com.jose.listacompra.ui.components.VoiceInputButton
+import com.jose.listacompra.ui.components.VoiceInputDialog
 import com.jose.listacompra.ui.screens.ColorSettingsDialog
 import com.jose.listacompra.ui.viewmodel.ProductListViewModel
 import kotlinx.coroutines.launch

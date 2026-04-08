@@ -77,7 +77,8 @@ fun HomeScreen(
                     onOpenDrawer = { scope.launch { drawerState.open() } },
                     onChangeColor = onChangeColor,
                     onToggleDarkMode = onToggleDarkMode,
-                    isDarkMode = isDarkMode
+                    isDarkMode = isDarkMode,
+                    onMicrophoneClick = { showVoiceDialog = true }
                 )
             },
             bottomBar = {
@@ -177,6 +178,14 @@ fun HomeScreen(
             }
         }
     }
+    
+    // Diálogo de voz
+    if (showVoiceDialog) {
+        com.jose.listacompra.ui.components.VoiceInputDialog(
+            viewModel = viewModel,
+            onDismiss = { showVoiceDialog = false }
+        )
+    }
 }
 
 @Composable
@@ -229,6 +238,13 @@ private fun HomeCard(
                 style = MaterialTheme.typography.bodySmall,
                 color = if (enabled)
                     MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                else
+                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
                 else
                     MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
                 textAlign = TextAlign.Center
