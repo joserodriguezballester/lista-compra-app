@@ -50,9 +50,16 @@ class InitialDataSeeder @Inject constructor(
         seedOffersIfNeeded()
         seedAislesIfNeeded()
         seedShoppingListIfNeeded()
-        seedCatalogIfNeeded()
-        seedProductsIfNeeded()
-        seedHistoryIfNeeded()
+        
+        // Solo en desarrollo: cargar datos de ejemplo
+        if (DataConfig.LOAD_FULL_DATA) {
+            Log.d(TAG, "Loading FULL data (development mode)")
+            seedCatalogIfNeeded()
+            seedProductsIfNeeded()
+            seedHistoryIfNeeded()
+        } else {
+            Log.d(TAG, "Loading MINIMUM data (production mode)")
+        }
         
         Log.d(TAG, "seedAll completed!")
     }
