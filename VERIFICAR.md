@@ -102,6 +102,18 @@
 |-----|--------|--------|
 | Imagen desde galería | 1. Editar producto<br>2. Seleccionar imagen de galería<br>3. Guardar<br>4. Verificar que la imagen se guarda | ⬜ OK / ❌ NO OK |
 | Scanner en Editar | 1. Editar producto<br>2. Click botón scanner<br>3. Verificar que navega a scanner | ⬜ OK / ❌ NO OK |
+
+---
+
+## 🗑️ T7 - Limpiar datos
+
+| Prueba | Pasos | Estado |
+|--------|-------|--------|
+| Abrir opción | 1. Ir a Mi Lista<br>2. Click overflow (⋮)<br>3. Ver "📁 Datos" → "Limpiar datos" | ⬜ OK / ❌ NO OK |
+| Diálogo de confirmación | 1. Click "Limpiar datos"<br>2. Ver diálogo con detalles | ⬜ OK / ❌ NO OK |
+| Ejecutar limpieza | 1. Confirmar "Limpiar"<br>2. Verificar que lista queda vacía<br>3. Verificar que supermercados siguen ahí | ⬜ OK / ❌ NO OK |
+| Datos mantenidos | 1. Ir a Supermercados<br>2. Verificar que siguen los 6 supermercados<br>3. Ir a Categorías<br>4. Verificar que siguen las 36 categorías | ⬜ OK / ❌ NO OK |
+| Datos eliminados | 1. Ir a Historial<br>2. Verificar que está vacío<br>3. Ir a Catálogo<br>4. Verificar que no hay artículos creados | ⬜ OK / ❌ NO OK |
 | HomeScreen - showVoiceDialog | 1. Compilar app<br>2. Verificar que no hay errores de compilación | ✅ FIXED |
 | HistoryScreen - showVoiceDialog | 1. Compilar app<br>2. Verificar que no hay errores de compilación | ✅ FIXED |
 | CategoriesScreen - showVoiceDialog | 1. Compilar app<br>2. Verificar que no hay errores de compilación | ✅ FIXED |
