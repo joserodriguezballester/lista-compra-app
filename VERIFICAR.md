@@ -102,10 +102,11 @@
 |-----|--------|--------|
 | Imagen desde galería | 1. Editar producto<br>2. Seleccionar imagen de galería<br>3. Guardar<br>4. Verificar que la imagen se guarda | ⬜ OK / ❌ NO OK |
 | Scanner en Editar | 1. Editar producto<br>2. Click botón scanner<br>3. Verificar que navega a scanner | ⬜ OK / ❌ NO OK |
-| AppDrawer duplicado | 1. Compilar app<br>2. Verificar que no hay errores de compilación | ✅ FIXED |
-| CategoriesScreen duplicado | 1. Compilar app<br>2. Verificar que no hay errores de compilación | ✅ FIXED |
-| VoiceResult redeclarado | 1. Compilar app<br>2. Verificar que no hay errores de compilación | ✅ FIXED |
-| parseVoiceCommand conflictivo | 1. Compilar app<br>2. Verificar que no hay errores de compilación | ✅ FIXED |
+| HomeScreen - showVoiceDialog | 1. Compilar app<br>2. Verificar que no hay errores de compilación | ✅ FIXED |
+| HistoryScreen - showVoiceDialog | 1. Compilar app<br>2. Verificar que no hay errores de compilación | ✅ FIXED |
+| CategoriesScreen - showVoiceDialog | 1. Compilar app<br>2. Verificar que no hay errores de compilación | ✅ FIXED |
+| OffersScreen - showVoiceDialog | 1. Compilar app<br>2. Verificar que no hay errores de compilación | ✅ FIXED |
+| SupermarketListScreen - showVoiceDialog | 1. Compilar app<br>2. Verificar que no hay errores de compilación | ✅ FIXED |
 
 ---
 
