@@ -39,4 +39,7 @@ interface ArticuloDao {
    suspend fun searchArticulosByName(query: String): List<ArticuloEntity>
     @Query("SELECT COUNT(*) FROM articulos")
     suspend fun getArticulosCount(): Int
+
+    @Query("DELETE FROM articulos")
+    suspend fun deleteAll()
 }

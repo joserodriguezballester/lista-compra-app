@@ -25,4 +25,7 @@ interface PurchaseHistoryDao {
 
     @Query("SELECT SUM(total) FROM purchase_history WHERE fecha >= :since")
     suspend fun getTotalSpentSince(since: Long): Float?
+
+    @Query("DELETE FROM purchase_history")
+    suspend fun deleteAll()
 }

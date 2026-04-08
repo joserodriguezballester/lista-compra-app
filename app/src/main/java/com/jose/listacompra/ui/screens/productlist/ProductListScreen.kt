@@ -90,6 +90,7 @@ fun ProductListScreen(
     var showColorDialog by remember { mutableStateOf(false) }
     var showVoiceDialog by remember { mutableStateOf(false) }
     var showClearConfirmDialog by remember { mutableStateOf(false) }
+    var showResetConfirmDialog by remember { mutableStateOf(false) } // T7: Reset a producción
 
     // Datos del scanner
     var scannedName by remember { mutableStateOf<String?>(null) }
@@ -229,6 +230,32 @@ fun ProductListScreen(
                             },
                             leadingIcon = {
                                 Icon(Icons.Default.Delete, contentDescription = null)
+                            },
+                            colors = MenuDefaults.itemColors(
+                                textColor = MaterialTheme.colorScheme.error
+                            )
+                        )
+                        
+                        HorizontalDivider()
+                        
+                        // 📁 Datos
+                        DropdownMenuItem(
+                            text = { Text("📁 Datos") },
+                            onClick = { /* Header, no action */ },
+                            enabled = false,
+                            colors = MenuDefaults.itemColors(
+                                textColor = MaterialTheme.colorScheme.primary,
+                                disabledTextColor = MaterialTheme.colorScheme.primary
+                            )
+                        )
+                        DropdownMenuItem(
+                            text = { Text("    Limpiar datos") },
+                            onClick = {
+                                showResetConfirmDialog = true
+                                onDismiss()
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Default.CleaningServices, contentDescription = null)
                             },
                             colors = MenuDefaults.itemColors(
                                 textColor = MaterialTheme.colorScheme.error
@@ -533,6 +560,36 @@ fun ProductListScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showClearConfirmDialog = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
+    // T7: Diálogo de confirmación para reset a producción
+    if (showResetConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showResetConfirmDialog = false },
+            title = { Text("Limpiar datos") },
+            text = { 
+                Text("¿Eliminar todos los datos de usuario?\n\nSe mantendrán:\n• Supermercados\n• Categorías\n• Pasillos Carrefour\n• Ofertas por defecto\n\nSe eliminarán:\n• Artículos creados\n• Productos en listas\n• Historial de precios\n• Compras anteriores") 
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.resetDataToProduction {
+                            showResetConfirmDialog = false
+                        }
+                    },
+                    colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Limpiar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showResetConfirmDialog = false }) {
                     Text("Cancelar")
                 }
             }

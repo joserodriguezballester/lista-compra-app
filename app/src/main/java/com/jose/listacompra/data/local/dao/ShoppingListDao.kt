@@ -39,4 +39,7 @@ interface ShoppingListDao {
 
     @Query("SELECT * FROM shopping_lists WHERE estado = 'ACTIVA' ORDER BY fechaCreacion ASC LIMIT 1")
     suspend fun getDefaultList(): ShoppingListEntity?
+
+    @Query("DELETE FROM shopping_lists")
+    suspend fun deleteAll()
 }

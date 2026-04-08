@@ -57,7 +57,8 @@ class ProductListViewModel @Inject constructor(
     private val savePriceHistoryUseCase: SavePriceHistoryUseCase,
     private val getPriceHistoryUseCase: GetPriceHistoryUseCase,
     private val getPriceStatsUseCase: GetPriceStatsUseCase,
-    private val themePreferences: ThemePreferences
+    private val themePreferences: ThemePreferences,
+    private val resetDataToProductionUseCase: com.jose.listacompra.domain.usecase.data.ResetDataToProductionUseCase
 ) : ViewModel() {
 
     private val TAG = "ProductListViewModel"
@@ -482,6 +483,30 @@ class ProductListViewModel @Inject constructor(
             
             addProductUseCase(product)
             Log.d(TAG, "Generic product added from voice: $productName x$quantity")
+        }
+    }
+
+    /**
+     * T7: Resetear datos a producción
+     * Mantiene: supermercados, categorías, pasillos Carrefour, ofertas por defecto
+     * Elimina: artículos usuario, productos, listas, historial
+     */
+    fun resetDataToProduction(onComplete: () -> Unit = {}) {
+        viewModelScope.launch {
+            try {
+                resetDataToProductionUseCase()
+                Log.d(TAG, "Data reset to production completed")
+                _uiState.update { it.copy(
+                    productsByAisle = emptyMap(),
+                    totalItems = 0,
+                    purchasedItems = 0,
+                    totalPrice = 0f
+                )}
+                onComplete()
+            } catch (e: Exception) {
+                Log.e(TAG, "Error resetting data", e)
+                _uiState.update { it.copy(error = "Error al limpiar datos: ${e.message}") }
+            }
         }
     }
 }

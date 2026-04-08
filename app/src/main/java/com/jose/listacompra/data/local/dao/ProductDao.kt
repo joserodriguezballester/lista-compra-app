@@ -38,6 +38,9 @@ interface ProductDao {
     @Query("DELETE FROM products WHERE shoppingListId = :listId")
     suspend fun deleteAllProducts(listId: Long)
 
+    @Query("DELETE FROM products")
+    suspend fun deleteAll()
+
     @Query("SELECT MAX(orderIndex) FROM products WHERE shoppingListId = :listId AND aisleId = :aisleId")
     suspend fun getMaxOrderIndexInAisle(listId: Long, aisleId: Long): Int?
     
