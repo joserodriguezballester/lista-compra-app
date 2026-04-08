@@ -1,133 +1,55 @@
 package com.jose.listacompra.ui.screens.productlist
 
-import android.Manifest
-import android.content.pm.PackageManager
 import android.net.Uri
-import android.util.Log
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Euro
-import androidx.compose.material.icons.filled.LocalOffer
-import androidx.compose.material.icons.filled.Notes
-import androidx.compose.material.icons.filled.PhotoCamera
-import androidx.compose.material.icons.filled.PhotoLibrary
-import androidx.compose.material.icons.filled.Save
-import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat
-import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
-import com.jose.listacompra.domain.model.Aisle
 import com.jose.listacompra.domain.model.Offer
 import com.jose.listacompra.domain.model.Product
-import com.jose.listacompra.ui.utils.getCategoryEmoji
-import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditProductDialog(
     product: Product,
-    aisles: List<Aisle>,
-    offers: List<Offer> = emptyList(),
+    aisles: List<com.jose.listacompra.domain.model.Aisle>,
+    offers: List<Offer>,
+    onSave: (Product, Uri?) -> Unit,
+    onDelete: () -> Unit,
     onDismiss: () -> Unit,
-    onSave: (Product) -> Unit
+    onNavigateToScanner: () -> Unit = {}
 ) {
-    val TAG = "EditProductDialog"
-    val context = LocalContext.current
-    
     var name by remember { mutableStateOf(product.name) }
     var quantity by remember { mutableStateOf(product.quantity.toString()) }
-    var estimatedPrice by remember { mutableStateOf(product.estimatedPrice?.toString() ?: "") }
-    var selectedAisleId by remember { mutableStateOf<Long?>(product.aisleId) }
+    var price by remember { mutableStateOf(product.estimatedPrice?.toString() ?: "") }
+    var notes by remember { mutableStateOf(product.notes ?: "") }
+    var selectedAisleId by remember { mutableStateOf(product.aisleId) }
     var selectedOfferId by remember { mutableStateOf(product.offerId) }
-    var notes by remember { mutableStateOf(product.notes) }
-    var photoUri by remember { mutableStateOf(product.photoUri?.let { Uri.parse(it) }) }
+    var photoUri by remember { mutableStateOf<Uri?>(product.photoUri?.let { Uri.parse(it) }) }
     
-    var aisleExpanded by remember { mutableStateOf(false) }
-    var offerExpanded by remember { mutableStateOf(false) }
-    var showImagePicker by remember { mutableStateOf(false) }
-
-    // Launcher para cámara
-    val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicture()
-    ) { success ->
-        if (success) {
-            Log.d(TAG, "Foto tomada: $photoUri")
-        }
+    var showAisleDropdown by remember { mutableStateOf(false) }
+    var showOfferDropdown by remember { mutableStateOf(false) }
+    var showImageSourceDialog by remember { mutableStateOf(false) }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
+    
+    // Launcher para seleccionar imagen desde galería
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        uri?.let { photoUri = it }
     }
-
-    // Launcher para galería
-    val galleryLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        photoUri = uri
-        Log.d(TAG, "Imagen seleccionada: $uri")
-    }
-
-    // Permisos de cámara
-    val cameraPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            val photoFile = File.createTempFile(
-                "product_${System.currentTimeMillis()}",
-                ".jpg",
-                context.cacheDir
-            )
-            photoUri = FileProvider.getUriForFile(
-                context,
-                "${context.packageName}.fileprovider",
-                photoFile
-            )
-            cameraLauncher.launch(photoUri)
-        } else {
-            Toast.makeText(context, "Permiso de cámara denegado", Toast.LENGTH_SHORT).show()
-        }
-    }
-
+    
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Editar producto") },
@@ -135,229 +57,191 @@ fun EditProductDialog(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .verticalScroll(rememberScrollState()),
+                    .padding(vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Fila: Imagen + Botones
+                // Nombre + Scanner
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Imagen del producto (click para cambiar)
-                    Box(
-                        modifier = Modifier
-                            .size(80.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant)
-                            .clickable { showImagePicker = true },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (photoUri != null) {
-                            AsyncImage(
-                                model = photoUri,
-                                contentDescription = "Foto del producto",
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
-                            )
-                        } else {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    text = getCategoryEmoji(product.name),
-                                    fontSize = 28.sp
-                                )
-                                Text(
-                                    "Cambiar",
-                                    fontSize = 10.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                                )
-                            }
-                        }
-                    }
-
-                    // Botones de acción
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        // Cámara
-                        OutlinedButton(
-                            onClick = {
-                                val permission = Manifest.permission.CAMERA
-                                if (ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED) {
-                                    val photoFile = File.createTempFile(
-                                        "product_${System.currentTimeMillis()}",
-                                        ".jpg",
-                                        context.cacheDir
-                                    )
-                                    photoUri = FileProvider.getUriForFile(
-                                        context,
-                                        "${context.packageName}.fileprovider",
-                                        photoFile
-                                    )
-                                    cameraLauncher.launch(photoUri)
-                                } else {
-                                    cameraPermissionLauncher.launch(permission)
-                                }
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(Icons.Default.PhotoCamera, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Cámara", fontSize = 12.sp)
-                        }
-                        
-                        // Galería
-                        OutlinedButton(
-                            onClick = { galleryLauncher.launch("image/*") },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(Icons.Default.PhotoLibrary, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Galería", fontSize = 12.sp)
-                        }
+                    OutlinedTextField(
+                        value = name,
+                        onValueChange = { name = it },
+                        label = { Text("Nombre") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true
+                    )
+                    
+                    // Botón Scanner (B4)
+                    IconButton(onClick = onNavigateToScanner) {
+                        Icon(Icons.Default.QrCodeScanner, "Escanear código")
                     }
                 }
-
-                // Nombre
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Nombre") },
+                
+                // Cantidad y precio
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    leadingIcon = {
-                        Icon(Icons.Default.ShoppingCart, contentDescription = null)
-                    }
-                )
-
-                // Cantidad
-                OutlinedTextField(
-                    value = quantity,
-                    onValueChange = { quantity = it },
-                    label = { Text("Cantidad") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-
-                // Precio unitario
-                OutlinedTextField(
-                    value = estimatedPrice,
-                    onValueChange = { estimatedPrice = it },
-                    label = { Text("Precio unitario (€)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    leadingIcon = {
-                        Icon(Icons.Default.Euro, contentDescription = null)
-                    }
-                )
-
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = quantity,
+                        onValueChange = { quantity = it },
+                        label = { Text("Cantidad") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    )
+                    
+                    OutlinedTextField(
+                        value = price,
+                        onValueChange = { price = it },
+                        label = { Text("Precio €") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                    )
+                }
+                
                 // Pasillo
                 ExposedDropdownMenuBox(
-                    expanded = aisleExpanded,
-                    onExpandedChange = { aisleExpanded = it }
+                    expanded = showAisleDropdown,
+                    onExpandedChange = { showAisleDropdown = it }
                 ) {
-                    val selectedAisle = aisles.find { it.id == selectedAisleId }
                     OutlinedTextField(
-                        value = selectedAisle?.let { "${it.emoji} ${it.name}" } ?: "Sin pasillo",
-                        onValueChange = {},
+                        value = aisles.find { it.id == selectedAisleId }?.name ?: "Sin pasillo",
+                        onValueChange = { },
                         readOnly = true,
                         label = { Text("Pasillo") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = aisleExpanded) },
-                        modifier = Modifier.fillMaxWidth().menuAnchor()
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showAisleDropdown) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor()
                     )
-
+                    
                     ExposedDropdownMenu(
-                        expanded = aisleExpanded,
-                        onDismissRequest = { aisleExpanded = false }
+                        expanded = showAisleDropdown,
+                        onDismissRequest = { showAisleDropdown = false }
                     ) {
                         DropdownMenuItem(
                             text = { Text("Sin pasillo") },
-                            onClick = { selectedAisleId = null; aisleExpanded = false }
+                            onClick = { selectedAisleId = null; showAisleDropdown = false }
                         )
                         aisles.forEach { aisle ->
                             DropdownMenuItem(
                                 text = { Text("${aisle.emoji} ${aisle.name}") },
-                                onClick = { selectedAisleId = aisle.id; aisleExpanded = false }
+                                onClick = { selectedAisleId = aisle.id; showAisleDropdown = false }
                             )
                         }
                     }
                 }
-
+                
                 // Oferta
                 ExposedDropdownMenuBox(
-                    expanded = offerExpanded,
-                    onExpandedChange = { offerExpanded = it }
+                    expanded = showOfferDropdown,
+                    onExpandedChange = { showOfferDropdown = it }
                 ) {
-                    val selectedOffer = offers.find { it.id == selectedOfferId }
                     OutlinedTextField(
-                        value = selectedOffer?.let { "🏷️ ${it.name}" } ?: "Sin oferta",
-                        onValueChange = {},
+                        value = offers.find { it.id == selectedOfferId }?.let { "${it.code} - ${it.name}" } ?: "Sin oferta",
+                        onValueChange = { },
                         readOnly = true,
                         label = { Text("Oferta") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = offerExpanded) },
-                        leadingIcon = { Icon(Icons.Default.LocalOffer, contentDescription = null) },
-                        modifier = Modifier.fillMaxWidth().menuAnchor()
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showOfferDropdown) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor()
                     )
-
+                    
                     ExposedDropdownMenu(
-                        expanded = offerExpanded,
-                        onDismissRequest = { offerExpanded = false }
+                        expanded = showOfferDropdown,
+                        onDismissRequest = { showOfferDropdown = false }
                     ) {
                         DropdownMenuItem(
                             text = { Text("Sin oferta") },
-                            onClick = { selectedOfferId = null; offerExpanded = false }
+                            onClick = { selectedOfferId = null; showOfferDropdown = false }
                         )
                         offers.forEach { offer ->
                             DropdownMenuItem(
-                                text = {
-                                    Column {
-                                        Text("🏷️ ${offer.name}", fontWeight = FontWeight.Medium)
-                                        Text(
-                                            offer.description,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                },
-                                onClick = { selectedOfferId = offer.id; offerExpanded = false }
+                                text = { Text("${offer.code} - ${offer.name}") },
+                                onClick = { selectedOfferId = offer.id; showOfferDropdown = false }
                             )
                         }
                     }
                 }
-
+                
                 // Notas
                 OutlinedTextField(
                     value = notes,
                     onValueChange = { notes = it },
                     label = { Text("Notas") },
-                    placeholder = { Text("Ej: del Mercadona, marca Hacendado...") },
                     modifier = Modifier.fillMaxWidth(),
-                    maxLines = 2,
-                    leadingIcon = { Icon(Icons.Default.Notes, contentDescription = null) }
+                    singleLine = true
                 )
+                
+                // Imagen
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Imagen:", style = MaterialTheme.typography.bodyMedium)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        IconButton(onClick = { showImageSourceDialog = true }) {
+                            Icon(Icons.Default.Image, "Seleccionar imagen")
+                        }
+                        if (photoUri != null) {
+                            IconButton(onClick = { photoUri = null }) {
+                                Icon(Icons.Default.Close, "Quitar imagen")
+                            }
+                        }
+                    }
+                }
+                
+                // Preview de imagen
+                if (photoUri != null) {
+                    AsyncImage(
+                        model = photoUri,
+                        contentDescription = "Imagen del producto",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(120.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                }
             }
         },
         confirmButton = {
-            Button(
-                onClick = {
-                    val qty = quantity.toFloatOrNull() ?: product.quantity
-                    val price = estimatedPrice.toFloatOrNull()
-                    
-                    val updatedProduct = product.copy(
-                        name = name,
-                        quantity = qty,
-                        estimatedPrice = price,
-                        aisleId = selectedAisleId ?: 0L,
-                        notes = notes,
-                        offerId = selectedOfferId,
-                        photoUri = photoUri?.toString()
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // Botón Eliminar
+                TextButton(
+                    onClick = { showDeleteConfirm = true },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
                     )
-                    Log.d(TAG, "Guardando: name=$name, photoUri=$photoUri")
-                    onSave(updatedProduct)
-                },
-                enabled = name.isNotBlank()
-            ) {
-                Icon(Icons.Default.Save, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Guardar")
+                ) {
+                    Icon(Icons.Default.Delete, contentDescription = null)
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Eliminar")
+                }
+                
+                // Botón Guardar
+                Button(
+                    onClick = {
+                        val updatedProduct = product.copy(
+                            name = name,
+                            quantity = quantity.toFloatOrNull() ?: 1f,
+                            aisleId = selectedAisleId,
+                            estimatedPrice = price.toFloatOrNull(),
+                            offerId = selectedOfferId,
+                            notes = notes.ifBlank { null }
+                        )
+                        onSave(updatedProduct, photoUri)
+                    },
+                    enabled = name.isNotBlank()
+                ) {
+                    Text("Guardar")
+                }
             }
         },
         dismissButton = {
@@ -366,79 +250,58 @@ fun EditProductDialog(
             }
         }
     )
-
+    
     // Diálogo para seleccionar origen de imagen
-    if (showImagePicker) {
+    if (showImageSourceDialog) {
         AlertDialog(
-            onDismissRequest = { showImagePicker = false },
-            title = { Text("Cambiar imagen") },
-            text = {
-                Column {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                showImagePicker = false
-                                galleryLauncher.launch("image/*")
-                            }
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Default.PhotoLibrary, contentDescription = null)
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text("Galería")
-                    }
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                showImagePicker = false
-                                val permission = Manifest.permission.CAMERA
-                                if (ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED) {
-                                    val photoFile = File.createTempFile(
-                                        "product_${System.currentTimeMillis()}",
-                                        ".jpg",
-                                        context.cacheDir
-                                    )
-                                    photoUri = FileProvider.getUriForFile(
-                                        context,
-                                        "${context.packageName}.fileprovider",
-                                        photoFile
-                                    )
-                                    cameraLauncher.launch(photoUri)
-                                } else {
-                                    cameraPermissionLauncher.launch(permission)
-                                }
-                            }
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Default.PhotoCamera, contentDescription = null)
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text("Cámara")
-                    }
-                    // Opción para eliminar
-                    if (photoUri != null) {
-                        HorizontalDivider()
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    showImagePicker = false
-                                    photoUri = null
-                                }
-                                .padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(Icons.Default.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error)
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Text("Eliminar foto", color = MaterialTheme.colorScheme.error)
-                        }
-                    }
+            onDismissRequest = { showImageSourceDialog = false },
+            title = { Text("Seleccionar imagen") },
+            text = { Text("¿Desde dónde quieres obtener la imagen?") },
+            confirmButton = {
+                Button(onClick = {
+                    showImageSourceDialog = false
+                    imagePickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                }) {
+                    Text("Galería")
                 }
             },
+            dismissButton = {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(onClick = {
+                        showImageSourceDialog = false
+                        onNavigateToScanner()
+                    }) {
+                        Text("Scanner")
+                    }
+                    TextButton(onClick = { showImageSourceDialog = false }) {
+                        Text("Cancelar")
+                    }
+                }
+            }
+        )
+    }
+    
+    // Confirmación de eliminar
+    if (showDeleteConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            title = { Text("Eliminar producto") },
+            text = { Text("¿Eliminar \"${product.name}\" de la lista?") },
             confirmButton = {
-                TextButton(onClick = { showImagePicker = false }) {
+                TextButton(
+                    onClick = {
+                        showDeleteConfirm = false
+                        onDelete()
+                    },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Eliminar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirm = false }) {
                     Text("Cancelar")
                 }
             }
