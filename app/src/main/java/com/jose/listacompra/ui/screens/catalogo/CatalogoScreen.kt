@@ -179,6 +179,7 @@ fun CatalogoScreen(
                         onChangeColor = onChangeColor,
                         onToggleDarkMode = onToggleDarkMode,
                         isDarkMode = isDarkMode,
+                        onMicrophoneClick = onNavigateToList,
                         overflowActions = { expanded, onDismiss ->
                             DropdownMenuItem(
                                 text = { Text("Añadir manual") },

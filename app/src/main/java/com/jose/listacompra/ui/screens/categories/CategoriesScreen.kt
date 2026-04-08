@@ -86,6 +86,7 @@ fun CategoriesScreen(
                     onChangeColor = onChangeColor,
                     onToggleDarkMode = onToggleDarkMode,
                     isDarkMode = isDarkMode,
+                    onMicrophoneClick = onNavigateToList,
                     overflowActions = { expanded, onDismiss ->
                         DropdownMenuItem(
                             text = { Text("Añadir categoría") },

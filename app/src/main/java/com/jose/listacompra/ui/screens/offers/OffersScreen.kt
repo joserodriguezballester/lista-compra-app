@@ -86,6 +86,7 @@ fun OffersScreen(
                     onChangeColor = onChangeColor,
                     onToggleDarkMode = onToggleDarkMode,
                     isDarkMode = isDarkMode,
+                    onMicrophoneClick = onNavigateToList,
                     overflowActions = { expanded, onDismiss ->
                         DropdownMenuItem(
                             text = { Text("Añadir oferta") },
@@ -361,5 +362,8 @@ fun OfferDialog(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun rememberDrawerState(initialValue: DrawerValue): androidx.compose.material3.DrawerState {
+    return androidx.compose.material3.rememberDrawerState(initialValue = initialValue)
+}
+nitialValue: DrawerValue): androidx.compose.material3.DrawerState {
     return androidx.compose.material3.rememberDrawerState(initialValue = initialValue)
 }

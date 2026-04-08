@@ -110,7 +110,8 @@ fun HistoryScreen(
                     onOpenDrawer = { scope.launch { drawerState.open() } },
                     onChangeColor = onChangeColor,
                     onToggleDarkMode = onToggleDarkMode,
-                    isDarkMode = isDarkMode
+                    isDarkMode = isDarkMode,
+                    onMicrophoneClick = onNavigateToList
                 )
             },
             bottomBar = {
