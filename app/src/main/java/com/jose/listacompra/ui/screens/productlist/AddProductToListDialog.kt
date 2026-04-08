@@ -36,8 +36,6 @@ import kotlinx.coroutines.delay
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.material.icons.filled.Store
-import kotlinx.coroutines.delay
-import android.util.Log
 import android.widget.Toast
 
 @OptIn(ExperimentalMaterial3Api::class)
