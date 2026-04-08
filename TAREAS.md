@@ -112,7 +112,7 @@
 
 | # | Tarea | Notas |
 |---|-------|-------|
-| CA5 | Filtro: Implementar funcionalidad | Filtrar por categoría, supermercado |
+| CA5 | Filtro catálogo funcional | ✅ Completado | Grid chips + búsqueda + categoría en card |
 
 ### Mi Lista
 
