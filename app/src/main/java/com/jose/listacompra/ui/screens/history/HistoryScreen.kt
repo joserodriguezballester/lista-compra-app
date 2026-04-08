@@ -37,6 +37,7 @@ import com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity
 import com.jose.listacompra.ui.components.AppDrawer
 import com.jose.listacompra.ui.components.CommonBottomBar
 import com.jose.listacompra.ui.components.CommonTopBar
+import com.jose.listacompra.ui.components.VoiceInputDialog
 import com.jose.listacompra.ui.viewmodel.HistoryViewModel
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat

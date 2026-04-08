@@ -436,7 +436,7 @@ class ProductListViewModel @Inject constructor(
                 aisleId = 0L,
                 quantity = quantity,
                 price = articulo.finalPrice,
-                supermarketId = selectedSupermarketId
+                supermarketId = supermarketId // Usar el supermarketId ya calculado
             )
         }
     }

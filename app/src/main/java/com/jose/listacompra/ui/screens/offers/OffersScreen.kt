@@ -16,6 +16,7 @@ import com.jose.listacompra.domain.model.Offer
 import com.jose.listacompra.ui.components.AppDrawer
 import com.jose.listacompra.ui.components.CommonBottomBar
 import com.jose.listacompra.ui.components.CommonTopBar
+import com.jose.listacompra.ui.components.VoiceInputDialog
 import com.jose.listacompra.ui.viewmodel.OffersViewModel
 import kotlinx.coroutines.launch
 
