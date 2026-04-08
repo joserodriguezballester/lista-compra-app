@@ -155,7 +155,7 @@
 | B1 | Botón scanner no actúa | AddProductToListDialog | ✅ Fixed | Conectar navegación |
 | B2 | No se ven las ofertas | ProductCard | ✅ Fixed | Badge visible |
 | B3 | Cambiar color no funciona | Navigation + TopBar | - | Dejar para usuarios o eliminar |
-| B4 | Falta botón scanner en Editar | EditProductDialog | - | Añadir igual que en añadir |
+| B4 | Falta botón scanner en Editar | EditProductDialog | ✅ Fixed | Añadido igual que en añadir |
 | B16 | Drawer no se abre en Home | HomeScreen | ✅ Fixed | ModalNavigationDrawer |
 | B17 | Scanner no muestra datos del producto | AddProductToListDialog | - | Escanea pero no rellena |
 | B18 | Scanner no asigna categoría | AddArticuloDialog | - | Falta asignación |

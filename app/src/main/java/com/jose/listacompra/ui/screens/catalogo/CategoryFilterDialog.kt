@@ -1,96 +1,127 @@
 package com.jose.listacompra.ui.screens.catalogo
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import com.jose.listacompra.domain.model.Category
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoryFilterDialog(
-    categories: List<String> = emptyList(),
-    selectedCategory: String? = null,
+    categories: List<Category> = emptyList(),
+    selectedCategoryId: String? = null,
     onDismiss: () -> Unit,
     onCategorySelected: (String?) -> Unit
 ) {
-    // Si no hay categorías, mostrar mensaje
-    val hasCategories = categories.isNotEmpty()
+    var searchQuery by remember { mutableStateOf("") }
+    var selected by remember { mutableStateOf(selectedCategoryId) }
     
-    var selected by remember { mutableStateOf(selectedCategory) }
+    val filteredCategories = remember(categories, searchQuery) {
+        if (searchQuery.isBlank()) categories
+        else categories.filter { 
+            it.name.contains(searchQuery, ignoreCase = true) 
+        }
+    }
     
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Filtrar por categoría") },
+        title = { 
+            Text("Filtrar por categoría") 
+        },
         text = {
-            if (hasCategories) {
-                Column {
-                    // Opción "Todas"
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .selectable(
-                                selected = selected == null,
-                                onClick = { selected = null }
-                            ),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = selected == null,
-                            onClick = { selected = null }
-                        )
-                        Text(
-                            text = "Todas",
-                            style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier.weight(1f)
-                        )
+            Column {
+                // Campo de búsqueda
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("Buscar categoría...") },
+                    singleLine = true,
+                    leadingIcon = {
+                        Icon(Icons.Default.Search, "Buscar")
                     }
-                    
-                    // Lista de categorías
-                    LazyColumn {
-                        items(categories) { category ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .selectable(
-                                        selected = selected == category,
-                                        onClick = { selected = category }
-                                    ),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                RadioButton(
-                                    selected = selected == category,
-                                    onClick = { selected = category }
-                                )
-                                Text(
-                                    text = category,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    modifier = Modifier.weight(1f)
-                                )
+                )
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                // Chip "Todas"
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Start
+                ) {
+                    FilterChip(
+                        selected = selected == null,
+                        onClick = { selected = null },
+                        label = { Text("Todas") },
+                        leadingIcon = {
+                            if (selected == null) {
+                                Icon(Icons.Default.Check, "Seleccionado", modifier = Modifier.size(16.dp))
                             }
+                        }
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                if (filteredCategories.isEmpty() && searchQuery.isNotBlank()) {
+                    Text(
+                        text = "No se encontraron categorías",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(vertical = 16.dp)
+                    )
+                } else if (categories.isEmpty()) {
+                    Text(
+                        text = "No hay categorías disponibles",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(vertical = 16.dp)
+                    )
+                } else {
+                    // Grid de categorías (compacto)
+                    LazyVerticalGrid(
+                        columns = GridCells.Adaptive(100.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.height(300.dp)
+                    ) {
+                        items(filteredCategories) { category ->
+                            FilterChip(
+                                selected = selected == category.id.toString(),
+                                onClick = { selected = category.id.toString() },
+                                label = { 
+                                    Text(
+                                        text = "${category.emoji} ${category.name}",
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    ) 
+                                },
+                                leadingIcon = {
+                                    if (selected == category.id.toString()) {
+                                        Icon(Icons.Default.Check, "Seleccionado", modifier = Modifier.size(16.dp))
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            )
                         }
                     }
                 }
-            } else {
+                
                 Text(
-                    text = "No hay categorías disponibles.\n\nLas categorías se mostrarán cuando haya artículos con categoría asignada.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = "${filteredCategories.size} categorías",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 8.dp)
                 )
             }
         },

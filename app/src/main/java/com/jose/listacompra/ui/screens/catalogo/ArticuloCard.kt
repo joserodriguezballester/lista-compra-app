@@ -2,24 +2,11 @@ package com.jose.listacompra.ui.screens.catalogo
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.QrCode
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,12 +19,14 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.jose.listacompra.R
 import com.jose.listacompra.domain.model.Articulo
+import com.jose.listacompra.domain.model.Category
 
 @Composable
 fun ArticuloCard(
     articulo: Articulo,
     onClick: () -> Unit,
-    hasVariants: Boolean = false // True si hay otros artículos con mismo nombre distinta cantidad
+    hasVariants: Boolean = false,
+    category: Category? = null
 ) {
     val borderColor = if (hasVariants) {
         MaterialTheme.colorScheme.tertiary
@@ -68,7 +57,7 @@ fun ArticuloCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(120.dp)
+                    .height(100.dp)
                     .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center
             ) {
@@ -80,11 +69,10 @@ fun ArticuloCard(
                         contentScale = ContentScale.Crop
                     )
                 } else {
-                    // Imagen por defecto cuando no hay foto
                     Icon(
                         painter = painterResource(id = R.drawable.ic_photo_loading),
                         contentDescription = "Sin foto",
-                        modifier = Modifier.size(64.dp),
+                        modifier = Modifier.size(48.dp),
                         tint = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
                     )
                 }
@@ -94,7 +82,7 @@ fun ArticuloCard(
                     Box(
                         modifier = Modifier
                             .align(Alignment.TopEnd)
-                            .padding(8.dp)
+                            .padding(6.dp)
                             .background(
                                 color = MaterialTheme.colorScheme.tertiary,
                                 shape = RoundedCornerShape(4.dp)
@@ -109,32 +97,54 @@ fun ArticuloCard(
                         )
                     }
                 }
+                
+                // Badge de categoría (CA5)
+                if (category != null) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(6.dp)
+                            .background(
+                                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.9f),
+                                shape = RoundedCornerShape(4.dp)
+                            )
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = "${category.emoji} ${category.name}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
             }
 
             // Sección de Información
             Column(
                 modifier = Modifier
-                    .padding(12.dp)
+                    .padding(10.dp)
                     .fillMaxWidth()
             ) {
                 Text(
                     text = articulo.name,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleSmall,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     fontWeight = FontWeight.Bold
                 )
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(2.dp))
 
-                // Detalles de cantidad (ej: 1.5 kg, 500 ml)
+                // Detalles de cantidad
                 Text(
                     text = "${articulo.size} ${articulo.unit}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -148,17 +158,17 @@ fun ArticuloCard(
                         } else {
                             "-- €"
                         },
-                        style = MaterialTheme.typography.titleLarge,
+                        style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.ExtraBold
                     )
 
-                    // Badge opcional si tiene EAN
+                    // Badge si tiene EAN
                     if (!articulo.ean.isNullOrBlank()) {
                         Icon(
                             imageVector = Icons.Default.QrCode,
                             contentDescription = "Tiene código de barras",
-                            modifier = Modifier.size(16.dp),
+                            modifier = Modifier.size(14.dp),
                             tint = MaterialTheme.colorScheme.outline
                         )
                     }

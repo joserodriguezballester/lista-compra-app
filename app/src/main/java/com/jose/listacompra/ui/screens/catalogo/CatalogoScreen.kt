@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -48,7 +47,7 @@ fun CatalogoScreen(
     var selectedArticulo by remember { mutableStateOf<Articulo?>(null) }
     var showAddDialog by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf<Articulo?>(null) }
-    var selectedCategory by remember { mutableStateOf<String?>(null) }
+    var selectedCategoryId by remember { mutableStateOf<String?>(null) }
     var showVoiceDialog by remember { mutableStateOf(false) }
     var scannedEan by remember { mutableStateOf<String?>(null) }
     var scannedName by remember { mutableStateOf<String?>(null) }
@@ -100,15 +99,20 @@ fun CatalogoScreen(
             }
     }
 
-    val articulosFiltrados = remember(articulos, searchQuery, selectedCategory) {
+    val articulosFiltrados = remember(articulos, searchQuery, selectedCategoryId) {
         var result = articulos
         if (searchQuery.isNotBlank()) {
             result = result.filter { it.name.contains(searchQuery, ignoreCase = true) || it.ean?.contains(searchQuery, ignoreCase = true) == true }
         }
-        if (selectedCategory != null) {
-            result = result.filter { it.categoryId?.toString() == selectedCategory }
+        if (selectedCategoryId != null) {
+            result = result.filter { it.categoryId?.toString() == selectedCategoryId }
         }
         result
+    }
+    
+    // Map de categorías para acceso rápido
+    val categoryMap = remember(categorias) {
+        categorias.associateBy { it.id }
     }
 
     val articuloNames = remember(articulos) {
@@ -248,10 +252,12 @@ fun CatalogoScreen(
                     modifier = Modifier.padding(paddingValues)
                 ) {
                     items(articulosFiltrados, { it.id }) { articulo ->
+                        val category = categorias.find { it.id.toString() == articulo.categoryId?.toString() }
                         ArticuloCard(
                             articulo,
                             { selectedArticulo = articulo; selectedImageUri = null },
-                            articulo.name.lowercase() in articuloNames
+                            articulo.name.lowercase() in articuloNames,
+                            category
                         )
                     }
                 }
@@ -316,10 +322,10 @@ fun CatalogoScreen(
 
     if (showFilterDialog) {
         CategoryFilterDialog(
-            categories = categorias.map { it.name },
-            selectedCategory = selectedCategory,
+            categories = categorias,
+            selectedCategoryId = selectedCategoryId,
             onDismiss = { showFilterDialog = false },
-            onCategorySelected = { selectedCategory = it }
+            onCategorySelected = { selectedCategoryId = it }
         )
     }
 
@@ -348,4 +354,6 @@ fun CatalogoScreen(
 @Composable
 fun rememberDrawerState(initialValue: DrawerValue): androidx.compose.material3.DrawerState {
     return androidx.compose.material3.rememberDrawerState(initialValue = initialValue)
+}
+turn androidx.compose.material3.rememberDrawerState(initialValue = initialValue)
 }
