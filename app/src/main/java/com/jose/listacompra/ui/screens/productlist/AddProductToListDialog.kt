@@ -42,6 +42,9 @@ fun AddProductToListDialog(
     offers: List<Offer> = emptyList(),
     suggestions: List<Articulo> = emptyList(),
     initialName: String? = null,
+    initialImageUrl: String? = null,
+    initialCategoryId: Long? = null,
+    initialQuantity: String? = null,
     onSearch: (String) -> Unit = {},
     onOpenScanner: () -> Unit = {},
     onImageSelected: (Uri?) -> Unit = {},
@@ -52,12 +55,12 @@ fun AddProductToListDialog(
     val context = LocalContext.current
     
     var name by remember { mutableStateOf(initialName ?: "") }
-    var quantity by remember { mutableStateOf("1") }
+    var quantity by remember { mutableStateOf(initialQuantity ?: "1") }
     var price by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
-    var selectedAisleId by remember { mutableStateOf<Long?>(null) }
+    var selectedAisleId by remember { mutableStateOf<Long?>(initialCategoryId) }
     var selectedOfferId by remember { mutableStateOf<Long?>(null) }
-    var photoUri by remember { mutableStateOf<Uri?>(null) }
+    var photoUri by remember { mutableStateOf<Uri?>(initialImageUrl?.let { Uri.parse(it) }) }
     
     var aisleExpanded by remember { mutableStateOf(false) }
     var offerExpanded by remember { mutableStateOf(false) }

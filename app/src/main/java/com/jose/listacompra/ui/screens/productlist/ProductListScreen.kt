@@ -93,6 +93,8 @@ fun ProductListScreen(
     var scannedName by remember { mutableStateOf<String?>(null) }
     var scannedPrice by remember { mutableStateOf<Float?>(null) }
     var scannedAisleId by remember { mutableStateOf<Long?>(null) }
+    var scannedImageUrl by remember { mutableStateOf<String?>(null) }
+    var scannedCategoryId by remember { mutableStateOf<String?>(null) }
     
     // Color actual
     val currentColor by viewModel.primaryColor.collectAsState(initial = 0)
@@ -105,13 +107,17 @@ fun ProductListScreen(
                 showAddProductDialog = true
             }
         navController?.currentBackStackEntry?.savedStateHandle
-            ?.get<String>("scannedImageUrl")?.let { /* manejar imagen */ }
+            ?.get<String>("scannedImageUrl")?.let { url ->
+                scannedImageUrl = url
+            }
         navController?.currentBackStackEntry?.savedStateHandle
             ?.get<String>("scannedQuantity")?.let { qty ->
                 scannedPrice = qty.toFloatOrNull()
             }
         navController?.currentBackStackEntry?.savedStateHandle
-            ?.get<String>("scannedCategoryId")?.let { /* manejar categoría */ }
+            ?.get<String>("scannedCategoryId")?.let { catId ->
+                scannedCategoryId = catId
+            }
     }
 
     ModalNavigationDrawer(
@@ -332,14 +338,22 @@ fun ProductListScreen(
                 offers = uiState.offers,
                 suggestions = uiState.articleSuggestions,
                 initialName = scannedName,
+                initialImageUrl = scannedImageUrl,
+                initialCategoryId = scannedCategoryId?.toLongOrNull(),
+                initialQuantity = scannedPrice?.toString(),
                 onSearch = { query -> viewModel.searchArticles(query) },
                 onOpenScanner = onNavigateToScanner,
                 onDismiss = { 
                     showAddProductDialog = false
                     scannedName = null
                     scannedPrice = null
+                    scannedImageUrl = null
+                    scannedCategoryId = null
                     // Limpiar savedStateHandle
                     navController?.currentBackStackEntry?.savedStateHandle?.remove<String>("scannedName")
+                    navController?.currentBackStackEntry?.savedStateHandle?.remove<String>("scannedImageUrl")
+                    navController?.currentBackStackEntry?.savedStateHandle?.remove<String>("scannedQuantity")
+                    navController?.currentBackStackEntry?.savedStateHandle?.remove<String>("scannedCategoryId")
                 },
                 onAdd = { name, quantity, aisleId, price, offerId, notes, photoUri ->
                     viewModel.addProduct(name, quantity, aisleId, price, offerId, notes,
@@ -347,6 +361,8 @@ fun ProductListScreen(
                     showAddProductDialog = false
                     scannedName = null
                     scannedPrice = null
+                    scannedImageUrl = null
+                    scannedCategoryId = null
                 }
             )
         }
