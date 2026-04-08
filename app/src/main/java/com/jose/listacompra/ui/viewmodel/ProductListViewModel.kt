@@ -391,7 +391,8 @@ class ProductListViewModel @Inject constructor(
      */
     fun addProductFromVoice(
         articulo: com.jose.listacompra.domain.model.Articulo,
-        quantity: Float
+        quantity: Float,
+        parsedSupermarketName: String? = null // T4
     ) {
         viewModelScope.launch {
             if (currentListId == 0L) {
@@ -400,15 +401,26 @@ class ProductListViewModel @Inject constructor(
                 return@launch
             }
 
-            // T4: null = "Todos" → asignar a "Cualquiera" (0)
-            val selectedSupermarketId = _uiState.value.selectedSupermarketId ?: 0L
+            // T4: Prioridad: explícito > bottom bar > Cualquiera
+            val supermarketId = when {
+                // Si dijo supermercado explícitamente, buscarlo
+                !parsedSupermarketName.isNullOrBlank() -> {
+                    _uiState.value.supermarkets.find { 
+                        it.name.contains(parsedSupermarketName, ignoreCase = true) 
+                    }?.id ?: 0L // Si no encuentra, "Cualquiera"
+                }
+                // Si hay bottom bar (solo en Mi Lista), usarla
+                _uiState.value.selectedSupermarketId != null -> _uiState.value.selectedSupermarketId!!
+                // Si no hay contexto, "Cualquiera"
+                else -> 0L
+            }
             
             val product = Product(
                 shoppingListId = currentListId,
                 name = articulo.name,
                 quantity = quantity,
                 aisleId = 0L, // Sin supermercado específico por ahora
-                supermarketId = selectedSupermarketId,
+                supermarketId = supermarketId,
                 estimatedPrice = articulo.finalPrice,
                 finalPrice = articulo.finalPrice,
                 offerId = null,
@@ -435,7 +447,8 @@ class ProductListViewModel @Inject constructor(
      */
     fun addGenericProductFromVoice(
         productName: String,
-        quantity: Float
+        quantity: Float,
+        parsedSupermarketName: String? = null // T4
     ) {
         viewModelScope.launch {
             if (currentListId == 0L) {
@@ -443,20 +456,23 @@ class ProductListViewModel @Inject constructor(
                 return@launch
             }
             
-            // T4: null = "Todos" → asignar a "Cualquiera" (0)
-            val selectedSupermarketId = _uiState.value.selectedSupermarketId ?: 0L
-            
-            // TODO: Política de añadir producto sin artículo
-            // - ¿Crear artículo nuevo automáticamente?
-            // - ¿Buscar en OpenFoodFacts?
-            // - ¿Mostrar diálogo de edición?
+            // T4: Prioridad: explícito > bottom bar > Cualquiera
+            val supermarketId = when {
+                !parsedSupermarketName.isNullOrBlank() -> {
+                    _uiState.value.supermarkets.find { 
+                        it.name.contains(parsedSupermarketName, ignoreCase = true) 
+                    }?.id ?: 0L
+                }
+                _uiState.value.selectedSupermarketId != null -> _uiState.value.selectedSupermarketId!!
+                else -> 0L
+            }
             
             val product = Product(
                 shoppingListId = currentListId,
                 name = productName,
                 quantity = quantity,
                 aisleId = 0L,
-                supermarketId = selectedSupermarketId,
+                supermarketId = supermarketId,
                 estimatedPrice = null,
                 finalPrice = null,
                 offerId = null,

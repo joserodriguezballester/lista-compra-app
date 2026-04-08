@@ -61,6 +61,7 @@ fun VoiceInputDialog(
     var status by remember { mutableStateOf("Habla ahora...") }
     var voiceMatches by remember { mutableStateOf<List<Articulo>>(emptyList()) }
     var lastQuantity by remember { mutableStateOf(1f) }
+    var lastParsed by remember { mutableStateOf<VoiceResult?>(null) } // T4
     var showSelection by remember { mutableStateOf(false) }
     
     // Animación de escucha
@@ -177,6 +178,7 @@ fun VoiceInputDialog(
                                 // Parsear el comando
                                 val parsed = parseVoiceCommand(text)
                                 lastQuantity = parsed.quantity
+                                lastParsed = parsed // T4
                                 
                                 // Buscar coincidencias
                                 val matches = viewModel.searchVoiceProducts(text)
@@ -188,8 +190,8 @@ fun VoiceInputDialog(
                                         BeepHelper.error(context)
                                         status = "Sin coincidencias. Añadiendo..."
                                         
-                                        // TODO: Política de añadir producto sin artículo
-                                        viewModel.addGenericProductFromVoice(parsed.productName, parsed.quantity)
+                                        // T4: Pasar supermercado parseado
+                                        viewModel.addGenericProductFromVoice(parsed.productName, parsed.quantity, parsed.supermarketName)
                                         
                                         // Esperar un poco y cerrar
                                         kotlinx.coroutines.delay(1000)
@@ -201,7 +203,7 @@ fun VoiceInputDialog(
                                         BeepHelper.success(context)
                                         status = "Añadido: ${matches[0].name}"
                                         
-                                        viewModel.addProductFromVoice(matches[0], parsed.quantity)
+                                        viewModel.addProductFromVoice(matches[0], parsed.quantity, parsed.supermarketName)
                                         
                                         // Esperar un poco y cerrar
                                         kotlinx.coroutines.delay(500)
@@ -244,7 +246,7 @@ fun VoiceInputDialog(
             quantity = lastQuantity,
             onConfirm = { articulo ->
                 BeepHelper.success(context)
-                viewModel.addProductFromVoice(articulo, lastQuantity)
+                viewModel.addProductFromVoice(articulo, lastQuantity, lastParsed?.supermarketName)
                 BeepHelper.release()
                 onDismiss()
             },

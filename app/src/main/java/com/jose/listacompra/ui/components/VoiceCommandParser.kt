@@ -8,11 +8,31 @@ import android.util.Log
  * - "2 kilos de patatas"
  * - "medio kilo de jamón"
  * - "1 litro de aceite"
+ * - "3 litros de leche del Mercadona" (T4)
  */
 fun parseVoiceCommand(text: String): VoiceResult {
     val normalized = text.lowercase().trim()
     
     Log.d("VoiceParser", "Parseando: '$normalized'")
+    
+    // T4: Patrones de supermercado al final
+    // "del Mercadona", "del Carrefour", "de la Alberca", etc.
+    val supermarketPatterns = listOf(
+        Regex("(.+)\\s+(?:del?|de la?)\\s+(mercadona|mercadona|mislata|carrefour|alberca|lidl|aldi|consum|dia)$", RegexOption.IGNORE_CASE)
+    )
+    
+    var supermarketName: String? = null
+    var textWithoutSupermarket = normalized
+    
+    for (pattern in supermarketPatterns) {
+        val match = pattern.find(normalized)
+        if (match != null) {
+            textWithoutSupermarket = match.groupValues[1].trim()
+            supermarketName = match.groupValues[2].trim()
+            Log.d("VoiceParser", "Supermercado detectado: '$supermarketName', texto: '$textWithoutSupermarket'")
+            break
+        }
+    }
     
     // Patrones comunes
     val patterns = listOf(
@@ -29,7 +49,7 @@ fun parseVoiceCommand(text: String): VoiceResult {
     )
     
     for (pattern in patterns) {
-        val match = pattern.find(normalized)
+        val match = pattern.find(textWithoutSupermarket)
         if (match != null) {
             return when (match.groupValues.size) {
                 3 -> {
@@ -39,7 +59,8 @@ fun parseVoiceCommand(text: String): VoiceResult {
                     VoiceResult(
                         text = text,
                         quantity = qty,
-                        unit = ""
+                        unit = "",
+                        supermarketName = supermarketName
                     )
                 }
                 4 -> {
@@ -52,7 +73,8 @@ fun parseVoiceCommand(text: String): VoiceResult {
                         VoiceResult(
                             text = text,
                             quantity = 0.5f,
-                            unit = group2
+                            unit = group2,
+                            supermarketName = supermarketName
                         )
                     } else {
                         // "2 kilos de patatas"
@@ -60,7 +82,8 @@ fun parseVoiceCommand(text: String): VoiceResult {
                         VoiceResult(
                             text = text,
                             quantity = qty,
-                            unit = group2
+                            unit = group2,
+                            supermarketName = supermarketName
                         )
                     }
                 }
@@ -69,7 +92,8 @@ fun parseVoiceCommand(text: String): VoiceResult {
                     VoiceResult(
                         text = text,
                         quantity = 1f,
-                        unit = ""
+                        unit = "",
+                        supermarketName = supermarketName
                     )
                 }
             }
@@ -80,6 +104,24 @@ fun parseVoiceCommand(text: String): VoiceResult {
     return VoiceResult(
         text = text,
         quantity = 1f,
-        unit = ""
+        unit = "",
+        supermarketName = supermarketName
     )
+}
+
+data class VoiceResult(
+    val text: String,
+    val quantity: Float,
+    val unit: String,
+    val supermarketName: String? = null // T4
+) {
+    val productName: String
+        get() {
+            // Extraer nombre del producto del texto original
+            return text.lowercase()
+                .replace(Regex("^\\d+\\s*"), "")
+                .replace(Regex("^(kilo|kilos|kg|gramo|gramos|g|litro|litros|l|ml|unidad|unidades|uds?|paquete|paquetes)\\s*(?:de)?\\s*"), "")
+                .replace(Regex("(?:del?|de la?)\\s+(mercadona|mercadona|mislata|carrefour|alberca|lidl|aldi|consum|dia)$", RegexOption.IGNORE_CASE), "")
+                .trim()
+        }
 }
