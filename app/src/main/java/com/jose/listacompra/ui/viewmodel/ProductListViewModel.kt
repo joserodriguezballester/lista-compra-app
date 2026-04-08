@@ -400,7 +400,8 @@ class ProductListViewModel @Inject constructor(
                 return@launch
             }
 
-            val selectedSupermarketId = _uiState.value.selectedSupermarketId ?: 1L
+            // T4: null = "Todos" → asignar a "Cualquiera" (0)
+            val selectedSupermarketId = _uiState.value.selectedSupermarketId ?: 0L
             
             val product = Product(
                 shoppingListId = currentListId,
@@ -442,7 +443,8 @@ class ProductListViewModel @Inject constructor(
                 return@launch
             }
             
-            val selectedSupermarketId = _uiState.value.selectedSupermarketId ?: 1L
+            // T4: null = "Todos" → asignar a "Cualquiera" (0)
+            val selectedSupermarketId = _uiState.value.selectedSupermarketId ?: 0L
             
             // TODO: Política de añadir producto sin artículo
             // - ¿Crear artículo nuevo automáticamente?
