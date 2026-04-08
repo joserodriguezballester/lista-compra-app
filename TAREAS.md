@@ -263,6 +263,28 @@
 
 ---
 
+### T6 - Sistema de datos precargados
+
+**Objetivo:** Control de qué datos se cargan según entorno
+
+**Modos:**
+- **Desarrollo (LOAD_FULL_DATA = true):** Carga todo (supermercados, pasillos Carrefour, categorías, ofertas, artículos ejemplo, productos en lista)
+- **Producción (LOAD_FULL_DATA = false):** Carga mínimo (supermercados, pasillos Carrefour, ofertas, categorías)
+
+**Categorías:** ✅ Actualizado - 36 categorías alineadas con Open Food Facts
+- ID 1 = "Sin categoría" (fallback obligatorio)
+- Mapeo de 90+ tags OFF → categorías locales
+
+**Implementación:**
+
+| Paso | Archivo | Cambio |
+|------|---------|--------|
+| 1 | DataConfig.kt (nuevo) | `object DataConfig { const val LOAD_FULL_DATA = true }` |
+| 2 | InitialDataSeeder.kt | `if (DataConfig.LOAD_FULL_DATA) { seedCatalogIfNeeded() }` |
+| 3 | InitialDataSeeder.kt | `if (DataConfig.LOAD_FULL_DATA) { seedProductsIfNeeded() }` |
+
+---
+
 ## 🌿 Ramas disponibles
 
 | Rama | Contenido | Estado |
