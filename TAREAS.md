@@ -207,23 +207,40 @@
 
 ### T5 - Mejorar micrófono
 
-**Problemas actuales:**
-1. Abre un diálogo cada vez → Solo mostrar la primera vez (guardar en preferencias)
-2. Solo aparece en algunas TopBar → Añadir a TODAS las pantallas
-3. Busca solo en productos de la lista → Debe buscar en el catálogo de artículos
+**Estado actual:**
+- Solo aparece en algunas pantallas (Mi Lista)
+- Abre un diálogo de instrucciones cada vez
+- Busca solo en productos de la lista actual
+
+**Objetivo:**
+1. **Aparecer en TODAS las TopBar** - Icono micrófono visible en Home, Mi Lista, Catálogo, Categorías, Ofertas, Supermercados, Historial
+2. **Activación directa** - Al pulsar, empieza a escuchar inmediatamente (sin diálogo de instrucciones)
+3. **Buscar en catálogo de artículos** - La búsqueda por voz debe consultar `articuloRepository.searchArticulos()` para encontrar coincidencias en toda la BD, no solo en la lista actual
 
 **Implementación:**
 
 | Paso | Archivo | Cambio |
 |------|---------|--------|
-| 1 | PreferencesManager.kt | Añadir `hasSeenMicInstructions: Boolean` |
-| 2 | MicrophoneDialog.kt | Si `hasSeenMicInstructions == true`, empezar a escuchar directo |
-| 3 | CommonTopBar.kt | Añadir `onMicrophoneClick` como parámetro obligatorio |
-| 4 | HomeScreen.kt | Añadir micrófono a TopBar |
-| 5 | OffersScreen.kt | Añadir micrófono a TopBar |
-| 6 | CategoriesScreen.kt | Añadir micrófono a TopBar |
-| 7 | SupermarketsScreen.kt | Añadir micrófono a TopBar |
-| 8 | ProductListViewModel.kt | Buscar también en `articuloRepository.searchArticulos()` |
+| 1 | PreferencesManager.kt | Añadir `hasSeenMicInstructions: Boolean` para guardar que ya vio las instrucciones |
+| 2 | MicrophoneDialog.kt | Si `hasSeenMicInstructions == true`, iniciar escucha directa sin mostrar diálogo |
+| 3 | CommonTopBar.kt | Parámetro `onMicrophoneClick: () -> Unit` obligatorio (no opcional) |
+| 4 | HomeScreen.kt | Pasar `onMicrophoneClick` a CommonTopBar |
+| 5 | ProductListScreen.kt | Ya tiene micrófono, verificar que usa búsqueda en artículos |
+| 6 | OffersScreen.kt | Añadir `onMicrophoneClick` a CommonTopBar |
+| 7 | CategoriesScreen.kt | Añadir `onMicrophoneClick` a CommonTopBar |
+| 8 | SupermarketListScreen.kt | Añadir `onMicrophoneClick` a CommonTopBar |
+| 9 | HistoryScreen.kt | Añadir `onMicrophoneClick` a CommonTopBar |
+| 10 | CatalogoScreen.kt | Añadir `onMicrophoneClick` a CommonTopBar |
+| 11 | ProductListViewModel.kt | Al recibir texto del micrófono, buscar en `articuloRepository.searchArticulos(query)` además de productos de la lista |
+| 12 | AppNavigation.kt | Proporcionar callback de micrófono que navegue a Mi Lista y añada el producto encontrado |
+
+**Comportamiento esperado:**
+1. Usuario pulsa 🎤 en cualquier pantalla
+2. App empieza a escuchar inmediatamente
+3. Usuario dice "leche"
+4. App busca "leche" en catálogo de artículos
+5. Si encuentra coincidencia → navega a Mi Lista y muestra sugerencia de añadir
+6. Si no encuentra → muestra mensaje "No encontrado"
 
 ---
 
