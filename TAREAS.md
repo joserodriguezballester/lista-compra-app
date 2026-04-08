@@ -357,45 +357,87 @@ istorial. Ahora creo que faltan algunas
 
 ---
 
-### T7 - Exportar BD
+### T7 - Exportar BD (Opción B - ZIP por categorías)
 
-**Objetivo:** Permitir exportar todos los datos de la app a archivo JSON/CSV
+**Arquitectura decidida:**
 
-**Datos a exportar:**
-- Artículos del catálogo
-- Productos de listas
-- Categorías
-- Supermercados y pasillos
-- Ofertas
-- Historial de precios
+```
+backup_lista-compra_2026-04-08.zip
+├── catalogo.json        (articulos creados por usuario)
+├── listas.json          (shopping_lists + products)
+├── historial.json       (product_history, frequency, price_history)
+├── config.json          (NO exportar - semillas fijas)
+└── manifest.json        (versión, fecha, device)
+```
+
+**Contenido por archivo:**
+
+| Archivo | Entidades | Notas |
+|---------|-----------|-------|
+| `catalogo.json` | articulos | Solo los creados por usuario |
+| `listas.json` | shopping_lists, products | Con mapeo de referencias |
+| `historial.json` | product_history, product_frequency, product_price_history, purchase_history | Datos de uso |
+| `manifest.json` | versión, fecha, appVersion, device | Metadatos |
+
+**NO se exporta:**
+- `supermarkets` - Semilla fija (Carrefour, Mercadona, etc.)
+- `categories` - Semilla fija (36 categorías alineadas con OFF)
+- `default_aisles` - Pasillos por defecto de Carrefour
+- `offers` - Temporales, expiran
+- `category_supermarket_orders` - Orden visual, regenerable
 
 **Implementación:**
 | Paso | Archivo | Cambio |
 |------|---------|--------|
-| 1 | ExportImportRepository.kt | Nuevo repositorio |
-| 2 | ExportImportUseCase.kt | Lógica de exportación |
-| 3 | SettingsScreen.kt | Botón "Exportar datos" |
-| 4 | StorageAccessFramework | Permiso escritura |
+| 1 | `DatabaseExportRepository.kt` | Nuevo repositorio |
+| 2 | `ExportUseCase.kt` | Crear ZIP con 4 JSONs |
+| 3 | `ImportUseCase.kt` | Validar + importar con mapeo IDs |
+| 4 | Overflow de TopBar | Añadir "📁 Datos" con opciones |
 
-**Formato:** JSON estructurado con versionado
+**UI en overflow:**
+```
+📁 Datos
+   └─ 📤 Exportar backup
+   └─ 📥 Importar backup
+   └─ 🗑️ Limpiar datos (dejar BD producción)
+```
+
+**Limpiar datos = Reset a producción:**
+- Elimina: articulos usuario, products, listas, historial
+- Mantiene: supermarkets, categories, aisles Carrefour, ofertas activas
 
 ---
 
 ### T8 - Importar BD
 
-**Objetivo:** Restaurar datos desde backup
+**Flujo de importación:**
 
-**Implementación:**
-| Paso | Archivo | Cambio |
-|------|---------|--------|
-| 1 | ExportImportRepository.kt | Método import() |
-| 2 | ExportImportUseCase.kt | Validación + importación |
-| 3 | SettingsScreen.kt | Botón "Importar datos" |
-| 4 | ConflictDialog.kt | Resolución de conflictos |
+1. Usuario selecciona archivo ZIP
+2. Leer `manifest.json` → validar versión compatible
+3. Mostrar diálogo con checkboxes por categoría:
+   ```
+   ☑️ Catálogo (X artículos)
+   ☑️ Listas (X listas, X productos)
+   ☑️ Historial de precios
+   ```
+4. Importar seleccionados con mapeo de IDs
+
+**Mapeo de IDs:**
+```
+Export: articulo.id = 5 → "articulo_5"
+Import: nuevo_id = 15
+Mapeo: old_to_new[5] = 15
+Actualizar referencias: products.articuloId → 15
+```
 
 **Conflictos:**
-- Duplicados: preguntar (sobrescribir/saltar/renombrar)
-- IDs: regenerar si hay conflicto
+| Situación | Acción |
+|-----------|--------|
+| Artículo ya existe (mismo nombre) | Preguntar: sobrescribir/saltar/renombrar |
+| ID duplicado | Regenerar nuevo ID |
+| Versión incompatible | Rechazar con mensaje claro |
+
+---
 
 ---
 
