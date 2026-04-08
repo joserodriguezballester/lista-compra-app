@@ -97,7 +97,7 @@ fun VoiceInputButton(
                         context = context,
                         onResult = { text ->
                             isListening = false
-                            parseVoiceCommand(text)?.let { command ->
+                            parseVoiceCommandLegacy(text)?.let { command ->
                                 onVoiceCommand(command)
                             } ?: run {
                                 errorMessage = "No pude entender: '$text'. Intenta decir algo como '3 litros de leche'"
@@ -230,14 +230,9 @@ private fun startSpeechRecognizer(
 
 /**
  * Parsea el texto reconocido para extraer cantidad, unidad y nombre del producto
- * Soporta formatos como:
- * - "3 litros de leche"
- * - "tres kilos de patatas"
- * - "500 gramos de jamón"
- * - "un paquete de galletas"
- * - "dos botellas de agua"
+ * Función privada para uso interno de VoiceInputButton
  */
-fun parseVoiceCommand(text: String): VoiceCommand? {
+private fun parseVoiceCommandLegacy(text: String): VoiceCommand? {
     val lowerText = text.lowercase().trim()
     
     // Palabras numéricas a números

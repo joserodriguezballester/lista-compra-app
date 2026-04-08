@@ -30,15 +30,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 
 /**
- * Datos del reconocimiento de voz
- */
-data class VoiceResult(
-    val text: String,
-    val quantity: Float,
-    val unit: String
-)
-
-/**
  * Diálogo completo de entrada por voz con feedback sonoro
  * 
  * Flujo:

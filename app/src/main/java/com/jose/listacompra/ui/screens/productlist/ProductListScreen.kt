@@ -131,7 +131,7 @@ fun ProductListScreen(
                 },
                 onNavigateToList = {
                     scope.launch { drawerState.close() }
-                    onNavigateToList()
+                    // Ya estamos en Mi Lista, solo cerrar drawer
                 },
                 onNavigateToOffers = {
                     scope.launch { drawerState.close() }
@@ -437,11 +437,15 @@ fun ProductListScreen(
                 product = product,
                 aisles = uiState.aisles,
                 offers = uiState.offers,
-                supermarkets = uiState.supermarkets, // T4
+                supermarkets = uiState.supermarkets,
                 onDismiss = { productToEdit = null },
                 onSave = { updatedProduct, _ -> 
                     viewModel.updateProduct(updatedProduct)
                     productToEdit = null 
+                },
+                onDelete = {
+                    viewModel.deleteProduct(product)
+                    productToEdit = null
                 }
             )
         }
