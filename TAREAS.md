@@ -173,9 +173,9 @@
 
 ### Baja Prioridad
 
-| # | Bug | Pantalla | Notas |
-|---|-----|----------|-------|
-| B19 | Drawer sí abre en Mi Lista | ProductListScreen | Comparar con Home |
+| # | Bug | Pantalla | Estado | Notas |
+|---|-----|----------|--------|-------|
+| B19 | Drawer sí abre en Mi Lista | ProductListScreen | ✅ Fixed | Funciona correctamente |
 
 ---
 
@@ -350,3 +350,4 @@ Historial. Tamaño fuente Eje Y mas grande aun
 Bottombar, hacerla aun mas estrecha. 
 overflow correcto
 Drawer. Por orden Home, mi lista, catalogo, categorias, supermercados, ofertas, historial. Ahora creo que faltan algunas
+istorial. Ahora creo que faltan algunas
