@@ -109,6 +109,7 @@
 | T5 | Mejorar micrófono | Media | ✅ Completado | Beeps + selección múltiple |
 | T7 | Exportar BD | Media | JSON/CSV para backup |
 | T8 | Importar BD | Media | Restaurar desde backup |
+| T9 | Refactorizar drawer común | Media | Unificar drawer en 7 pantallas |
 
 ### Catálogo
 
@@ -395,3 +396,29 @@ istorial. Ahora creo que faltan algunas
 **Conflictos:**
 - Duplicados: preguntar (sobrescribir/saltar/renombrar)
 - IDs: regenerar si hay conflicto
+
+---
+
+### T9 - Refactorizar Drawer común
+
+**Problema:** El drawer está duplicado en 7 pantallas
+
+**Pantallas afectadas:**
+- HomeScreen.kt
+- CategoriesScreen.kt
+- HistoryScreen.kt
+- OffersScreen.kt
+- SupermarketListScreen.kt
+- CatalogoScreen.kt
+- ProductListScreen.kt
+
+**Solución:**
+1. Crear `MainScreenWrapper.kt` con drawer único
+2. Modificar `AppNavigation.kt` para usar wrapper
+3. Simplificar cada pantalla (quitar drawer, dejar contenido)
+4. Estado compartido del drawer
+
+**Beneficios:**
+- Menos código duplicado
+- Drawer sincronizado entre pantallas
+- Más fácil añadir opciones globales
