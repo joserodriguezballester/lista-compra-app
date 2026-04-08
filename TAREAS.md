@@ -168,8 +168,8 @@
 | B6 | No se ven imágenes | ProductCard | ✅ Fixed | Carga correcta |
 | B7 | No hay opción añadir imagen | Add/EditDialog | - | Falta campo/selección |
 | B8 | Etiquetas sin delimitación | SupermarketBottomBar | ✅ Fixed | Dividers añadidos |
-| B22 | ProductCard precio mal si línea larga | ProductCard | - | Precio se corta |
-| B23 | Total de lista incorrecto | ProductListScreen | - | Verificar cálculo |
+| B22 | ProductCard precio mal si línea larga | ProductCard | ✅ Fixed | Verificar en móvil |
+| B23 | Total de lista incorrecto | ProductListScreen | ✅ Fixed | Resumen con totales |
 
 ### Baja Prioridad
 
