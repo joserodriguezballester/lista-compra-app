@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Inventory
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -17,13 +18,15 @@ import com.jose.listacompra.domain.model.Supermarket
  * Bottom bar para Mi Lista
  * Muestra Home + logos de supermercados
  * Solo iconos, sin texto
+ * 
+ * T4: Añadido "Todos" (null) al principio
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ListBottomBar(
     supermarkets: List<Supermarket>,
-    selectedSupermarketId: Long,
-    onSupermarketSelected: (Long) -> Unit,
+    selectedSupermarketId: Long?,
+    onSupermarketSelected: (Long?) -> Unit,
     onHomeClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -31,6 +34,18 @@ fun ListBottomBar(
         modifier = modifier.height(56.dp),
         tonalElevation = 8.dp
     ) {
+        // T4: "Todos" - mostrar todos los productos
+        NavigationBarItem(
+            selected = selectedSupermarketId == null,
+            onClick = { onSupermarketSelected(null) },
+            icon = {
+                Icon(
+                    Icons.Default.Inventory,
+                    contentDescription = "Todos"
+                )
+            }
+        )
+        
         // Home
         NavigationBarItem(
             selected = false,
@@ -43,8 +58,8 @@ fun ListBottomBar(
             }
         )
         
-        // Supermercados
-        supermarkets.forEach { supermarket ->
+        // Supermercados (sin "Cualquiera" id=0)
+        supermarkets.filter { it.id > 0 }.forEach { supermarket ->
             NavigationBarItem(
                 selected = supermarket.id == selectedSupermarketId,
                 onClick = { onSupermarketSelected(supermarket.id) },

@@ -9,19 +9,24 @@ import javax.inject.Singleton
 /**
  * Caso de uso: Obtener productos de una lista
  * Clean Architecture - ViewModel no debe acceder directo a Repository
+ * 
+ * T4: Soporte para supermercado por producto
  */
 @Singleton
 class GetProductsByListUseCase @Inject constructor(
     private val productRepository: IProductRepository
 ) {
     /**
-     * Obtiene productos de una lista, opcionalmente filtrados por supermercado
+     * Obtiene productos de una lista
+     * 
+     * @param listId ID de la lista
+     * @param supermarketId ID del supermercado (null = todos, >0 = X + "Cualquiera")
      */
     operator fun invoke(listId: Long, supermarketId: Long? = null): Flow<List<Product>> {
-        return if (supermarketId != null && supermarketId > 0) {
-            productRepository.getProductsBySupermarketFlow(listId, supermarketId)
-        } else {
-            productRepository.getProductsByListFlow(listId)
+        return when {
+            supermarketId == null -> productRepository.getProductsByListFlow(listId)
+            supermarketId > 0 -> productRepository.getProductsBySupermarketOrAnyFlow(listId, supermarketId)
+            else -> productRepository.getProductsByListFlow(listId)
         }
     }
 }

@@ -12,6 +12,8 @@ interface IProductRepository {
     suspend fun togglePurchased(productId: Long, isPurchased: Boolean)
     fun getProductsByListFlow(listId: Long): Flow<List<Product>>
     fun getProductsBySupermarketFlow(listId: Long, supermarketId: Long): Flow<List<Product>>
+    // T4: Productos del supermercado X + productos "Cualquiera"
+    fun getProductsBySupermarketOrAnyFlow(listId: Long, supermarketId: Long): Flow<List<Product>>
     suspend fun updatePhoto(productId: Long, photoUri: String?)
     suspend fun updateEan(productId: Long, ean: String?)
     suspend fun getProductsByList(listId: Long): List<Product>

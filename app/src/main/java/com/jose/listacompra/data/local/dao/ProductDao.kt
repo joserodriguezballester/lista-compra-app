@@ -56,6 +56,10 @@ interface ProductDao {
     @Query("SELECT * FROM products WHERE shoppingListId = :listId AND supermarketId = :supermarketId ORDER BY aisleId ASC, orderIndex ASC")
     fun getProductsBySupermarketFlow(listId: Long, supermarketId: Long): Flow<List<ProductEntity>>
     
+    // T4: Productos del supermercado X + productos "Cualquiera" (supermarketId = 0)
+    @Query("SELECT * FROM products WHERE shoppingListId = :listId AND (supermarketId = :supermarketId OR supermarketId = 0) ORDER BY aisleId ASC, orderIndex ASC")
+    fun getProductsBySupermarketOrAnyFlow(listId: Long, supermarketId: Long): Flow<List<ProductEntity>>
+    
     @Query("UPDATE products SET isPurchased = :isPurchased WHERE id = :id")
     suspend fun updatePurchased(id: Long, isPurchased: Boolean)
 

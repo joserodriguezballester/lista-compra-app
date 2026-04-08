@@ -238,7 +238,7 @@ fun ProductListScreen(
             bottomBar = {
                 ListBottomBar(
                     supermarkets = uiState.supermarkets,
-                    selectedSupermarketId = uiState.selectedSupermarketId ?: 0L,
+                    selectedSupermarketId = uiState.selectedSupermarketId,
                     onSupermarketSelected = { viewModel.selectSupermarket(it) },
                     onHomeClick = onNavigateToHome
                 )
@@ -400,6 +400,7 @@ fun ProductListScreen(
             AddProductToListDialog(
                 aisles = uiState.aisles,
                 offers = uiState.offers,
+                supermarkets = uiState.supermarkets, // T4
                 suggestions = uiState.articleSuggestions,
                 initialName = scannedName,
                 initialImageUrl = scannedImageUrl,
@@ -419,9 +420,8 @@ fun ProductListScreen(
                     navController?.currentBackStackEntry?.savedStateHandle?.remove<String>("scannedQuantity")
                     navController?.currentBackStackEntry?.savedStateHandle?.remove<String>("scannedCategoryId")
                 },
-                onAdd = { name, quantity, aisleId, price, offerId, notes, photoUri ->
-                    viewModel.addProduct(name, quantity, aisleId, price, offerId, notes,
-                        photoUri?.let { Uri.parse(it) } as String?)
+                onAdd = { name, quantity, aisleId, price, offerId, notes, photoUri, supermarketId -> // T4
+                    viewModel.addProduct(name, quantity, aisleId, price, offerId, notes, photoUri, supermarketId)
                     showAddProductDialog = false
                     scannedName = null
                     scannedPrice = null

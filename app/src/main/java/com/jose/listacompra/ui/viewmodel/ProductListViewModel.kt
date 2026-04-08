@@ -126,13 +126,16 @@ class ProductListViewModel @Inject constructor(
         }
     }
 
-    private fun loadAislesAndProducts(supermarketId: Long) {
+    private fun loadAislesAndProducts(supermarketId: Long?) {
         viewModelScope.launch {
             try {
-                val aisleList = getAislesBySupermarketUseCase(supermarketId)
+                // Cargar pasillos del primer supermercado por defecto para mostrar
+                val displaySupermarketId = supermarketId ?: _uiState.value.supermarkets.firstOrNull()?.id ?: 1L
+                val aisleList = getAislesBySupermarketUseCase(displaySupermarketId)
                 _uiState.update { it.copy(aisles = aisleList) }
-                Log.d(TAG, "Loaded ${aisleList.size} aisles for supermarket $supermarketId")
+                Log.d(TAG, "Loaded ${aisleList.size} aisles for supermarket $displaySupermarketId")
 
+                // T4: null = todos los productos, >0 = filtrado
                 getProductsByListUseCase(currentListId, supermarketId)
                     .catch { e -> Log.e(TAG, "Error loading products", e) }
                     .collect { productList ->
@@ -156,14 +159,16 @@ class ProductListViewModel @Inject constructor(
         }
     }
 
-    fun selectSupermarket(supermarketId: Long) {
+    // T4: null = mostrar todos, Long = filtrar por supermercado
+    fun selectSupermarket(supermarketId: Long?) {
         viewModelScope.launch {
             _uiState.update { it.copy(selectedSupermarketId = supermarketId) }
             loadAislesAndProducts(supermarketId)
         }
     }
 
-    fun addProduct(name: String, quantity: Float, aisleId: Long?, price: Float?, offerId: Long?, notes: String?, photoUri: String?) {
+    // T4: supermarketId ahora es parámetro, no sacado del estado
+    fun addProduct(name: String, quantity: Float, aisleId: Long?, price: Float?, offerId: Long?, notes: String?, photoUri: String?, supermarketId: Long? = null) {
         viewModelScope.launch {
             if (currentListId == 0L) {
                 Log.e(TAG, "Cannot add product: currentListId is 0")
@@ -174,7 +179,8 @@ class ProductListViewModel @Inject constructor(
             try {
                 val finalPrice = calculateFinalPrice(quantity, price, offerId)
                 val selectedAisleId = aisleId ?: _uiState.value.aisles.firstOrNull()?.id ?: 0L
-                val selectedSupermarketId = _uiState.value.selectedSupermarketId ?: 1L
+                // T4: Usar el supermarketId pasado, o "Cualquiera" (0) si no se especifica
+                val selectedSupermarketId = supermarketId ?: 0L
 
                 val product = Product(
                     shoppingListId = currentListId,

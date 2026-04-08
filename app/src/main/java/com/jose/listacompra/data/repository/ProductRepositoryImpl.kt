@@ -51,6 +51,13 @@ class ProductRepositoryImpl @Inject constructor(
         }
     }
 
+    // T4: Productos del supermercado X + productos "Cualquiera"
+    override fun getProductsBySupermarketOrAnyFlow(listId: Long, supermarketId: Long): Flow<List<Product>> {
+        return productDao.getProductsBySupermarketOrAnyFlow(listId, supermarketId).map { entities ->
+            entities.map { it.toDomain() }
+        }
+    }
+
     override suspend fun updatePhoto(productId: Long, photoUri: String?) {
         productDao.updateProductPhoto(productId, photoUri)
     }

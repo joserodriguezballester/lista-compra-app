@@ -30,7 +30,12 @@ import coil.compose.AsyncImage
 import com.jose.listacompra.domain.model.Aisle
 import com.jose.listacompra.domain.model.Articulo
 import com.jose.listacompra.domain.model.Offer
+import com.jose.listacompra.domain.model.Supermarket
 import com.jose.listacompra.ui.utils.getCategoryEmoji
+import kotlinx.coroutines.delay
+import android.util.Log
+import android.widget.Toast
+import androidx.compose.material.icons.filled.Store
 import kotlinx.coroutines.delay
 import android.util.Log
 import android.widget.Toast
@@ -40,6 +45,7 @@ import android.widget.Toast
 fun AddProductToListDialog(
     aisles: List<Aisle>,
     offers: List<Offer> = emptyList(),
+    supermarkets: List<Supermarket> = emptyList(), // T4
     suggestions: List<Articulo> = emptyList(),
     initialName: String? = null,
     initialImageUrl: String? = null,
@@ -49,7 +55,7 @@ fun AddProductToListDialog(
     onOpenScanner: () -> Unit = {},
     onImageSelected: (Uri?) -> Unit = {},
     onDismiss: () -> Unit,
-    onAdd: (name: String, quantity: Float, aisleId: Long?, price: Float?, offerId: Long?, notes: String?, photoUri: String?) -> Unit
+    onAdd: (name: String, quantity: Float, aisleId: Long?, price: Float?, offerId: Long?, notes: String?, photoUri: String?, supermarketId: Long?) -> Unit // T4
 ) {
     val TAG = "AddProductDialog"
     val context = LocalContext.current
@@ -60,10 +66,12 @@ fun AddProductToListDialog(
     var notes by remember { mutableStateOf("") }
     var selectedAisleId by remember { mutableStateOf<Long?>(initialCategoryId) }
     var selectedOfferId by remember { mutableStateOf<Long?>(null) }
+    var selectedSupermarketId by remember { mutableStateOf<Long?>(0L) } // T4: Por defecto "Cualquiera"
     var photoUri by remember { mutableStateOf<Uri?>(initialImageUrl?.let { Uri.parse(it) }) }
     
     var aisleExpanded by remember { mutableStateOf(false) }
     var offerExpanded by remember { mutableStateOf(false) }
+    var supermarketExpanded by remember { mutableStateOf(false) } // T4
     var showSuggestions by remember { mutableStateOf(false) }
     var showImagePicker by remember { mutableStateOf(false) }
 
@@ -322,6 +330,46 @@ fun AddProductToListDialog(
                     }
                 }
 
+                // T4: Supermercado
+                ExposedDropdownMenuBox(
+                    expanded = supermarketExpanded,
+                    onExpandedChange = { supermarketExpanded = it }
+                ) {
+                    val selectedSupermarket = supermarkets.find { it.id == selectedSupermarketId }
+                    val displayValue = when {
+                        selectedSupermarketId == 0L -> "📦 Cualquiera"
+                        selectedSupermarket != null -> "${selectedSupermarket.emoji} ${selectedSupermarket.name}"
+                        else -> "📦 Cualquiera"
+                    }
+                    OutlinedTextField(
+                        value = displayValue,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Supermercado") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = supermarketExpanded) },
+                        leadingIcon = { Icon(Icons.Default.Store, contentDescription = null) },
+                        modifier = Modifier.fillMaxWidth().menuAnchor()
+                    )
+
+                    ExposedDropdownMenu(
+                        expanded = supermarketExpanded,
+                        onDismissRequest = { supermarketExpanded = false }
+                    ) {
+                        // Opción "Cualquiera"
+                        DropdownMenuItem(
+                            text = { Text("📦 Cualquiera") },
+                            onClick = { selectedSupermarketId = 0L; supermarketExpanded = false }
+                        )
+                        // Supermercados específicos (sin "Cualquiera" que tiene id=0)
+                        supermarkets.filter { it.id > 0 }.forEach { supermarket ->
+                            DropdownMenuItem(
+                                text = { Text("${supermarket.emoji} ${supermarket.name}") },
+                                onClick = { selectedSupermarketId = supermarket.id; supermarketExpanded = false }
+                            )
+                        }
+                    }
+                }
+
                 // Oferta
                 ExposedDropdownMenuBox(
                     expanded = offerExpanded,
@@ -379,7 +427,7 @@ fun AddProductToListDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    Log.d(TAG, "Añadiendo: name=$name, qty=$quantity, photoUri=$photoUri")
+                    Log.d(TAG, "Añadiendo: name=$name, qty=$quantity, photoUri=$photoUri, supermarket=$selectedSupermarketId")
                     onAdd(
                         name,
                         quantity.toFloatOrNull() ?: 1f,
@@ -387,7 +435,8 @@ fun AddProductToListDialog(
                         price.toFloatOrNull(),
                         selectedOfferId,
                         notes.ifBlank { null },
-                        photoUri?.toString()
+                        photoUri?.toString(),
+                        selectedSupermarketId // T4
                     )
                 },
                 enabled = name.isNotBlank()

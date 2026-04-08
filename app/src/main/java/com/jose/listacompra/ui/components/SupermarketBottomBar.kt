@@ -26,15 +26,13 @@ fun Modifier.tabIndicatorOffset(
 @Composable
 fun SupermarketBottomBar(
     supermarkets: List<Supermarket>,
-    selectedSupermarketId: Long,
-    onSupermarketSelected: (Long) -> Unit,
+    selectedSupermarketId: Long?,
+    onSupermarketSelected: (Long?) -> Unit,
     onHomeClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
-    // Si hay onHomeClick, añadimos Home como primer tab
-    val homeTabIndex = if (onHomeClick != null) 1 else 0
-    val selectedIndex = supermarkets.indexOfFirst { it.id == selectedSupermarketId }
-        .let { if (it >= 0) it + homeTabIndex else homeTabIndex }
+    // T4: "Todos" (null) como primer tab
+    val showAllSelected = selectedSupermarketId == null
     
     val dividerColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
     val surfaceColor = MaterialTheme.colorScheme.surface
@@ -42,6 +40,16 @@ fun SupermarketBottomBar(
     val onSurfaceColor = MaterialTheme.colorScheme.onSurface
     val onSurfaceVariantColor = MaterialTheme.colorScheme.onSurfaceVariant
     val outlineVariantColor = MaterialTheme.colorScheme.outlineVariant
+
+    // Calcular índice seleccionado
+    val selectedIndex = when {
+        showAllSelected -> 0 // "Todos"
+        onHomeClick != null -> 1 // Home
+        else -> {
+            val idx = supermarkets.indexOfFirst { it.id == selectedSupermarketId }
+            if (idx >= 0) idx + (if (onHomeClick != null) 2 else 1) else 0
+        }
+    }
 
     Surface(
         modifier = modifier.fillMaxWidth(),
@@ -71,6 +79,31 @@ fun SupermarketBottomBar(
                 )
             }
         ) {
+            // T4: Tab "Todos" (null = mostrar todos los productos)
+            Tab(
+                selected = showAllSelected,
+                onClick = { onSupermarketSelected(null) },
+                text = {
+                    Text(
+                        text = "📦 Todos",
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        color = if (showAllSelected) primaryColor else onSurfaceVariantColor
+                    )
+                },
+                selectedContentColor = primaryColor,
+                unselectedContentColor = onSurfaceVariantColor,
+                modifier = Modifier.drawBehind {
+                    val strokeWidth = 1.dp.toPx()
+                    drawLine(
+                        color = dividerColor,
+                        start = Offset(size.width, 12.dp.toPx()),
+                        end = Offset(size.width, size.height - 12.dp.toPx()),
+                        strokeWidth = strokeWidth
+                    )
+                }
+            )
+            
             // Tab de Home (si está habilitado)
             if (onHomeClick != null) {
                 Tab(
@@ -98,8 +131,8 @@ fun SupermarketBottomBar(
                 )
             }
             
-            // Tabs de supermercados
-            supermarkets.forEachIndexed { index, supermarket ->
+            // Tabs de supermercados (sin "Cualquiera")
+            supermarkets.filter { it.id > 0 }.forEachIndexed { index, supermarket ->
                 val isSelected = supermarket.id == selectedSupermarketId
                 
                 Tab(
