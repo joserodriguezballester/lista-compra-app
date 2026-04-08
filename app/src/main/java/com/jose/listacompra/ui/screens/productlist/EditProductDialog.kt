@@ -25,6 +25,7 @@ fun EditProductDialog(
     product: Product,
     aisles: List<com.jose.listacompra.domain.model.Aisle>,
     offers: List<Offer>,
+    supermarkets: List<com.jose.listacompra.domain.model.Supermarket> = emptyList(), // T4
     onSave: (Product, Uri?) -> Unit,
     onDelete: () -> Unit,
     onDismiss: () -> Unit,
@@ -36,10 +37,12 @@ fun EditProductDialog(
     var notes by remember { mutableStateOf(product.notes ?: "") }
     var selectedAisleId by remember { mutableStateOf(product.aisleId) }
     var selectedOfferId by remember { mutableStateOf(product.offerId) }
+    var selectedSupermarketId by remember { mutableStateOf(product.supermarketId) } // T4
     var photoUri by remember { mutableStateOf<Uri?>(product.photoUri?.let { Uri.parse(it) }) }
     
     var showAisleDropdown by remember { mutableStateOf(false) }
     var showOfferDropdown by remember { mutableStateOf(false) }
+    var showSupermarketDropdown by remember { mutableStateOf(false) } // T4
     var showImageSourceDialog by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
     
@@ -132,6 +135,48 @@ fun EditProductDialog(
                             DropdownMenuItem(
                                 text = { Text("${aisle.emoji} ${aisle.name}") },
                                 onClick = { selectedAisleId = aisle.id; showAisleDropdown = false }
+                            )
+                        }
+                    }
+                }
+                
+                // T4: Supermercado
+                ExposedDropdownMenuBox(
+                    expanded = showSupermarketDropdown,
+                    onExpandedChange = { showSupermarketDropdown = it }
+                ) {
+                    val selectedSupermarket = supermarkets.find { it.id == selectedSupermarketId }
+                    val displayValue = when {
+                        selectedSupermarketId == 0L -> "📦 Cualquiera"
+                        selectedSupermarket != null -> "${selectedSupermarket.emoji} ${selectedSupermarket.name}"
+                        else -> "📦 Cualquiera"
+                    }
+                    OutlinedTextField(
+                        value = displayValue,
+                        onValueChange = { },
+                        readOnly = true,
+                        label = { Text("Supermercado") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showSupermarketDropdown) },
+                        leadingIcon = { Icon(Icons.Default.Store, contentDescription = null) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor()
+                    )
+                    
+                    ExposedDropdownMenu(
+                        expanded = showSupermarketDropdown,
+                        onDismissRequest = { showSupermarketDropdown = false }
+                    ) {
+                        // Opción "Cualquiera"
+                        DropdownMenuItem(
+                            text = { Text("📦 Cualquiera") },
+                            onClick = { selectedSupermarketId = 0L; showSupermarketDropdown = false }
+                        )
+                        // Supermercados específicos
+                        supermarkets.filter { it.id > 0 }.forEach { supermarket ->
+                            DropdownMenuItem(
+                                text = { Text("${supermarket.emoji} ${supermarket.name}") },
+                                onClick = { selectedSupermarketId = supermarket.id; showSupermarketDropdown = false }
                             )
                         }
                     }
@@ -232,6 +277,7 @@ fun EditProductDialog(
                             name = name,
                             quantity = quantity.toFloatOrNull() ?: 1f,
                             aisleId = selectedAisleId,
+                            supermarketId = selectedSupermarketId, // T4
                             estimatedPrice = price.toFloatOrNull(),
                             offerId = selectedOfferId,
                             notes = notes.ifBlank { null }

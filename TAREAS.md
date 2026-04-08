@@ -105,7 +105,7 @@
 |---|-------|-----------|-------|
 | T1 | CRUD ofertas completo (falta delete) | Alta | O3 lo implementa |
 | T2 | Pantalla añadir oferta personalizada | Media | |
-| T4 | Supermercado por producto | Alta | Ver plan detallado |
+| T4 | Supermercado por producto | Alta | ✅ Completado | Ver plan detallado |
 | T5 | Mejorar micrófono | Media | ✅ Completado | Beeps + selección múltiple |
 | T7 | Exportar BD | Media | JSON/CSV para backup |
 | T8 | Importar BD | Media | Restaurar desde backup |

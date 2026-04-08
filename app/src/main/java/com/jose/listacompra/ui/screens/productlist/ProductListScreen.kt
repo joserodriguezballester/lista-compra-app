@@ -437,8 +437,12 @@ fun ProductListScreen(
                 product = product,
                 aisles = uiState.aisles,
                 offers = uiState.offers,
+                supermarkets = uiState.supermarkets, // T4
                 onDismiss = { productToEdit = null },
-                onSave = { viewModel.updateProduct(it); productToEdit = null }
+                onSave = { updatedProduct, _ -> 
+                    viewModel.updateProduct(updatedProduct)
+                    productToEdit = null 
+                }
             )
         }
 
