@@ -265,12 +265,76 @@ fun ProductListScreen(
                 )
             },
             bottomBar = {
-                ListBottomBar(
-                    supermarkets = uiState.supermarkets,
-                    selectedSupermarketId = uiState.selectedSupermarketId,
-                    onSupermarketSelected = { viewModel.selectSupermarket(it) },
-                    onHomeClick = onNavigateToHome
-                )
+                Column {
+                    // Barra de totales (encima de la bottom bar)
+                    if (uiState.productsByAisle.isNotEmpty()) {
+                        val allProducts = uiState.productsByAisle.flatMap { it.value }
+                        val purchasedProducts = allProducts.filter { it.isPurchased }
+                        val totalProducts = allProducts.size
+                        val purchasedCount = purchasedProducts.size
+
+                        val purchasedTotal = purchasedProducts.sumOf { product ->
+                            val offer = uiState.offers.find { it.id == product.offerId }
+                            val unitPrice = product.finalPrice ?: product.estimatedPrice ?: 0f
+                            val finalPrice = when {
+                                offer != null -> calculateOfferPrice(unitPrice, product.quantity, offer)
+                                else -> unitPrice * product.quantity
+                            }
+                            finalPrice.toDouble()
+                        }
+
+                        val listTotal = allProducts.sumOf { product ->
+                            val offer = uiState.offers.find { it.id == product.offerId }
+                            val unitPrice = product.finalPrice ?: product.estimatedPrice ?: 0f
+                            val finalPrice = when {
+                                offer != null -> calculateOfferPrice(unitPrice, product.quantity, offer)
+                                else -> unitPrice * product.quantity
+                            }
+                            finalPrice.toDouble()
+                        }
+
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.95f)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text(
+                                        text = "Comprados: $purchasedCount/$totalProducts",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    if (purchasedCount > 0) {
+                                        Text(
+                                            text = "Llevas: €${String.format("%.2f", purchasedTotal)}",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                }
+                                Text(
+                                    text = "Total: €${String.format("%.2f", listTotal)}",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    }
+
+                    ListBottomBar(
+                        supermarkets = uiState.supermarkets,
+                        selectedSupermarketId = uiState.selectedSupermarketId,
+                        onSupermarketSelected = { viewModel.selectSupermarket(it) },
+                        onHomeClick = onNavigateToHome
+                    )
+                }
             }
         ) { paddingValues ->
             if (uiState.isLoading) {
@@ -359,69 +423,6 @@ fun ProductListScreen(
                             }
                         }
                     }
-                }
-            }
-        }
-
-        // Resumen de totales
-        if (uiState.productsByAisle.isNotEmpty()) {
-            val allProducts = uiState.productsByAisle.flatMap { it.value }
-            val purchasedProducts = allProducts.filter { it.isPurchased }
-            val totalProducts = allProducts.size
-            val purchasedCount = purchasedProducts.size
-
-            // Calcular totales
-            val purchasedTotal = purchasedProducts.sumOf { product ->
-                val offer = uiState.offers.find { it.id == product.offerId }
-                val unitPrice = product.finalPrice ?: product.estimatedPrice ?: 0f
-                val finalPrice = when {
-                    offer != null -> calculateOfferPrice(unitPrice, product.quantity, offer)
-                    else -> unitPrice * product.quantity
-                }
-                finalPrice.toDouble()
-            }
-
-            val listTotal = allProducts.sumOf { product ->
-                val offer = uiState.offers.find { it.id == product.offerId }
-                val unitPrice = product.finalPrice ?: product.estimatedPrice ?: 0f
-                val finalPrice = when {
-                    offer != null -> calculateOfferPrice(unitPrice, product.quantity, offer)
-                    else -> unitPrice * product.quantity
-                }
-                finalPrice.toDouble()
-            }
-
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = "Comprados: $purchasedCount/$totalProducts",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        if (purchasedCount > 0) {
-                            Text(
-                                text = "Llevas: €${String.format("%.2f", purchasedTotal)}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-                    Text(
-                        text = "Total: €${String.format("%.2f", listTotal)}",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
                 }
             }
         }

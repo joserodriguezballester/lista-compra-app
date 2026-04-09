@@ -34,6 +34,18 @@ fun ListBottomBar(
         modifier = modifier.height(56.dp),
         tonalElevation = 8.dp
     ) {
+        // Home - a la izquierda del todo
+        NavigationBarItem(
+            selected = false,
+            onClick = onHomeClick,
+            icon = {
+                Icon(
+                    Icons.Default.Home,
+                    contentDescription = "Home"
+                )
+            }
+        )
+
         // T4: "Todos" - mostrar todos los productos
         NavigationBarItem(
             selected = selectedSupermarketId == null,
@@ -42,18 +54,6 @@ fun ListBottomBar(
                 Icon(
                     Icons.Default.Inventory,
                     contentDescription = "Todos"
-                )
-            }
-        )
-        
-        // Home
-        NavigationBarItem(
-            selected = false,
-            onClick = onHomeClick,
-            icon = {
-                Icon(
-                    Icons.Default.Home,
-                    contentDescription = "Home"
                 )
             }
         )
