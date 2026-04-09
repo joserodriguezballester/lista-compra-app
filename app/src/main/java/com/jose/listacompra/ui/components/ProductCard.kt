@@ -55,7 +55,7 @@ fun ProductCard(
         MaterialTheme.colorScheme.surface
     }
 
-    val supermarketLogoRes = getSupermarketLogo(product.notes)
+    val supermarketLogoRes = getSupermarketLogo(product.supermarketId)
     val offerStatus = calculateOfferStatus(product.quantity, offer)
     val total = calculateTotal(product, offer, offerStatus)
 
@@ -318,15 +318,14 @@ private data class OfferStatus(
 )
 
 @Composable
-private fun getSupermarketLogo(notes: String): Int? {
-    val lowerNotes = notes.lowercase()
-    return when {
-        lowerNotes.contains("mercadona") -> R.drawable.logo_mercadona
-        lowerNotes.contains("carrefour") -> R.drawable.logo_carrefour
-        lowerNotes.contains("lidl") -> R.drawable.logo_lidl
-        lowerNotes.contains("aldi") -> R.drawable.logo_aldi
-        lowerNotes.contains("dia") -> R.drawable.logo_dia
-        lowerNotes.contains("consum") -> R.drawable.logo_consum
-        else -> null
+private fun getSupermarketLogo(supermarketId: Long?): Int? {
+    // IDs: 0=Cualquiera, 1=Carrefour, 2=Mercadona, 3=Lidl, 4=Aldi, 5=Consum
+    return when (supermarketId) {
+        1L -> R.drawable.logo_carrefour
+        2L -> R.drawable.logo_mercadona
+        3L -> R.drawable.logo_lidl
+        4L -> R.drawable.logo_aldi
+        5L -> R.drawable.logo_consum
+        else -> null // 0=Cualquiera o null
     }
 }
