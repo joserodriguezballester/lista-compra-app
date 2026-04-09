@@ -21,7 +21,6 @@ import com.jose.listacompra.domain.model.Supermarket
 import com.jose.listacompra.ui.components.AppDrawer
 import com.jose.listacompra.ui.components.CommonBottomBar
 import com.jose.listacompra.ui.components.CommonTopBar
-import com.jose.listacompra.ui.components.VoiceInputDialog
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -91,7 +90,6 @@ fun SupermarketListScreen(
                     onChangeColor = onChangeColor,
                     onToggleDarkMode = onToggleDarkMode,
                     isDarkMode = isDarkMode,
-                    onMicrophoneClick = { showVoiceDialog = true },
                     overflowActions = { expanded, onDismiss ->
                         DropdownMenuItem(
                             text = { Text("Añadir supermercado") },
@@ -146,7 +144,8 @@ fun SupermarketListScreen(
             supermarket = null,
             onDismiss = { showAddDialog = false },
             onSave = { name, emoji ->
-                viewModel.addSupermarket(name, emoji)
+                // TODO: Implementar con ViewModel
+                // viewModel.addSupermarket(name, emoji)
                 showAddDialog = false
             }
         )
@@ -158,7 +157,8 @@ fun SupermarketListScreen(
             supermarket = supermarket,
             onDismiss = { supermarketToEdit = null },
             onSave = { name, emoji ->
-                viewModel.updateSupermarket(supermarket.copy(name = name, emoji = emoji))
+                // TODO: Implementar con ViewModel
+                // viewModel.updateSupermarket(supermarket.copy(name = name, emoji = emoji))
                 supermarketToEdit = null
             }
         )
@@ -173,7 +173,8 @@ fun SupermarketListScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        viewModel.deleteSupermarket(supermarket)
+                        // TODO: Implementar con ViewModel
+                        // viewModel.deleteSupermarket(supermarket)
                         showDeleteConfirm = null
                     },
                     colors = ButtonDefaults.textButtonColors(
@@ -188,14 +189,6 @@ fun SupermarketListScreen(
                     Text("Cancelar")
                 }
             }
-        )
-    }
-
-    // Diálogo de voz (T5 refactor)
-    if (showVoiceDialog) {
-        com.jose.listacompra.ui.components.VoiceInputDialog(
-            viewModel = productListViewModel,
-            onDismiss = { showVoiceDialog = false }
         )
     }
 }
