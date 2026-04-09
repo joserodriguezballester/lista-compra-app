@@ -22,7 +22,6 @@ import com.jose.listacompra.ui.components.AppDrawer
 import com.jose.listacompra.ui.components.CommonBottomBar
 import com.jose.listacompra.ui.components.CommonTopBar
 import com.jose.listacompra.ui.components.VoiceInputDialog
-import com.jose.listacompra.ui.viewmodel.SupermarketListViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -38,18 +37,15 @@ fun SupermarketListScreen(
     onNavigateToCatalogo: () -> Unit = {},
     onToggleDarkMode: () -> Unit = {},
     isDarkMode: Boolean = false,
-    onChangeColor: () -> Unit = {},
-    viewModel: SupermarketListViewModel = hiltViewModel(),
-    productListViewModel: com.jose.listacompra.ui.viewmodel.ProductListViewModel = hiltViewModel() // T5 refactor
+    onChangeColor: () -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val supermarkets by viewModel.supermarkets.collectAsState()
+    var supermarkets by remember { mutableStateOf(listOf<Supermarket>()) }
     
     var showAddDialog by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf<Supermarket?>(null) }
     var supermarketToEdit by remember { mutableStateOf<Supermarket?>(null) }
-    var showVoiceDialog by remember { mutableStateOf(false) } // T5 refactor
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -414,5 +410,8 @@ private fun SupermarketDialog(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun rememberDrawerState(initialValue: DrawerValue): androidx.compose.material3.DrawerState {
+    return androidx.compose.material3.rememberDrawerState(initialValue = initialValue)
+}
+e: DrawerValue): androidx.compose.material3.DrawerState {
     return androidx.compose.material3.rememberDrawerState(initialValue = initialValue)
 }
