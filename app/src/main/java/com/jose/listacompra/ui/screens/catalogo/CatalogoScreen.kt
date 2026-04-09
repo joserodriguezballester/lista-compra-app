@@ -6,8 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -407,8 +405,20 @@ fun CatalogoScreen(
             modifier = Modifier.fillMaxWidth(0.95f),
             title = { Text("🎨 Preview Diseño Card M3") },
             text = {
-                androidx.compose.foundation.verticalScroll(rememberScrollState()) {
-                    ArticuloCardPreviewGrid()
+                Column {
+                    ArticuloCardPreview(
+                        name = "Aceite Girasol 5L",
+                        price = 10.75f,
+                        categoryIcon = "🫒",
+                        categoryName = "Aceites"
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    ArticuloCardPreview(
+                        name = "Leche Semidesnatada",
+                        price = 0.88f,
+                        categoryIcon = "🥛",
+                        categoryName = "Lácteos"
+                    )
                 }
             },
             confirmButton = {
