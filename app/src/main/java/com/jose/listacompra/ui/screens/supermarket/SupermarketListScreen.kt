@@ -21,6 +21,8 @@ import com.jose.listacompra.domain.model.Supermarket
 import com.jose.listacompra.ui.components.AppDrawer
 import com.jose.listacompra.ui.components.CommonBottomBar
 import com.jose.listacompra.ui.components.CommonTopBar
+import com.jose.listacompra.ui.components.VoiceInputDialog
+import com.jose.listacompra.ui.viewmodel.ProductListViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -40,11 +42,13 @@ fun SupermarketListScreen(
 ) {
     val scope = rememberCoroutineScope()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val productListViewModel: ProductListViewModel = hiltViewModel()
     var supermarkets by remember { mutableStateOf(listOf<Supermarket>()) }
     
     var showAddDialog by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf<Supermarket?>(null) }
     var supermarketToEdit by remember { mutableStateOf<Supermarket?>(null) }
+    var showVoiceDialog by remember { mutableStateOf(false) }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -90,6 +94,7 @@ fun SupermarketListScreen(
                     onChangeColor = onChangeColor,
                     onToggleDarkMode = onToggleDarkMode,
                     isDarkMode = isDarkMode,
+                    onMicrophoneClick = { showVoiceDialog = true },
                     overflowActions = { expanded, onDismiss ->
                         DropdownMenuItem(
                             text = { Text("Añadir supermercado") },
@@ -189,6 +194,14 @@ fun SupermarketListScreen(
                     Text("Cancelar")
                 }
             }
+        )
+    }
+
+    // Diálogo de voz
+    if (showVoiceDialog) {
+        VoiceInputDialog(
+            viewModel = productListViewModel,
+            onDismiss = { showVoiceDialog = false }
         )
     }
 }
