@@ -110,28 +110,6 @@ fun ArticuloCard(
                         )
                     }
                 }
-                
-                // Badge de categoría (CA5)
-                if (category != null) {
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .padding(6.dp)
-                            .background(
-                                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.9f),
-                                shape = RoundedCornerShape(4.dp)
-                            )
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                    ) {
-                        Text(
-                            text = "${category.icon} ${category.name}",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                }
             }
 
             // Sección de Información
@@ -158,6 +136,21 @@ fun ArticuloCard(
                 )
 
                 Spacer(modifier = Modifier.height(6.dp))
+
+                // Categoría (CA5) - encima del precio
+                Text(
+                    text = if (category != null) {
+                        "${category.icon} ${category.name}"
+                    } else {
+                        "📦 Sin categoría"
+                    },
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
