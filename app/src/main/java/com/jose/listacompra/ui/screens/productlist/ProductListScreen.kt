@@ -81,6 +81,7 @@ fun ProductListScreen(
     viewModel: ProductListViewModel = hiltViewModel()
 ) {
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val uiState by viewModel.uiState.collectAsState()
 
@@ -88,7 +89,6 @@ fun ProductListScreen(
     var showAddProductDialog by remember { mutableStateOf(false) }
     var productToEdit by remember { mutableStateOf<Product?>(null) }
     var showColorDialog by remember { mutableStateOf(false) }
-    var showVoiceDialog by remember { mutableStateOf(false) }
     var showClearConfirmDialog by remember { mutableStateOf(false) }
     var showResetConfirmDialog by remember { mutableStateOf(false) } // T7: Reset a producción
 
@@ -164,7 +164,7 @@ fun ProductListScreen(
                 CommonTopBar(
                     title = "Mi lista",
                     onOpenDrawer = { scope.launch { drawerState.open() } },
-                    onMicrophoneClick = { showVoiceDialog = true },
+                    onMicrophoneClick = { startDirectVoiceRecognition(context, productListViewModel, scope) },
                     onAddClick = { showAddProductDialog = true },
                     onChangeColor = { showColorDialog = true },
                     overflowActions = { expanded, onDismiss ->
@@ -502,35 +502,6 @@ fun ProductListScreen(
     }
 
     // Diálogo de voz
-    if (showVoiceDialog) {
-        AlertDialog(
-            onDismissRequest = { showVoiceDialog = false },
-            title = { Text("Añadir por voz") },
-            text = {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text("Di algo como:", style = MaterialTheme.typography.bodyMedium)
-                    Text("\"3 litros de leche\"", style = MaterialTheme.typography.bodySmall)
-                    Text("\"dos kilos de patatas\"", style = MaterialTheme.typography.bodySmall)
-                    Spacer(modifier = Modifier.height(16.dp))
-                    VoiceInputButton(
-                        onVoiceCommand = { command ->
-                            viewModel.addProduct(
-                                name = command.productName,
-                                quantity = command.quantity,
-                                aisleId = null,
-                                price = null,
-                                offerId = null,
-                                notes = null,
-                                photoUri = null
-                            )
-                            showVoiceDialog = false
-                        },
-                        modifier = Modifier.size(64.dp)
-                    )
-                }
             },
             confirmButton = {
                 TextButton(onClick = { showVoiceDialog = false }) {

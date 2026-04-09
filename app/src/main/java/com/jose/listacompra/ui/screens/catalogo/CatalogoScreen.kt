@@ -76,6 +76,7 @@ fun CatalogoScreen(
     onChangeColor: () -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val articulos by viewModel.listaArticulos.collectAsState()
     val categorias by viewModel.categorias.collectAsState()
@@ -87,7 +88,6 @@ fun CatalogoScreen(
     var showAddDialog by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf<Articulo?>(null) }
     var selectedCategoryIds by remember { mutableStateOf<Set<String>>(emptySet()) }
-    var showVoiceDialog by remember { mutableStateOf(false) }
     var scannedEan by remember { mutableStateOf<String?>(null) }
     var scannedName by remember { mutableStateOf<String?>(null) }
     var scannedImageUrl by remember { mutableStateOf<String?>(null) }
@@ -224,7 +224,7 @@ fun CatalogoScreen(
                         onChangeColor = onChangeColor,
                         onToggleDarkMode = onToggleDarkMode,
                         isDarkMode = isDarkMode,
-                        onMicrophoneClick = { showVoiceDialog = true },
+                        onMicrophoneClick = { startDirectVoiceRecognition(context, productListViewModel, scope) },
                         overflowActions = { expanded, onDismiss ->
                             DropdownMenuItem(
                                 text = { Text("Añadir manual") },
@@ -389,11 +389,6 @@ fun CatalogoScreen(
     }
 
     // Diálogo de voz (T5 refactor)
-    if (showVoiceDialog) {
-        com.jose.listacompra.ui.components.VoiceInputDialog(
-            viewModel = productListViewModel,
-            onDismiss = { showVoiceDialog = false }
-        )
     }
 }
 

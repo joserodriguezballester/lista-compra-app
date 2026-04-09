@@ -21,7 +21,8 @@ import com.jose.listacompra.domain.model.Supermarket
 import com.jose.listacompra.ui.components.AppDrawer
 import com.jose.listacompra.ui.components.CommonBottomBar
 import com.jose.listacompra.ui.components.CommonTopBar
-import com.jose.listacompra.ui.components.VoiceInputDialog
+import com.jose.listacompra.ui.components.startDirectVoiceRecognition
+import androidx.compose.ui.platform.LocalContext
 import com.jose.listacompra.ui.viewmodel.ProductListViewModel
 import kotlinx.coroutines.launch
 
@@ -41,6 +42,7 @@ fun SupermarketListScreen(
     onChangeColor: () -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val productListViewModel: ProductListViewModel = hiltViewModel()
     var supermarkets by remember { mutableStateOf(listOf<Supermarket>()) }
@@ -48,7 +50,6 @@ fun SupermarketListScreen(
     var showAddDialog by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf<Supermarket?>(null) }
     var supermarketToEdit by remember { mutableStateOf<Supermarket?>(null) }
-    var showVoiceDialog by remember { mutableStateOf(false) }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -94,7 +95,7 @@ fun SupermarketListScreen(
                     onChangeColor = onChangeColor,
                     onToggleDarkMode = onToggleDarkMode,
                     isDarkMode = isDarkMode,
-                    onMicrophoneClick = { showVoiceDialog = true },
+                    onMicrophoneClick = { startDirectVoiceRecognition(context, productListViewModel, scope) },
                     overflowActions = { expanded, onDismiss ->
                         DropdownMenuItem(
                             text = { Text("Añadir supermercado") },
@@ -198,11 +199,6 @@ fun SupermarketListScreen(
     }
 
     // Diálogo de voz
-    if (showVoiceDialog) {
-        VoiceInputDialog(
-            viewModel = productListViewModel,
-            onDismiss = { showVoiceDialog = false }
-        )
     }
 }
 

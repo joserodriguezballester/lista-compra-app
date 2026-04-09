@@ -37,7 +37,8 @@ import com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity
 import com.jose.listacompra.ui.components.AppDrawer
 import com.jose.listacompra.ui.components.CommonBottomBar
 import com.jose.listacompra.ui.components.CommonTopBar
-import com.jose.listacompra.ui.components.VoiceInputDialog
+import com.jose.listacompra.ui.components.startDirectVoiceRecognition
+import androidx.compose.ui.platform.LocalContext
 import com.jose.listacompra.ui.viewmodel.HistoryViewModel
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -66,9 +67,9 @@ fun HistoryScreen(
     productListViewModel: com.jose.listacompra.ui.viewmodel.ProductListViewModel = hiltViewModel() // T5 refactor
 ) {
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val uiState by viewModel.uiState.collectAsState()
-    var showVoiceDialog by remember { mutableStateOf(false) } // T5 refactor
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -114,7 +115,7 @@ fun HistoryScreen(
                     onChangeColor = onChangeColor,
                     onToggleDarkMode = onToggleDarkMode,
                     isDarkMode = isDarkMode,
-                    onMicrophoneClick = { showVoiceDialog = true }
+                    onMicrophoneClick = { startDirectVoiceRecognition(context, productListViewModel, scope) }
                 )
             },
             bottomBar = {
@@ -184,11 +185,6 @@ fun HistoryScreen(
     }
 
     // Diálogo de voz (T5 refactor)
-    if (showVoiceDialog) {
-        com.jose.listacompra.ui.components.VoiceInputDialog(
-            viewModel = productListViewModel,
-            onDismiss = { showVoiceDialog = false }
-        )
     }
 }
 

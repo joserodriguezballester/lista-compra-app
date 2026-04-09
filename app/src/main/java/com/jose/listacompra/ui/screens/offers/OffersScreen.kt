@@ -16,7 +16,8 @@ import com.jose.listacompra.domain.model.Offer
 import com.jose.listacompra.ui.components.AppDrawer
 import com.jose.listacompra.ui.components.CommonBottomBar
 import com.jose.listacompra.ui.components.CommonTopBar
-import com.jose.listacompra.ui.components.VoiceInputDialog
+import com.jose.listacompra.ui.components.startDirectVoiceRecognition
+import androidx.compose.ui.platform.LocalContext
 import com.jose.listacompra.ui.viewmodel.OffersViewModel
 import kotlinx.coroutines.launch
 
@@ -37,13 +38,13 @@ fun OffersScreen(
     productListViewModel: com.jose.listacompra.ui.viewmodel.ProductListViewModel = hiltViewModel() // T5 refactor
 ) {
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val uiState by viewModel.uiState.collectAsState()
     
     var showAddDialog by remember { mutableStateOf(false) }
     var offerToEdit by remember { mutableStateOf<Offer?>(null) }
     var offerToDelete by remember { mutableStateOf<Offer?>(null) }
-    var showVoiceDialog by remember { mutableStateOf(false) } // T5 refactor
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -89,7 +90,7 @@ fun OffersScreen(
                     onChangeColor = onChangeColor,
                     onToggleDarkMode = onToggleDarkMode,
                     isDarkMode = isDarkMode,
-                    onMicrophoneClick = { showVoiceDialog = true },
+                    onMicrophoneClick = { startDirectVoiceRecognition(context, productListViewModel, scope) },
                     overflowActions = { expanded, onDismiss ->
                         DropdownMenuItem(
                             text = { Text("Añadir oferta") },
@@ -218,11 +219,6 @@ fun OffersScreen(
     }
 
     // Diálogo de voz (T5 refactor)
-    if (showVoiceDialog) {
-        com.jose.listacompra.ui.components.VoiceInputDialog(
-            viewModel = productListViewModel,
-            onDismiss = { showVoiceDialog = false }
-        )
     }
 }
 
