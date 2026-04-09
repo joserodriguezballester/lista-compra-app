@@ -53,6 +53,17 @@ package com.jose.listacompra.data.local.dataseeder
     // Despensa (Pasta, Conservas, Legumbres)
     SeedArticulo("Fideua Carrefour 500", 24, 0.80f, 500f, "g", "8410100015501",
         "https://jcarrefour.vtexassets.com/arquivos/ids/2202611/8410100015501_01.jpg"),
+    SeedArticulo("Garbanzo Cocido", 7, 1.61f, 400f, "g", "8410100014023",
+        "https://jcarrefour.vtexassets.com/arquivos/ids/2202611/8410100014023_01.jpg"),
+    SeedArticulo("Tomate Frito 550 G", 7, 1.92f, 550f, "g", "8410100013972",
+        "https://jcarrefour.vtexassets.com/arquivos/ids/2202611/8410100013972_01.jpg"),
+
+    // Frescos (Frutas, Verduras, Carnes)
+    SeedArticulo("Banana Granel", 18, 1.54f, 1f, "kg", null, null),
+    SeedArticulo("Zanahoria CDC 500G", 19, 0.79f, 500f, "g", "8410100020185",
+        "https://jcarrefour.vtexassets.com/arquivos/ids/2202611/8410100020185_01.jpg"),
+    SeedArticulo("Picada Pollo", 20, 3.08f, 1f, "ud", null, null),
+    SeedArticulo("Chuletas Cerdo Agu", 20, 4.80f, 1f, "ud", null, null),
 
     // === ARTÍCULOS BASE ORIGINALES ===
 
