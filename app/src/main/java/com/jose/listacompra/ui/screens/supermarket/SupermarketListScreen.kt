@@ -412,6 +412,3 @@ private fun SupermarketDialog(
 fun rememberDrawerState(initialValue: DrawerValue): androidx.compose.material3.DrawerState {
     return androidx.compose.material3.rememberDrawerState(initialValue = initialValue)
 }
-e: DrawerValue): androidx.compose.material3.DrawerState {
-    return androidx.compose.material3.rememberDrawerState(initialValue = initialValue)
-}
