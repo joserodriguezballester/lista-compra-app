@@ -255,7 +255,7 @@ fun ProductListScreen(
                                 onDismiss()
                             },
                             leadingIcon = {
-                                Icon(Icons.Default.DeleteSweep, contentDescription = null)
+                                Icon(Icons.Default.Delete, contentDescription = null)
                             },
                             colors = MenuDefaults.itemColors(
                                 textColor = MaterialTheme.colorScheme.error

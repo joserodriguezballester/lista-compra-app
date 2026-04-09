@@ -274,9 +274,9 @@ private fun CategoryCard(
         }
     }
     
-    // Diálogo de voz
+    // Diálogo de voz (T5 refactor)
     if (showVoiceDialog) {
-        com.jose.listacompra.ui.components.VoiceInputDialog(
+        VoiceInputDialog(
             viewModel = productListViewModel,
             onDismiss = { showVoiceDialog = false }
         )
