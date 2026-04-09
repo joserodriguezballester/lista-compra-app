@@ -216,6 +216,14 @@ fun CategoriesScreen(
             }
         )
     }
+    
+    // Diálogo de voz (T5 refactor)
+    if (showVoiceDialog) {
+        VoiceInputDialog(
+            viewModel = productListViewModel,
+            onDismiss = { showVoiceDialog = false }
+        )
+    }
 }
 
 @Composable
@@ -272,14 +280,6 @@ private fun CategoryCard(
                 }
             }
         }
-    }
-    
-    // Diálogo de voz (T5 refactor)
-    if (showVoiceDialog) {
-        VoiceInputDialog(
-            viewModel = productListViewModel,
-            onDismiss = { showVoiceDialog = false }
-        )
     }
 }
 
