@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -95,6 +97,7 @@ fun CatalogoScreen(
     var scannedCategoryId by remember { mutableStateOf<String?>(null) }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var showImageSourceDialog by remember { mutableStateOf(false) }
+    var showCardPreview by remember { mutableStateOf(false) } // Preview diseño M3
 
     // Recibir datos del scanner
     LaunchedEffect(navController) {
@@ -242,6 +245,15 @@ fun CatalogoScreen(
                                 },
                                 leadingIcon = { Icon(Icons.Default.QrCodeScanner, contentDescription = null) }
                             )
+                            HorizontalDivider()
+                            DropdownMenuItem(
+                                text = { Text("🎨 Preview Card M3") },
+                                onClick = {
+                                    showCardPreview = true
+                                    onDismiss()
+                                },
+                                leadingIcon = { Icon(Icons.Default.Visibility, contentDescription = null) }
+                            )
                         }
                     )
                 }
@@ -388,7 +400,23 @@ fun CatalogoScreen(
         )
     }
 
-    // Diálogo de voz (T5 refactor)
+    // Preview de diseño M3
+    if (showCardPreview) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showCardPreview = false },
+            modifier = Modifier.fillMaxWidth(0.95f),
+            title = { Text("🎨 Preview Diseño Card M3") },
+            text = {
+                androidx.compose.foundation.verticalScroll(rememberScrollState()) {
+                    ArticuloCardPreviewGrid()
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showCardPreview = false }) {
+                    Text("Cerrar")
+                }
+            }
+        )
     }
 }
 
