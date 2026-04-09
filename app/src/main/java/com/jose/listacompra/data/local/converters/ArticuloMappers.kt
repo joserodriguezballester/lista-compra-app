@@ -3,15 +3,14 @@ package com.jose.listacompra.data.local.converters
 import com.jose.listacompra.data.local.entities.ArticuloEntity
 import com.jose.listacompra.domain.model.Articulo
 
-// Archivo: data/mapper/ArticuloMappers.kt
-
 fun ArticuloEntity.toDomain(): Articulo {
     return Articulo(
         id = id,
         name = name,
         photoUri = photoUri,
         ean = ean,
-        finalPrice = basePrice, // O la lógica que decidas
+        finalPrice = basePrice,
+        categoryId = categoryId,
         size = size,
         unit = unit
     )
@@ -24,6 +23,7 @@ fun Articulo.toEntity(): ArticuloEntity {
         basePrice = finalPrice,
         photoUri = photoUri,
         ean = ean,
+        categoryId = categoryId,
         size = size,
         unit = unit
     )
