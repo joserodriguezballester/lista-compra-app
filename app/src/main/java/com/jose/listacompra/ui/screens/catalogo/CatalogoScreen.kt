@@ -86,7 +86,7 @@ fun CatalogoScreen(
     var selectedArticulo by remember { mutableStateOf<Articulo?>(null) }
     var showAddDialog by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf<Articulo?>(null) }
-    var selectedCategoryId by remember { mutableStateOf<String?>(null) }
+    var selectedCategoryIds by remember { mutableStateOf<Set<String>>(emptySet()) }
     var showVoiceDialog by remember { mutableStateOf(false) }
     var scannedEan by remember { mutableStateOf<String?>(null) }
     var scannedName by remember { mutableStateOf<String?>(null) }
@@ -138,13 +138,13 @@ fun CatalogoScreen(
             }
     }
 
-    val articulosFiltrados = remember(articulos, searchQuery, selectedCategoryId) {
+    val articulosFiltrados = remember(articulos, searchQuery, selectedCategoryIds) {
         var result = articulos
         if (searchQuery.isNotBlank()) {
             result = result.filter { it.name.contains(searchQuery, ignoreCase = true) || it.ean?.contains(searchQuery, ignoreCase = true) == true }
         }
-        if (selectedCategoryId != null) {
-            result = result.filter { it.categoryId?.toString() == selectedCategoryId }
+        if (selectedCategoryIds.isNotEmpty()) {
+            result = result.filter { it.categoryId?.toString() in selectedCategoryIds }
         }
         result
     }
@@ -362,9 +362,9 @@ fun CatalogoScreen(
     if (showFilterDialog) {
         CategoryFilterDialog(
             categories = categorias,
-            selectedCategoryId = selectedCategoryId,
+            selectedCategoryIds = selectedCategoryIds,
             onDismiss = { showFilterDialog = false },
-            onCategorySelected = { selectedCategoryId = it }
+            onCategorySelected = { selectedCategoryIds = it }
         )
     }
 

@@ -36,12 +36,12 @@ import com.jose.listacompra.domain.model.Category
 @Composable
 fun CategoryFilterDialog(
     categories: List<Category> = emptyList(),
-    selectedCategoryId: String? = null,
+    selectedCategoryIds: Set<String> = emptySet(),
     onDismiss: () -> Unit,
-    onCategorySelected: (String?) -> Unit
+    onCategorySelected: (Set<String>) -> Unit
 ) {
     var searchQuery by remember { mutableStateOf("") }
-    var selected by remember { mutableStateOf(selectedCategoryId) }
+    var selected by remember { mutableStateOf(selectedCategoryIds) }
     
     val filteredCategories = remember(categories, searchQuery) {
         if (searchQuery.isBlank()) categories
@@ -71,17 +71,17 @@ fun CategoryFilterDialog(
                 
                 Spacer(modifier = Modifier.height(12.dp))
                 
-                // Chip "Todas"
+                // Chip "Todas" (limpia selección)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Start
                 ) {
                     FilterChip(
-                        selected = selected == null,
-                        onClick = { selected = null },
+                        selected = selected.isEmpty(),
+                        onClick = { selected = emptySet() },
                         label = { Text("Todas") },
                         leadingIcon = {
-                            if (selected == null) {
+                            if (selected.isEmpty()) {
                                 Icon(Icons.Default.Check, "Seleccionado", modifier = Modifier.size(16.dp))
                             }
                         }
@@ -113,9 +113,18 @@ fun CategoryFilterDialog(
                         modifier = Modifier.height(300.dp)
                     ) {
                         items(filteredCategories) { category ->
+                            val categoryId = category.id.toString()
+                            val isSelected = categoryId in selected
+                            
                             FilterChip(
-                                selected = selected == category.id.toString(),
-                                onClick = { selected = category.id.toString() },
+                                selected = isSelected,
+                                onClick = { 
+                                    selected = if (isSelected) {
+                                        selected - categoryId
+                                    } else {
+                                        selected + categoryId
+                                    }
+                                },
                                 label = { 
                                     Text(
                                         text = "${category.icon} ${category.name}",
@@ -124,7 +133,7 @@ fun CategoryFilterDialog(
                                     ) 
                                 },
                                 leadingIcon = {
-                                    if (selected == category.id.toString()) {
+                                    if (isSelected) {
                                         Icon(Icons.Default.Check, "Seleccionado", modifier = Modifier.size(16.dp))
                                     }
                                 },
