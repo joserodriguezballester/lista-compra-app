@@ -21,7 +21,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.jose.listacompra.ui.components.AppDrawer
 import com.jose.listacompra.ui.components.CommonBottomBar
 import com.jose.listacompra.ui.components.CommonTopBar
-import com.jose.listacompra.ui.components.VoiceInputDialog
+import com.jose.listacompra.ui.components.startDirectVoiceRecognition
+import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -40,7 +41,7 @@ fun HomeScreen(
 ) {
     val scope = rememberCoroutineScope()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    var showVoiceDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -85,7 +86,7 @@ fun HomeScreen(
                     onChangeColor = onChangeColor,
                     onToggleDarkMode = onToggleDarkMode,
                     isDarkMode = isDarkMode,
-                    onMicrophoneClick = { showVoiceDialog = true }
+                    onMicrophoneClick = { startDirectVoiceRecognition(context, productListViewModel, scope) }
                 )
             },
             bottomBar = {
@@ -180,13 +181,6 @@ fun HomeScreen(
                 }
             }
         }
-    }
-    
-    if (showVoiceDialog) {
-        VoiceInputDialog(
-            viewModel = productListViewModel,
-            onDismiss = { showVoiceDialog = false }
-        )
     }
 }
 
