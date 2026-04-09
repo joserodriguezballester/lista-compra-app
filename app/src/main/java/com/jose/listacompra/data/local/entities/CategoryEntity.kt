@@ -6,7 +6,7 @@ import com.jose.listacompra.domain.model.Category
 
 @Entity(tableName = "categories")
 data class CategoryEntity(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    @PrimaryKey val id: Long,
     val name: String,
     val icon: String = "📦"
 ) {
