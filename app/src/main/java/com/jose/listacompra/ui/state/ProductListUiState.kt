@@ -1,8 +1,6 @@
 package com.jose.listacompra.ui.state
 
-import com.jose.listacompra.data.local.dao.PriceStats
 import com.jose.listacompra.data.local.entities.ProductFrequencyEntity
-import com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity
 import com.jose.listacompra.domain.model.Aisle
 import com.jose.listacompra.domain.model.Articulo
 import com.jose.listacompra.domain.model.Category
@@ -24,7 +22,5 @@ data class ProductListUiState(
     val offers: List<Offer> = emptyList(),
     val articleSuggestions: List<Articulo> = emptyList(),
     val collapsedAisles: Set<Long> = emptySet(),
-    val historySuggestions: List<ProductFrequencyEntity> = emptyList(),
-    val selectedPriceHistory: List<ProductPriceHistoryEntity> = emptyList(),
-    val selectedPriceStats: PriceStats? = null
+    val historySuggestions: List<ProductFrequencyEntity> = emptyList()
 )

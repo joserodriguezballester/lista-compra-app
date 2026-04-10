@@ -9,8 +9,6 @@ import com.jose.listacompra.domain.model.Product
 import com.jose.listacompra.domain.usecase.aisle.GetAislesBySupermarketUseCase
 import com.jose.listacompra.domain.usecase.articulo.SearchArticulosUseCase
 import com.jose.listacompra.domain.usecase.category.GetAllCategoriesFlowUseCase
-import com.jose.listacompra.domain.usecase.history.GetPriceHistoryUseCase
-import com.jose.listacompra.domain.usecase.history.GetPriceStatsUseCase
 import com.jose.listacompra.domain.usecase.history.GetProductHistorySuggestionsUseCase
 import com.jose.listacompra.domain.usecase.history.SavePriceHistoryUseCase
 import com.jose.listacompra.domain.usecase.history.UpdateProductFrequencyUseCase
@@ -55,8 +53,6 @@ class ProductListViewModel @Inject constructor(
     private val getProductHistorySuggestionsUseCase: GetProductHistorySuggestionsUseCase,
     private val updateProductFrequencyUseCase: UpdateProductFrequencyUseCase,
     private val savePriceHistoryUseCase: SavePriceHistoryUseCase,
-    private val getPriceHistoryUseCase: GetPriceHistoryUseCase,
-    private val getPriceStatsUseCase: GetPriceStatsUseCase,
     private val themePreferences: ThemePreferences,
     private val resetDataToProductionUseCase: com.jose.listacompra.domain.usecase.data.ResetDataToProductionUseCase
 ) : ViewModel() {
@@ -349,26 +345,6 @@ class ProductListViewModel @Inject constructor(
     fun setPrimaryColor(color: Int) {
         viewModelScope.launch {
             themePreferences.setPrimaryColor(color)
-        }
-    }
-
-    fun loadPriceHistory(productName: String) {
-        viewModelScope.launch {
-            try {
-                val history = getPriceHistoryUseCase(productName)
-                val stats = getPriceStatsUseCase(productName)
-
-                _uiState.update {
-                    it.copy(
-                        selectedPriceHistory = history,
-                        selectedPriceStats = stats
-                    )
-                }
-
-                Log.d(TAG, "Loaded ${history.size} price records for '$productName'")
-            } catch (e: Exception) {
-                Log.e(TAG, "Error loading price history", e)
-            }
         }
     }
     
