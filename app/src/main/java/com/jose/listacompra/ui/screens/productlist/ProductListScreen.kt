@@ -64,6 +64,7 @@ import com.jose.listacompra.ui.components.VoiceInputButton
 import com.jose.listacompra.ui.components.startDirectVoiceRecognition
 import com.jose.listacompra.ui.screens.ColorSettingsDialog
 import com.jose.listacompra.ui.viewmodel.ProductListViewModel
+import com.jose.listacompra.utils.calculateOfferPrice
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -566,76 +567,3 @@ fun ProductListScreen(
 @Composable
 private fun SwipeableProductCard(
     product: Product,
-    offer: com.jose.listacompra.domain.model.Offer?,
-    onClick: () -> Unit,
-    onTogglePurchased: () -> Unit,
-    onRemove: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val dismissState = rememberSwipeToDismissBoxState(
-        initialValue = SwipeToDismissBoxValue.Settled,
-        confirmValueChange = { newValue ->
-            if (newValue == SwipeToDismissBoxValue.EndToStart) {
-                onRemove()
-                true
-            } else false
-        },
-        positionalThreshold = { it * 0.5f }
-    )
-
-    SwipeToDismissBox(
-        state = dismissState,
-        modifier = modifier,
-        enableDismissFromStartToEnd = false,
-        enableDismissFromEndToStart = true,
-        backgroundContent = {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        MaterialTheme.colorScheme.errorContainer,
-                        MaterialTheme.shapes.medium
-                    )
-                    .padding(horizontal = 16.dp),
-                contentAlignment = Alignment.CenterEnd
-            ) {
-                Icon(
-                    Icons.Default.Delete,
-                    "Eliminar",
-                    tint = MaterialTheme.colorScheme.onErrorContainer
-                )
-            }
-        },
-        content = {
-            ProductCard(product, offer, onClick, onTogglePurchased, Modifier.fillMaxWidth())
-        }
-    )
-}
-
-/**
- * Calcula el precio final aplicando una oferta
- */
-private fun calculateOfferPrice(
-    unitPrice: Float,
-    quantity: Float,
-    offer: com.jose.listacompra.domain.model.Offer
-): Float {
-    return when (offer.code) {
-        "3x2" -> unitPrice * (quantity.toInt() / 3 * 2 + quantity.toInt() % 3)
-        "2x1" -> unitPrice * (quantity.toInt() / 2 + quantity.toInt() % 2)
-        "2nd_50" -> {
-            val fullPrice = quantity.toInt() / 2 * unitPrice
-            val halfPrice = quantity.toInt() / 2 * unitPrice * 0.5f
-            fullPrice + halfPrice + (quantity.toInt() % 2) * unitPrice
-        }
-
-        "2nd_70" -> {
-            val fullPrice = quantity.toInt() / 2 * unitPrice
-            val discountedPrice = quantity.toInt() / 2 * unitPrice * 0.3f
-            fullPrice + discountedPrice + (quantity.toInt() % 2) * unitPrice
-        }
-
-        "4x3" -> unitPrice * (quantity.toInt() / 4 * 3 + quantity.toInt() % 4)
-        else -> unitPrice * quantity
-    }
-}
