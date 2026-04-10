@@ -74,7 +74,6 @@ fun AppNavigation(
         
         composable(NavScreen.ShoppingList.route) {
             ProductListScreen(
-                onNavigateBack = { navController.popBackStack() },
                 onNavigateToHome = navigateToHome,
                 onNavigateToCatalogo = { navController.navigate(NavScreen.Catalogo.route) },
                 onNavigateToOffers = { navController.navigate(NavScreen.Offers.route) },
@@ -82,8 +81,6 @@ fun AppNavigation(
                 onNavigateToScanner = { navController.navigate(NavScreen.BarcodeScanner.route) },
                 onNavigateToCategories = { navController.navigate(NavScreen.Categories.route) },
                 onNavigateToHistory = { navController.navigate(NavScreen.History.route) },
-                isDarkMode = isDarkMode,
-                onToggleDarkMode = { onToggleTheme() },
                 navController = navController
             )
         }
@@ -105,7 +102,6 @@ fun AppNavigation(
         
         composable(NavScreen.Offers.route) {
             OffersScreen(
-                onNavigateBack = { navController.popBackStack() },
                 onNavigateToHome = navigateToHome,
                 onNavigateToList = navigateToList,
                 onNavigateToCatalogo = { navController.navigate(NavScreen.Catalogo.route) },
@@ -120,7 +116,6 @@ fun AppNavigation(
         
         composable(NavScreen.Categories.route) {
             CategoriesScreen(
-                onNavigateBack = { navController.popBackStack() },
                 onNavigateToHome = navigateToHome,
                 onNavigateToList = navigateToList,
                 onNavigateToOffers = { navController.navigate(NavScreen.Offers.route) },
@@ -135,7 +130,6 @@ fun AppNavigation(
         
         composable(NavScreen.History.route) {
             HistoryScreen(
-                onNavigateBack = { navController.popBackStack() },
                 onNavigateToHome = navigateToHome,
                 onNavigateToList = navigateToList,
                 onNavigateToOffers = { navController.navigate(NavScreen.Offers.route) },
