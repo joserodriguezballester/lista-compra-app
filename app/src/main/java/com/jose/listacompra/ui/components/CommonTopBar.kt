@@ -1,9 +1,13 @@
 package com.jose.listacompra.ui.components
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 
 /**
@@ -24,9 +28,18 @@ fun CommonTopBar(
     onChangeColor: () -> Unit = {},
     onToggleDarkMode: (() -> Unit)? = null,
     isDarkMode: Boolean = false,
+    showVersionInOverflow: Boolean = true,
     overflowActions: @Composable (Expanded: Boolean, onDismiss: () -> Unit) -> Unit = { _, _ -> }
 ) {
     var showMenu by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val versionName = remember {
+        try {
+            context.packageManager.getPackageInfo(context.packageName, 0).versionName
+        } catch (e: Exception) {
+            "?"
+        }
+    }
 
     TopAppBar(
         title = {
@@ -113,6 +126,31 @@ fun CommonTopBar(
                         Icon(Icons.Default.Palette, contentDescription = null)
                     }
                 )
+                
+                // Versión y actualizar
+                if (showVersionInOverflow) {
+                    HorizontalDivider()
+                    
+                    DropdownMenuItem(
+                        text = { Text("Versión $versionName") },
+                        onClick = { showMenu = false },
+                        leadingIcon = {
+                            Icon(Icons.Default.Info, contentDescription = null)
+                        }
+                    )
+                    
+                    DropdownMenuItem(
+                        text = { Text("Actualizar app") },
+                        onClick = {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/joserodriguezballester/lista-compra-app/releases/latest"))
+                            context.startActivity(intent)
+                            showMenu = false
+                        },
+                        leadingIcon = {
+                            Icon(Icons.Default.SystemUpdate, contentDescription = null)
+                        }
+                    )
+                }
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(

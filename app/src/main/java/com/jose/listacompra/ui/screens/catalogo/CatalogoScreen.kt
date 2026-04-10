@@ -264,21 +264,6 @@ fun CatalogoScreen(
                                 },
                                 leadingIcon = { Icon(Icons.Default.Visibility, contentDescription = null) }
                             )
-                            HorizontalDivider()
-                            DropdownMenuItem(
-                                text = { Text("Versión ${context.packageManager.getPackageInfo(context.packageName, 0).versionName}") },
-                                onClick = { onDismiss() },
-                                leadingIcon = { Icon(Icons.Default.Info, contentDescription = null) }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Actualizar app") },
-                                onClick = {
-                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/joserodriguezballester/lista-compra-app/releases/latest"))
-                                    context.startActivity(intent)
-                                    onDismiss()
-                                },
-                                leadingIcon = { Icon(Icons.Default.SystemUpdate, contentDescription = null) }
-                            )
                         }
                     )
                 }
@@ -320,21 +305,57 @@ fun CatalogoScreen(
                     }
                 }
             } else {
-                LazyVerticalGrid(
-                    columns = GridCells.Adaptive(150.dp),
-                    contentPadding = PaddingValues(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.padding(paddingValues)
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
                 ) {
-                    items(articulosFiltrados, { it.id }) { articulo ->
-                        val category = categorias.find { it.id.toString() == articulo.categoryId?.toString() }
-                        ArticuloCard(
-                            articulo,
-                            { selectedArticulo = articulo; selectedImageUri = null },
-                            articulo.name.lowercase() in articuloNames,
-                            category
-                        )
+                    // Chips de categorías seleccionadas
+                    if (selectedCategoryIds.isNotEmpty()) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState())
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            selectedCategoryIds.forEach { categoryId ->
+                                val category = categorias.find { it.id.toString() == categoryId }
+                                if (category != null) {
+                                    InputChip(
+                                        selected = true,
+                                        onClick = {
+                                            selectedCategoryIds = selectedCategoryIds - categoryId
+                                        },
+                                        label = { Text("${category.icon} ${category.name}") },
+                                        trailingIcon = {
+                                            Icon(
+                                                Icons.Default.Close,
+                                                contentDescription = "Quitar",
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    
+                    LazyVerticalGrid(
+                        columns = GridCells.Adaptive(150.dp),
+                        contentPadding = PaddingValues(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(articulosFiltrados, { it.id }) { articulo ->
+                            val category = categorias.find { it.id.toString() == articulo.categoryId?.toString() }
+                            ArticuloCard(
+                                articulo,
+                                { selectedArticulo = articulo; selectedImageUri = null },
+                                articulo.name.lowercase() in articuloNames,
+                                category
+                            )
+                        }
                     }
                 }
             }
