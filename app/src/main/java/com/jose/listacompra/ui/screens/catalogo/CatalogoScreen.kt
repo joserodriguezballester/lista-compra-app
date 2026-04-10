@@ -1,9 +1,11 @@
 package com.jose.listacompra.ui.screens.catalogo
 
+import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,15 +13,19 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Inventory
 import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -30,6 +36,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.InputChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.OutlinedTextField
@@ -257,6 +264,21 @@ fun CatalogoScreen(
                                 },
                                 leadingIcon = { Icon(Icons.Default.Visibility, contentDescription = null) }
                             )
+                            HorizontalDivider()
+                            DropdownMenuItem(
+                                text = { Text("Versión ${context.packageManager.getPackageInfo(context.packageName, 0).versionName}") },
+                                onClick = { onDismiss() },
+                                leadingIcon = { Icon(Icons.Default.Info, contentDescription = null) }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Actualizar app") },
+                                onClick = {
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/joserodriguezballester/lista-compra-app/releases/latest"))
+                                    context.startActivity(intent)
+                                    onDismiss()
+                                },
+                                leadingIcon = { Icon(Icons.Default.SystemUpdate, contentDescription = null) }
+                            )
                         }
                     )
                 }
@@ -406,26 +428,12 @@ fun CatalogoScreen(
 
     // Preview de diseño M3
     if (showCardPreview) {
-        androidx.compose.material3.AlertDialog(
+        AlertDialog(
             onDismissRequest = { showCardPreview = false },
             modifier = Modifier.fillMaxWidth(0.95f),
-            title = { Text("🎨 Preview Diseño Card M3") },
+            title = { Text("🎨 Comparación de Diseños") },
             text = {
-                Column {
-                    ArticuloCardPreview(
-                        name = "Aceite Girasol 5L",
-                        price = 10.75f,
-                        categoryIcon = "🫒",
-                        categoryName = "Aceites"
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    ArticuloCardPreview(
-                        name = "Leche Semidesnatada",
-                        price = 0.88f,
-                        categoryIcon = "🥛",
-                        categoryName = "Lácteos"
-                    )
-                }
+                ArticuloCardDesignComparison()
             },
             confirmButton = {
                 TextButton(onClick = { showCardPreview = false }) {
