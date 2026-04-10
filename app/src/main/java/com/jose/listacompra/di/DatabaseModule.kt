@@ -16,6 +16,10 @@ import com.jose.listacompra.data.local.dao.ProductPriceHistoryDao
 import com.jose.listacompra.data.local.dao.PurchaseHistoryDao
 import com.jose.listacompra.data.local.dao.ShoppingListDao
 import com.jose.listacompra.data.local.dao.SupermarketDao
+import com.jose.listacompra.data.local.dao.TicketDao
+import com.jose.listacompra.data.local.ShoppingListDatabase.Companion.MIGRATION_11_12
+import com.jose.listacompra.data.local.ShoppingListDatabase.Companion.MIGRATION_13_14
+import com.jose.listacompra.data.local.ShoppingListDatabase.Companion.MIGRATION_7_8
 import com.jose.listacompra.data.repository.AisleRepositoryImpl
 import com.jose.listacompra.data.repository.ArticuloSupermarketDefaultRepository
 import com.jose.listacompra.data.repository.CategoryRepository
@@ -50,7 +54,7 @@ object DatabaseModule {
             ShoppingListDatabase::class.java,
             "shopping_list_db"
         )
-            .fallbackToDestructiveMigration()
+            .addMigrations(MIGRATION_7_8, MIGRATION_11_12, MIGRATION_13_14)
             .build()
     }
 
@@ -92,6 +96,9 @@ object DatabaseModule {
 
     @Provides
     fun provideCategorySupermarketOrderDao(db: ShoppingListDatabase): CategorySupermarketOrderDao = db.categorySupermarketOrderDao()
+
+    @Provides
+    fun provideTicketDao(db: ShoppingListDatabase): TicketDao = db.ticketDao()
 }
 
 @Module

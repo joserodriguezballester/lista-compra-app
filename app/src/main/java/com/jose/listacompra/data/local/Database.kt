@@ -19,6 +19,7 @@ import com.jose.listacompra.data.local.dao.ProductPriceHistoryDao
 import com.jose.listacompra.data.local.dao.PurchaseHistoryDao
 import com.jose.listacompra.data.local.dao.ShoppingListDao
 import com.jose.listacompra.data.local.dao.SupermarketDao
+import com.jose.listacompra.data.local.dao.TicketDao
 import com.jose.listacompra.data.local.entities.AisleEntity
 import com.jose.listacompra.data.local.entities.ArticuloEntity
 import com.jose.listacompra.data.local.entities.ArticuloSupermarketDefaultEntity
@@ -32,6 +33,8 @@ import com.jose.listacompra.data.local.entities.ProductPriceHistoryEntity
 import com.jose.listacompra.data.local.entities.PurchaseHistoryEntity
 import com.jose.listacompra.data.local.entities.ShoppingListEntity
 import com.jose.listacompra.data.local.entities.SupermarketEntity
+import com.jose.listacompra.data.local.entities.TicketEntity
+import com.jose.listacompra.data.local.entities.TicketLineEntity
 
 @Database(
     entities = [
@@ -47,9 +50,11 @@ import com.jose.listacompra.data.local.entities.SupermarketEntity
         SupermarketEntity::class,
         CategoryEntity::class,
         ArticuloSupermarketDefaultEntity::class,
-        CategorySupermarketOrderEntity::class  // NUEVA
+        CategorySupermarketOrderEntity::class,
+        TicketEntity::class,
+        TicketLineEntity::class
     ],
-    version = 13,  // Subido para forzar recreación con ofertas
+    version = 14,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -66,7 +71,8 @@ abstract class ShoppingListDatabase : RoomDatabase() {
     abstract fun supermarketDao(): SupermarketDao
     abstract fun categoryDao(): CategoryDao
     abstract fun articuloSupermarketDefaultDao(): ArticuloSupermarketDefaultDao
-    abstract fun categorySupermarketOrderDao(): CategorySupermarketOrderDao  // NUEVO
+    abstract fun categorySupermarketOrderDao(): CategorySupermarketOrderDao
+    abstract fun ticketDao(): TicketDao
 
     companion object {
         const val DATABASE_NAME = "shopping_list_db"
@@ -135,6 +141,59 @@ abstract class ShoppingListDatabase : RoomDatabase() {
                 
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_category_supermarket_orders_categoryId ON category_supermarket_orders(categoryId)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_category_supermarket_orders_supermarketId ON category_supermarket_orders(supermarketId)")
+            }
+        }
+        
+        // Migración 13→14: Añadir tablas de tickets
+        val MIGRATION_13_14 = object : Migration(13, 14) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Tabla de tickets
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS tickets (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        fecha INTEGER NOT NULL,
+                        supermarketId INTEGER,
+                        supermarketName TEXT,
+                        total REAL NOT NULL,
+                        subtotal REAL,
+                        descuentos REAL,
+                        numProductos INTEGER NOT NULL,
+                        socioClub TEXT,
+                        formaPago TEXT,
+                        pdfPath TEXT,
+                        importado INTEGER NOT NULL DEFAULT 0,
+                        createdAt INTEGER NOT NULL,
+                        FOREIGN KEY(supermarketId) REFERENCES supermarkets(id) ON DELETE SET NULL
+                    )
+                """)
+                
+                // Tabla de líneas de ticket
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS ticket_lines (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        ticketId INTEGER NOT NULL,
+                        nombreOriginal TEXT NOT NULL,
+                        nombreNormalizado TEXT NOT NULL,
+                        cantidad INTEGER NOT NULL,
+                        precioUnitario REAL NOT NULL,
+                        precioTotal REAL NOT NULL,
+                        articuloId INTEGER,
+                        categoriaId INTEGER,
+                        esDescuento INTEGER NOT NULL DEFAULT 0,
+                        codigoPromocion TEXT,
+                        notas TEXT,
+                        confirmado INTEGER NOT NULL DEFAULT 0,
+                        FOREIGN KEY(ticketId) REFERENCES tickets(id) ON DELETE CASCADE,
+                        FOREIGN KEY(articuloId) REFERENCES articulos(id) ON DELETE SET NULL
+                    )
+                """)
+                
+                // Índices
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_tickets_supermarketId ON tickets(supermarketId)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_tickets_fecha ON tickets(fecha)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_ticket_lines_ticketId ON ticket_lines(ticketId)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_ticket_lines_articuloId ON ticket_lines(articuloId)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_ticket_lines_nombreNormalizado ON ticket_lines(nombreNormalizado)")
             }
         }
     }
