@@ -19,6 +19,7 @@ import com.jose.listacompra.ui.screens.productlist.ProductListScreen
 import com.jose.listacompra.ui.screens.scanner.BarcodeScannerScreen
 import com.jose.listacompra.ui.screens.supermarket.SupermarketAislesScreen
 import com.jose.listacompra.ui.screens.supermarket.SupermarketListScreen
+import com.jose.listacompra.ui.screens.ticket.TicketImportScreen
 
 @Composable
 fun AppNavigation(
@@ -66,6 +67,7 @@ fun AppNavigation(
                 onNavigateToOffers = { navController.navigate(NavScreen.Offers.route) },
                 onNavigateToCategories = { navController.navigate(NavScreen.Categories.route) },
                 onNavigateToHistory = { navController.navigate(NavScreen.History.route) },
+                onNavigateToTicketImport = { navController.navigate(NavScreen.TicketImport.route) },
                 onChangeColor = onChangeColor,
                 isDarkMode = isDarkMode,
                 onToggleDarkMode = onToggleTheme
@@ -156,6 +158,12 @@ fun AppNavigation(
                         }
                     navController.popBackStack()
                 },
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        
+        composable(NavScreen.TicketImport.route) {
+            TicketImportScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }

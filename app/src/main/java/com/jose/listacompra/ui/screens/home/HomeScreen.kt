@@ -34,6 +34,7 @@ fun HomeScreen(
     onNavigateToOffers: () -> Unit = {},
     onNavigateToCategories: () -> Unit = {},
     onNavigateToHistory: () -> Unit = {},
+    onNavigateToTicketImport: () -> Unit = {},
     onChangeColor: () -> Unit = {},
     isDarkMode: Boolean = false,
     onToggleDarkMode: () -> Unit = {},
@@ -173,6 +174,17 @@ fun HomeScreen(
                         onClick = onNavigateToHistory
                     )
                 }
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                // Importar ticket
+                HomeCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    title = "Importar Ticket",
+                    subtitle = "Escanea un ticket de Carrefour",
+                    emoji = "🧾",
+                    onClick = onNavigateToTicketImport
+                )
             }
         }
     }

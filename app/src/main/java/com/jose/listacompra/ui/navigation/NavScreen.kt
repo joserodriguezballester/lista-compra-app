@@ -19,6 +19,7 @@ sealed class NavScreen(val route: String, val title: String, val icon: ImageVect
     object Offers : NavScreen("ofertas", "Ofertas", Icons.Default.LocalOffer)
     object BarcodeScanner : NavScreen("scanner", "Escanear", Icons.Default.Home)
     object History : NavScreen("historial", "Historial", Icons.Default.Home)
+    object TicketImport : NavScreen("ticket-import", "Importar Ticket", Icons.Default.Receipt)
     // Rutas con argumentos
     object SupermarketAisles : NavScreen("supermercado/{supermarketId}/pasillos", "Pasillos", Icons.Default.Store) {
         fun createRoute(supermarketId: Long) = "supermercado/$supermarketId/pasillos"
