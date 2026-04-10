@@ -8,10 +8,12 @@ import android.content.IntentFilter
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -215,19 +217,7 @@ fun CommonTopBar(
                     latestRelease?.let { release ->
                         DropdownMenuItem(
                             text = { 
-                                Column {
-                                    Text(
-                                        text = "Último: ${release.tagName}",
-                                        style = MaterialTheme.typography.bodySmall
-                                    )
-                                    if (apkSizeFormatted.isNotEmpty() && release.apkUrl != null) {
-                                        Text(
-                                            text = apkSizeFormatted,
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                }
+                                Text("Último: ${release.tagName} ($apkSizeFormatted)")
                             },
                             onClick = { showMenu = false },
                             leadingIcon = {
@@ -270,7 +260,7 @@ fun CommonTopBar(
                             leadingIcon = {
                                 if (isDownloading) {
                                     CircularProgressIndicator(
-                                        modifier = androidx.compose.ui.Modifier.size(20.dp),
+                                        modifier = Modifier.size(20.dp),
                                         strokeWidth = 2.dp
                                     )
                                 } else {
