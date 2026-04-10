@@ -140,4 +140,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindHistoryRepository(impl: com.jose.listacompra.data.repository.HistoryRepositoryImpl): com.jose.listacompra.domain.repository.IHistoryRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindTicketRepository(impl: com.jose.listacompra.data.repository.TicketRepository): com.jose.listacompra.domain.repository.ITicketRepository
 }
