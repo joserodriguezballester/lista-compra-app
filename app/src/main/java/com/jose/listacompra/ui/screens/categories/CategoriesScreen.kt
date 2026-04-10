@@ -217,9 +217,6 @@ fun CategoriesScreen(
             }
         )
     }
-    
-    // Diálogo de voz (T5 refactor)
-    }
 }
 
 @Composable

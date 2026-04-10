@@ -183,9 +183,6 @@ fun HistoryScreen(
             }
         }
     }
-
-    // Diálogo de voz (T5 refactor)
-    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

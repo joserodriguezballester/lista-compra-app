@@ -501,16 +501,6 @@ fun ProductListScreen(
         )
     }
 
-    // Diálogo de voz
-            },
-            confirmButton = {
-                TextButton(onClick = { showVoiceDialog = false }) {
-                    Text("Cancelar")
-                }
-            }
-        )
-    }
-
     // Diálogo confirmar vaciar lista
     if (showClearConfirmDialog) {
         AlertDialog(

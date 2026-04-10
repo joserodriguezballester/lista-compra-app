@@ -217,9 +217,6 @@ fun OffersScreen(
             }
         )
     }
-
-    // Diálogo de voz (T5 refactor)
-    }
 }
 
 @Composable

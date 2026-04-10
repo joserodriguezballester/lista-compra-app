@@ -197,9 +197,6 @@ fun SupermarketListScreen(
             }
         )
     }
-
-    // Diálogo de voz
-    }
 }
 
 /**
