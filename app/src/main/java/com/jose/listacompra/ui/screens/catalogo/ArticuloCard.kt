@@ -41,20 +41,19 @@ fun ArticuloCard(
     hasVariants: Boolean = false,
     category: Category? = null
 ) {
+    // Estilo variante 2: sombra pronunciada + borde 2dp
     val borderColor = if (hasVariants) {
         MaterialTheme.colorScheme.tertiary
     } else {
-        MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+        MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
     }
-    
-    val borderThickness = if (hasVariants) 2.dp else 1.dp
     
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .border(
-                width = borderThickness,
+                width = 2.dp,
                 color = borderColor,
                 shape = RoundedCornerShape(12.dp)
             ),
@@ -62,7 +61,7 @@ fun ArticuloCard(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface,
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
         onClick = onClick
     ) {
         Column {
