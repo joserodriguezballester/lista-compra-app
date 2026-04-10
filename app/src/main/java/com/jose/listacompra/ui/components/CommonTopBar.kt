@@ -1,6 +1,5 @@
 package com.jose.listacompra.ui.components
 
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.material.icons.Icons
@@ -9,6 +8,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.json.JSONObject
 
 /**
  * TopBar común con:
@@ -17,6 +19,35 @@ import androidx.compose.ui.text.font.FontWeight
  * - Micrófono (para añadir productos)
  * - Menú overflow (opciones específicas + ajustes)
  */
+data class ReleaseInfo(
+    val tagName: String,
+    val name: String,
+    val publishedAt: String,
+    val htmlUrl: String
+)
+
+suspend fun fetchLatestRelease(): ReleaseInfo? = withContext(Dispatchers.IO) {
+    try {
+        val url = java.net.URL("https://api.github.com/repos/joserodriguezballester/lista-compra-app/releases/latest")
+        val connection = url.openConnection()
+        connection.setRequestProperty("Accept", "application/vnd.github.v3+json")
+        connection.connectTimeout = 5000
+        connection.readTimeout = 5000
+        
+        val response = connection.getInputStream().bufferedReader().readText()
+        val json = JSONObject(response)
+        
+        ReleaseInfo(
+            tagName = json.getString("tag_name"),
+            name = json.optString("name", json.getString("tag_name")),
+            publishedAt = json.optString("published_at", ""),
+            htmlUrl = json.getString("html_url")
+        )
+    } catch (e: Exception) {
+        null
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CommonTopBar(
@@ -33,11 +64,29 @@ fun CommonTopBar(
 ) {
     var showMenu by remember { mutableStateOf(false) }
     val context = LocalContext.current
-    val versionName = remember {
+    
+    // Versión instalada
+    val installedVersion = remember {
         try {
             context.packageManager.getPackageInfo(context.packageName, 0).versionName
         } catch (e: Exception) {
             "?"
+        }
+    }
+    
+    // Último release de GitHub
+    var latestRelease by remember { mutableStateOf<ReleaseInfo?>(null) }
+    LaunchedEffect(Unit) {
+        latestRelease = fetchLatestRelease()
+    }
+    
+    // Comparar versiones (formato vX.X.X)
+    val hasUpdate = remember(installedVersion, latestRelease) {
+        if (latestRelease == null || installedVersion == "?") false
+        else {
+            val installed = installedVersion.removePrefix("v")
+            val latest = latestRelease!!.tagName.removePrefix("v")
+            installed != latest
         }
     }
 
@@ -131,23 +180,48 @@ fun CommonTopBar(
                 if (showVersionInOverflow) {
                     HorizontalDivider()
                     
+                    // Info del último release
+                    latestRelease?.let { release ->
+                        DropdownMenuItem(
+                            text = { 
+                                Column {
+                                    Text(
+                                        text = "Último: ${release.tagName}",
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                    if (hasUpdate) {
+                                        Text(
+                                            text = "Actualización disponible",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                }
+                            },
+                            onClick = { showMenu = false },
+                            leadingIcon = {
+                                Icon(Icons.Default.Info, contentDescription = null)
+                            }
+                        )
+                    }
+                    
                     DropdownMenuItem(
-                        text = { Text("Versión $versionName") },
+                        text = { Text("Instalada: v$installedVersion") },
                         onClick = { showMenu = false },
                         leadingIcon = {
-                            Icon(Icons.Default.Info, contentDescription = null)
+                            Icon(Icons.Default.Download, contentDescription = null)
                         }
                     )
                     
                     DropdownMenuItem(
-                        text = { Text("Actualizar app") },
+                        text = { Text("Ver releases") },
                         onClick = {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/joserodriguezballester/lista-compra-app/releases/latest"))
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/joserodriguezballester/lista-compra-app/releases"))
                             context.startActivity(intent)
                             showMenu = false
                         },
                         leadingIcon = {
-                            Icon(Icons.Default.SystemUpdate, contentDescription = null)
+                            Icon(Icons.Default.OpenInNew, contentDescription = null)
                         }
                     )
                 }
