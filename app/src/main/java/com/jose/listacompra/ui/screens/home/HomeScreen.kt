@@ -165,7 +165,6 @@ fun HomeScreen(
                         modifier = Modifier.weight(1f),
                         title = "Categorías",
                         subtitle = "Ver categorías",
-                        icon = Icons.Default.Category,
                         emoji = "📂",
                         onClick = onNavigateToCategories
                     )
@@ -174,7 +173,6 @@ fun HomeScreen(
                         modifier = Modifier.weight(1f),
                         title = "Historial",
                         subtitle = "Estadísticas",
-                        icon = Icons.Default.History,
                         emoji = "📊",
                         onClick = onNavigateToHistory
                     )
@@ -189,7 +187,6 @@ private fun HomeCard(
     modifier: Modifier = Modifier,
     title: String,
     subtitle: String,
-    icon: ImageVector,
     emoji: String = "",
     enabled: Boolean = true,
     onClick: () -> Unit

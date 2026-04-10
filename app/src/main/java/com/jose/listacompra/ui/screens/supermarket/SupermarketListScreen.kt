@@ -29,7 +29,6 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SupermarketListScreen(
-    onNavigateBack: () -> Unit = {},
     onNavigateToAisles: (Long) -> Unit,
     onNavigateToHome: () -> Unit = {},
     onNavigateToList: () -> Unit = {},
@@ -96,7 +95,7 @@ fun SupermarketListScreen(
                     onToggleDarkMode = onToggleDarkMode,
                     isDarkMode = isDarkMode,
                     onMicrophoneClick = { startDirectVoiceRecognition(context, productListViewModel, scope) },
-                    overflowActions = { expanded, onDismiss ->
+                    overflowActions = { _, onDismiss ->
                         DropdownMenuItem(
                             text = { Text("Añadir supermercado") },
                             onClick = {
@@ -149,7 +148,7 @@ fun SupermarketListScreen(
         SupermarketDialog(
             supermarket = null,
             onDismiss = { showAddDialog = false },
-            onSave = { name, emoji ->
+            onSave = { _, _ ->
                 // TODO: Implementar con ViewModel
                 // viewModel.addSupermarket(name, emoji)
                 showAddDialog = false

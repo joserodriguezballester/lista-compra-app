@@ -70,7 +70,6 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductListScreen(
-    onNavigateBack: () -> Unit = {},
     onNavigateToHome: () -> Unit = {},
     onNavigateToCatalogo: () -> Unit = {},
     onNavigateToOffers: () -> Unit = {},
@@ -78,8 +77,6 @@ fun ProductListScreen(
     onNavigateToScanner: () -> Unit = {},
     onNavigateToCategories: () -> Unit = {},
     onNavigateToHistory: () -> Unit = {},
-    isDarkMode: Boolean = false,
-    onToggleDarkMode: (Boolean) -> Unit = {},
     navController: NavController? = null,
     viewModel: ProductListViewModel = hiltViewModel()
 ) {
@@ -98,7 +95,6 @@ fun ProductListScreen(
     // Datos del scanner
     var scannedName by remember { mutableStateOf<String?>(null) }
     var scannedPrice by remember { mutableStateOf<Float?>(null) }
-    var scannedAisleId by remember { mutableStateOf<Long?>(null) }
     var scannedImageUrl by remember { mutableStateOf<String?>(null) }
     var scannedCategoryId by remember { mutableStateOf<String?>(null) }
 
@@ -170,7 +166,7 @@ fun ProductListScreen(
                     onMicrophoneClick = { startDirectVoiceRecognition(context, viewModel, scope) },
                     onAddClick = { showAddProductDialog = true },
                     onChangeColor = { showColorDialog = true },
-                    overflowActions = { expanded, onDismiss ->
+                    overflowActions = { _, onDismiss ->
                         // 📁 Añadir productos
                         DropdownMenuItem(
                             text = { Text("📁 Añadir productos") },
@@ -567,3 +563,48 @@ fun ProductListScreen(
 @Composable
 private fun SwipeableProductCard(
     product: Product,
+    offer: com.jose.listacompra.domain.model.Offer?,
+    onClick: () -> Unit,
+    onTogglePurchased: () -> Unit,
+    onRemove: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val dismissState = rememberSwipeToDismissBoxState(
+        initialValue = SwipeToDismissBoxValue.Settled,
+        confirmValueChange = { newValue ->
+            if (newValue == SwipeToDismissBoxValue.EndToStart) {
+                onRemove()
+                true
+            } else false
+        },
+        positionalThreshold = { it * 0.5f }
+    )
+
+    SwipeToDismissBox(
+        state = dismissState,
+        modifier = modifier,
+        enableDismissFromStartToEnd = false,
+        enableDismissFromEndToStart = true,
+        backgroundContent = {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        MaterialTheme.colorScheme.errorContainer,
+                        MaterialTheme.shapes.medium
+                    )
+                    .padding(horizontal = 16.dp),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                Icon(
+                    Icons.Default.Delete,
+                    "Eliminar",
+                    tint = MaterialTheme.colorScheme.onErrorContainer
+                )
+            }
+        },
+        content = {
+            ProductCard(product, offer, onClick, onTogglePurchased, Modifier.fillMaxWidth())
+        }
+    )
+}

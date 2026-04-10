@@ -24,7 +24,6 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OffersScreen(
-    onNavigateBack: () -> Unit = {},
     onNavigateToHome: () -> Unit = {},
     onNavigateToList: () -> Unit = {},
     onNavigateToCatalogo: () -> Unit = {},
@@ -91,7 +90,7 @@ fun OffersScreen(
                     onToggleDarkMode = onToggleDarkMode,
                     isDarkMode = isDarkMode,
                     onMicrophoneClick = { startDirectVoiceRecognition(context, productListViewModel, scope) },
-                    overflowActions = { expanded, onDismiss ->
+                    overflowActions = { _, onDismiss ->
                         DropdownMenuItem(
                             text = { Text("Añadir oferta") },
                             onClick = {

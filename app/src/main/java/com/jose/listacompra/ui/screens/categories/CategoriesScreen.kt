@@ -24,7 +24,6 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoriesScreen(
-    onNavigateBack: () -> Unit = {},
     onNavigateToHome: () -> Unit = {},
     onNavigateToList: () -> Unit = {},
     onNavigateToOffers: () -> Unit = {},

@@ -233,7 +233,7 @@ fun CatalogoScreen(
                         onToggleDarkMode = onToggleDarkMode,
                         isDarkMode = isDarkMode,
                         onMicrophoneClick = { startDirectVoiceRecognition(context, productListViewModel, scope) },
-                        overflowActions = { expanded, onDismiss ->
+                        overflowActions = { _, onDismiss ->
                             DropdownMenuItem(
                                 text = { Text("Añadir manual") },
                                 onClick = {
