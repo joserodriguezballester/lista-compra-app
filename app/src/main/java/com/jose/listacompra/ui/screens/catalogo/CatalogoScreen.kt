@@ -22,18 +22,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Inventory
 import androidx.compose.material.icons.filled.QrCodeScanner
-import androidx.compose.material.icons.filled.SystemUpdate
-import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.InputChip
@@ -107,7 +103,6 @@ fun CatalogoScreen(
     var scannedCategoryId by remember { mutableStateOf<String?>(null) }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var showImageSourceDialog by remember { mutableStateOf(false) }
-    var showCardPreview by remember { mutableStateOf(false) } // Preview diseño M3
 
     // Recibir datos del scanner
     LaunchedEffect(navController) {
@@ -254,15 +249,6 @@ fun CatalogoScreen(
                                     onDismiss()
                                 },
                                 leadingIcon = { Icon(Icons.Default.QrCodeScanner, contentDescription = null) }
-                            )
-                            HorizontalDivider()
-                            DropdownMenuItem(
-                                text = { Text("🎨 Preview Card M3") },
-                                onClick = {
-                                    showCardPreview = true
-                                    onDismiss()
-                                },
-                                leadingIcon = { Icon(Icons.Default.Visibility, contentDescription = null) }
                             )
                         }
                     )
@@ -444,23 +430,6 @@ fun CatalogoScreen(
                 }
             },
             dismissButton = { TextButton({ showDeleteConfirm = null }) { Text("Cancelar") } }
-        )
-    }
-
-    // Preview de diseño M3
-    if (showCardPreview) {
-        AlertDialog(
-            onDismissRequest = { showCardPreview = false },
-            modifier = Modifier.fillMaxWidth(0.95f),
-            title = { Text("🎨 Comparación de Diseños") },
-            text = {
-                ArticuloCardDesignComparison()
-            },
-            confirmButton = {
-                TextButton(onClick = { showCardPreview = false }) {
-                    Text("Cerrar")
-                }
-            }
         )
     }
 }
