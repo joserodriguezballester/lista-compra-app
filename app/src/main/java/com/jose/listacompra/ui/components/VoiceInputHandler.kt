@@ -7,7 +7,10 @@ import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.widget.Toast
+import androidx.activity.ComponentActivity
 import androidx.compose.runtime.*
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.jose.listacompra.ui.utils.BeepHelper
 import com.jose.listacompra.ui.viewmodel.ProductListViewModel
 import kotlinx.coroutines.launch
@@ -22,14 +25,26 @@ fun startDirectVoiceRecognition(
     context: Context,
     viewModel: ProductListViewModel,
     scope: kotlinx.coroutines.CoroutineScope,
-    onStatusUpdate: ((String) -> Unit)? = null
+    onStatusUpdate: ((String) -> Unit)? = null,
+    onRequestPermission: (() -> Unit)? = null
 ) {
     // Verificar permiso
-    val hasPermission = context.checkSelfPermission(Manifest.permission.RECORD_AUDIO) == 
-        PackageManager.PERMISSION_GRANTED
+    val hasPermission = ContextCompat.checkSelfPermission(
+        context, Manifest.permission.RECORD_AUDIO
+    ) == PackageManager.PERMISSION_GRANTED
     
     if (!hasPermission) {
-        Toast.makeText(context, "Se necesita permiso de micrófono", Toast.LENGTH_SHORT).show()
+        // Solicitar permiso
+        if (context is ComponentActivity) {
+            ActivityCompat.requestPermissions(
+                context,
+                arrayOf(Manifest.permission.RECORD_AUDIO),
+                REQUEST_CODE_MICROPHONE
+            )
+            onStatusUpdate?.invoke("🎤 Se necesita permiso de micrófono")
+            Toast.makeText(context, "Concede permiso de micrófono", Toast.LENGTH_SHORT).show()
+        }
+        onRequestPermission?.invoke()
         return
     }
     
@@ -147,4 +162,6 @@ private fun processVoiceResult(
         }
     }
 }
+
+private const val REQUEST_CODE_MICROPHONE = 1001
 

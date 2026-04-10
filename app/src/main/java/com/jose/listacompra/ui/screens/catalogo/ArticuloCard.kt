@@ -79,7 +79,7 @@ fun ArticuloCard(
                         model = articulo.photoUri,
                         contentDescription = articulo.name,
                         modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
+                        contentScale = ContentScale.Fit
                     )
                 } else {
                     Icon(

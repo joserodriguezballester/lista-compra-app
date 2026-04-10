@@ -122,7 +122,7 @@ fun AddEditArticuloDialog(
                                 model = photoUri,
                                 contentDescription = name,
                                 modifier = Modifier.fillMaxWidth().height(150.dp),
-                                contentScale = ContentScale.Crop
+                                contentScale = ContentScale.Fit
                             )
                             // Overlay con icono de cámara
                             Surface(

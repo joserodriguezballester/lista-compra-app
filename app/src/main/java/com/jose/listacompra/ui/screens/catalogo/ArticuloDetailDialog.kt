@@ -30,6 +30,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -51,6 +52,7 @@ import com.jose.listacompra.domain.model.Category
 fun ArticuloDetailDialog(
     articulo: Articulo,
     categories: List<Category> = emptyList(),
+    selectedImageUri: String? = null,
     onDismiss: () -> Unit,
     onSave: (Articulo) -> Unit,
     onDelete: () -> Unit,
@@ -64,7 +66,14 @@ fun ArticuloDetailDialog(
     var selectedCategory by remember { mutableStateOf(
         categories.find { it.id == articulo.categoryId } ?: categories.firstOrNull()
     ) }
-    var photoUri by remember { mutableStateOf(articulo.photoUri ?: "") }
+    var photoUri by remember { mutableStateOf(selectedImageUri ?: articulo.photoUri ?: "") }
+    
+    // Actualizar photoUri cuando selectedImageUri cambia desde fuera
+    LaunchedEffect(selectedImageUri) {
+        if (selectedImageUri != null) {
+            photoUri = selectedImageUri
+        }
+    }
     
     var isEditing by remember { mutableStateOf(false) }
     var categoryExpanded by remember { mutableStateOf(false) }
@@ -102,7 +111,7 @@ fun ArticuloDetailDialog(
                                 model = photoUri,
                                 contentDescription = articulo.name,
                                 modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
+                                contentScale = ContentScale.Fit
                             )
                             if (isEditing) {
                                 // Overlay con icono de cámara

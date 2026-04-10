@@ -367,6 +367,7 @@ fun CatalogoScreen(
         ArticuloDetailDialog(
             articulo = articulo.copy(photoUri = selectedImageUri?.toString() ?: articulo.photoUri),
             categories = categorias,
+            selectedImageUri = selectedImageUri?.toString(),
             onDismiss = { selectedArticulo = null; selectedImageUri = null },
             onSave = { viewModel.updateArticulo(it); selectedArticulo = null; selectedImageUri = null },
             onDelete = { showDeleteConfirm = articulo; selectedArticulo = null },
