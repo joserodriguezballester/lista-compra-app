@@ -33,6 +33,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -76,6 +77,13 @@ fun AddEditArticuloDialog(
     ) }
     var photoUri by remember { mutableStateOf(selectedImageUri ?: articulo?.photoUri ?: "") }
     var categoryExpanded by remember { mutableStateOf(false) }
+    
+    // Actualizar photoUri cuando selectedImageUri cambia desde fuera
+    LaunchedEffect(selectedImageUri) {
+        if (selectedImageUri != null) {
+            photoUri = selectedImageUri
+        }
+    }
     
     // Parsear cantidad si viene del scanner
     val quantityParts = prefillQuantity?.split(" ")
