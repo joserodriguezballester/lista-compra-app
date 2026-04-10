@@ -119,7 +119,6 @@ fun HomeScreen(
                         modifier = Modifier.weight(1f),
                         title = "Mi Lista",
                         subtitle = "Lista de la compra",
-                        icon = Icons.Default.ShoppingCart,
                         emoji = "🛒",
                         onClick = onNavigateToList
                     )
@@ -128,7 +127,6 @@ fun HomeScreen(
                         modifier = Modifier.weight(1f),
                         title = "Catálogo",
                         subtitle = "Artículos",
-                        icon = Icons.Default.Inventory,
                         emoji = "📦",
                         onClick = onNavigateToCatalogo
                     )
@@ -142,7 +140,6 @@ fun HomeScreen(
                         modifier = Modifier.weight(1f),
                         title = "Supermercados",
                         subtitle = "Gestionar",
-                        icon = Icons.Default.Store,
                         emoji = "🏪",
                         onClick = onNavigateToSupermarkets
                     )
@@ -151,7 +148,6 @@ fun HomeScreen(
                         modifier = Modifier.weight(1f),
                         title = "Ofertas",
                         subtitle = "Ver ofertas",
-                        icon = Icons.Default.LocalOffer,
                         emoji = "🏷️",
                         onClick = onNavigateToOffers
                     )
