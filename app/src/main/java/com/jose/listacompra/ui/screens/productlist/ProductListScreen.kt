@@ -49,6 +49,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -60,6 +61,7 @@ import com.jose.listacompra.ui.components.CommonTopBar
 import com.jose.listacompra.ui.components.ListBottomBar
 import com.jose.listacompra.ui.components.ProductCard
 import com.jose.listacompra.ui.components.VoiceInputButton
+import com.jose.listacompra.ui.components.startDirectVoiceRecognition
 import com.jose.listacompra.ui.screens.ColorSettingsDialog
 import com.jose.listacompra.ui.viewmodel.ProductListViewModel
 import kotlinx.coroutines.launch
@@ -164,7 +166,7 @@ fun ProductListScreen(
                 CommonTopBar(
                     title = "Mi lista",
                     onOpenDrawer = { scope.launch { drawerState.open() } },
-                    onMicrophoneClick = { startDirectVoiceRecognition(context, productListViewModel, scope) },
+                    onMicrophoneClick = { startDirectVoiceRecognition(context, viewModel, scope) },
                     onAddClick = { showAddProductDialog = true },
                     onChangeColor = { showColorDialog = true },
                     overflowActions = { expanded, onDismiss ->

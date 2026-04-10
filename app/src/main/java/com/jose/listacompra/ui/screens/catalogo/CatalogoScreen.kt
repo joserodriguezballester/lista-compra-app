@@ -20,12 +20,14 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Inventory
 import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -38,6 +40,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,6 +57,8 @@ import com.jose.listacompra.ui.components.CatalogBottomBar
 import com.jose.listacompra.ui.components.CommonTopBar
 import com.jose.listacompra.ui.components.ImageSourceDialog
 import com.jose.listacompra.ui.components.rememberImagePicker
+import com.jose.listacompra.ui.components.startDirectVoiceRecognition
+import com.jose.listacompra.ui.viewmodel.ProductListViewModel
 import com.jose.listacompra.ui.navigation.NavScreen
 import com.jose.listacompra.ui.viewmodel.ArticuloViewModel
 import kotlinx.coroutines.launch
