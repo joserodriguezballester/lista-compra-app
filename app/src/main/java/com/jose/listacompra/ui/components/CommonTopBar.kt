@@ -1,29 +1,33 @@
 package com.jose.listacompra.ui.components
 
+import android.app.DownloadManager
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.net.Uri
+import android.os.Build
+import android.os.Environment
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import java.io.File
 
-/**
- * TopBar común con:
- * - Drawer (hamburguesa) o volver
- * - Título
- * - Micrófono (para añadir productos)
- * - Menú overflow (opciones específicas + ajustes)
- */
 data class ReleaseInfo(
     val tagName: String,
     val name: String,
     val publishedAt: String,
-    val htmlUrl: String
+    val htmlUrl: String,
+    val apkUrl: String?,
+    val apkSize: Long
 )
 
 suspend fun fetchLatestRelease(): ReleaseInfo? = withContext(Dispatchers.IO) {
@@ -37,11 +41,25 @@ suspend fun fetchLatestRelease(): ReleaseInfo? = withContext(Dispatchers.IO) {
         val response = connection.getInputStream().bufferedReader().readText()
         val json = JSONObject(response)
         
+        // Obtener URL del APK (primer asset)
+        val assets = json.optJSONArray("assets")
+        val apkAsset = if (assets != null && assets.length() > 0) {
+            val firstAsset = assets.getJSONObject(0)
+            Pair(
+                firstAsset.optString("browser_download_url"),
+                firstAsset.optLong("size", 0)
+            )
+        } else {
+            Pair(null, 0L)
+        }
+        
         ReleaseInfo(
             tagName = json.getString("tag_name"),
             name = json.optString("name", json.getString("tag_name")),
             publishedAt = json.optString("published_at", ""),
-            htmlUrl = json.getString("html_url")
+            htmlUrl = json.getString("html_url"),
+            apkUrl = apkAsset.first,
+            apkSize = apkAsset.second
         )
     } catch (e: Exception) {
         null
@@ -76,6 +94,9 @@ fun CommonTopBar(
     
     // Último release de GitHub
     var latestRelease by remember { mutableStateOf<ReleaseInfo?>(null) }
+    var isDownloading by remember { mutableStateOf(false) }
+    var downloadProgress by remember { mutableStateOf(0L) }
+    
     LaunchedEffect(Unit) {
         latestRelease = fetchLatestRelease()
     }
@@ -87,6 +108,16 @@ fun CommonTopBar(
             val installed = installedVersion.removePrefix("v")
             val latest = latestRelease!!.tagName.removePrefix("v")
             installed != latest
+        }
+    }
+    
+    // Formatear tamaño de archivo
+    val apkSizeFormatted = remember(latestRelease?.apkSize) {
+        val size = latestRelease?.apkSize ?: 0
+        if (size > 1024 * 1024) {
+            "%.1f MB".format(size / (1024.0 * 1024.0))
+        } else {
+            "%.0f KB".format(size / 1024.0)
         }
     }
 
@@ -189,11 +220,11 @@ fun CommonTopBar(
                                         text = "Último: ${release.tagName}",
                                         style = MaterialTheme.typography.bodySmall
                                     )
-                                    if (hasUpdate) {
+                                    if (apkSizeFormatted.isNotEmpty() && release.apkUrl != null) {
                                         Text(
-                                            text = "Actualización disponible",
+                                            text = apkSizeFormatted,
                                             style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.primary
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     }
                                 }
@@ -213,17 +244,54 @@ fun CommonTopBar(
                         }
                     )
                     
-                    DropdownMenuItem(
-                        text = { Text("Ver releases") },
-                        onClick = {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/joserodriguezballester/lista-compra-app/releases"))
-                            context.startActivity(intent)
-                            showMenu = false
-                        },
-                        leadingIcon = {
-                            Icon(Icons.Default.OpenInNew, contentDescription = null)
-                        }
-                    )
+                    // Botón de actualización
+                    if (hasUpdate && latestRelease?.apkUrl != null) {
+                        DropdownMenuItem(
+                            text = { 
+                                Text(
+                                    if (isDownloading) "Descargando..." else "⬇️ Actualizar a ${latestRelease?.tagName}",
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            },
+                            onClick = {
+                                if (!isDownloading) {
+                                    isDownloading = true
+                                    downloadAndInstallApk(
+                                        context = context,
+                                        apkUrl = latestRelease!!.apkUrl!!,
+                                        versionName = latestRelease!!.tagName,
+                                        onProgress = { progress -> downloadProgress = progress },
+                                        onComplete = { isDownloading = false }
+                                    )
+                                }
+                                showMenu = false
+                            },
+                            enabled = !isDownloading,
+                            leadingIcon = {
+                                if (isDownloading) {
+                                    CircularProgressIndicator(
+                                        modifier = androidx.compose.ui.Modifier.size(20.dp),
+                                        strokeWidth = 2.dp
+                                    )
+                                } else {
+                                    Icon(Icons.Default.SystemUpdate, contentDescription = null)
+                                }
+                            }
+                        )
+                    } else {
+                        // Sin actualización o sin APK
+                        DropdownMenuItem(
+                            text = { Text("Ver releases") },
+                            onClick = {
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/joserodriguezballester/lista-compra-app/releases"))
+                                context.startActivity(intent)
+                                showMenu = false
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Default.OpenInNew, contentDescription = null)
+                            }
+                        )
+                    }
                 }
             }
         },
@@ -232,4 +300,92 @@ fun CommonTopBar(
             titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
         )
     )
+}
+
+fun downloadAndInstallApk(
+    context: Context,
+    apkUrl: String,
+    versionName: String,
+    onProgress: (Long) -> Unit,
+    onComplete: () -> Unit
+) {
+    val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+    
+    // Nombre del archivo
+    val fileName = "lista-compra-$versionName.apk"
+    
+    // Eliminar descarga anterior si existe
+    val query = DownloadManager.Query()
+    query.setFilterByStatus(DownloadManager.STATUS_SUCCESSFUL)
+    val cursor = downloadManager.query(query)
+    while (cursor.moveToNext()) {
+        val localUri = cursor.getString(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_LOCAL_URI))
+        if (localUri?.contains("lista-compra-") == true) {
+            val id = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_ID))
+            downloadManager.remove(id)
+        }
+    }
+    cursor.close()
+    
+    // Crear solicitud de descarga
+    val request = DownloadManager.Request(Uri.parse(apkUrl))
+        .setTitle("Actualizando Lista Compra")
+        .setDescription("Descargando $versionName...")
+        .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+        .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
+        .setAllowedOverMetered(true)
+        .setAllowedOverRoaming(true)
+    
+    // Iniciar descarga
+    val downloadId = downloadManager.enqueue(request)
+    
+    // Registrar receiver para cuando termine
+    val receiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
+            if (id == downloadId) {
+                onComplete()
+                
+                // Obtener URI del archivo descargado
+                val query = DownloadManager.Query().setFilterById(downloadId)
+                val cursor = downloadManager.query(query)
+                if (cursor.moveToFirst()) {
+                    val localUri = cursor.getString(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_LOCAL_URI))
+                    cursor.close()
+                    
+                    // Abrir el APK para instalación
+                    val apkUri = Uri.parse(localUri)
+                    val apkFile = File(apkUri.path ?: return)
+                    
+                    val installIntent = Intent(Intent.ACTION_VIEW).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                            // Android 7+ necesita FileProvider
+                            val contentUri = FileProvider.getUriForFile(
+                                context,
+                                "${context.packageName}.fileprovider",
+                                apkFile
+                            )
+                            setDataAndType(contentUri, "application/vnd.android.package-archive")
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        } else {
+                            setDataAndType(apkUri, "application/vnd.android.package-archive")
+                        }
+                    }
+                    
+                    context.startActivity(installIntent)
+                }
+                
+                // Desregistrar receiver
+                context.unregisterReceiver(this)
+            }
+        }
+    }
+    
+    // Registrar receiver
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        context.registerReceiver(receiver, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE), Context.RECEIVER_NOT_EXPORTED)
+    } else {
+        context.registerReceiver(receiver, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
+    }
 }
