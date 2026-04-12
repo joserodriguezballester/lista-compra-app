@@ -1,4 +1,4 @@
-package com.jose.listacompra.domain.usecase.ticket
+﻿package com.jose.listacompra.domain.usecase.ticket
 
 import android.content.Context
 import android.net.Uri
@@ -63,7 +63,22 @@ class ImportTicketUseCase @Inject constructor(
             debug += "FirstName: ${firstName.take(45)}"
             debug += "FirstPrice: ${firstPrice.take(45)}"
 
+            section.take(20).forEachIndexed { index, line ->
+                debug += "SEC[$index]: $line"
+                debug += "SEC[$index]-isName=${isNameCandidate(line)} isPrice=${isPriceCandidate(line)} hasTrailing=${hasTrailingPrice(line)}"
+                val visibleLine = line.replace(" ", "Â·")
+                val tail = line.takeLast(minOf(20, line.length)).replace(" ", "Â·")
+                val commaIndex = line.lastIndexOf(",")
+                val afterComma = if (commaIndex >= 0) line.substring(maxOf(0, commaIndex - 6)).replace(" ", "Â·") else "NO_COMMA"
+                debug += "SEC[$index]-visible=$visibleLine"
+                debug += "SEC[$index]-tail=$tail"
+                debug += "SEC[$index]-afterComma=$afterComma"
+            }
+
             val parseResult = CarrefourTicketParser.parse(rawText)
+            parseResult.ticket.lines.take(10).forEachIndexed { index, line ->
+                debug += "PARSED[$index]: ${line.nombreOriginal} | total=${line.precioTotal} | unit=${line.precioUnitario}"
+            }
             debug += "Productos: ${parseResult.ticket.lines.size}"
             debug += "Total: %.2f".format(parseResult.ticket.total)
 
@@ -133,3 +148,4 @@ class ImportTicketUseCase @Inject constructor(
         ocrExtractor.close()
     }
 }
+

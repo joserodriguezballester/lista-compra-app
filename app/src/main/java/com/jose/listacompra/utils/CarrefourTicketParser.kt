@@ -1,4 +1,4 @@
-package com.jose.listacompra.utils
+﻿package com.jose.listacompra.utils
 
 import com.jose.listacompra.domain.model.Ticket
 import com.jose.listacompra.domain.model.TicketLine
@@ -97,11 +97,21 @@ object CarrefourTicketParser {
         val pendingPrices = mutableListOf<Float>()
 
         for (line in section) {
-            if (isSkippableLine(line)) continue
+            val normalizedLine = line
+                .replace(Regex("""[^\p{L}\p{N},.\- ]+"""), " ")
+                .replace(Regex("""\s+"""), " ")
+                .trim()
+                .replace(Regex("""(\d+)\s*,\s*(\d)\s*(\d)"""), "$1,$2$3")
+            if (isSkippableLine(normalizedLine)) continue
 
-            // Caso ideal: producto y precio al final en la misma línea
-            val trailing = trailingPricePattern.find(line)
+            // Caso ideal: producto y precio al final en la misma lÃ­nea
+            val trailing = trailingPricePattern.find(normalizedLine)
+            println("PARSER[line]=$line")
+            println("PARSER[normalized]=$normalizedLine")
+            println("PARSER[hasTrailing]=${trailing != null}")
             if (trailing != null) {
+                println("PARSER[name]=${trailing.groupValues[1]}")
+                println("PARSER[price]=${trailing.groupValues[2]}")
                 val name = cleanProductName(trailing.groupValues[1])
                 val price = trailing.groupValues[2].replace(',', '.').toFloatOrNull()
                 if (name.isNotBlank() && price != null && price > 0f) {
@@ -120,13 +130,13 @@ object CarrefourTicketParser {
                 }
             }
 
-            if (isNegativePriceLine(line)) continue
-            if (isPositivePriceLine(line)) {
-                extractPrice(line)?.let { pendingPrices.add(it) }
+            if (isNegativePriceLine(normalizedLine)) continue
+            if (isPositivePriceLine(normalizedLine)) {
+                extractPrice(normalizedLine)?.let { pendingPrices.add(it) }
                 continue
             }
-            if (isProductNameLine(line)) {
-                pendingNames.add(cleanProductName(line))
+            if (isProductNameLine(normalizedLine)) {
+                pendingNames.add(cleanProductName(normalizedLine))
             }
         }
 
@@ -208,3 +218,7 @@ data class ParseResult(
     val ticket: Ticket,
     val warnings: List<String> = emptyList()
 )
+
+
+
+
