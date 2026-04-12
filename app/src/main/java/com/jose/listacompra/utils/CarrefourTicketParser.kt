@@ -8,9 +8,11 @@ import java.util.Locale
 
 object CarrefourTicketParser {
 
-    private val priceLinePattern = Regex("""^-?\d+[,.]\d{1,2}$""")
-    private val trailingPricePattern = Regex("""(.+?)\s+(-?\d+[,.]\d{1,2})$""")
-    private val embeddedPricePattern = Regex("""(\d+[,.]\d{1,2})""")
+    private val compactPricePattern = """-?\d+[,.]\d{1,2}"""
+    private val spacedPricePattern = """-?\d+\s*[,.]\s*\d(?:\s*\d)?"""
+    private val priceLinePattern = Regex("""^$compactPricePattern$|^$spacedPricePattern$""")
+    private val trailingPricePattern = Regex("""(.+?)\s+($compactPricePattern|$spacedPricePattern)$""")
+    private val embeddedPricePattern = Regex("""($compactPricePattern|$spacedPricePattern)""")
     private val datePattern = Regex("""(\d{2}/\d{2}/\d{4})\s+(\d{2}:\d{2}:\d{2})""")
     private val socioPattern = Regex("""SOCIO\s*CLUB.*?:\s*(\d+)""", RegexOption.IGNORE_CASE)
     private val totalBlockPattern = Regex(
@@ -47,10 +49,14 @@ object CarrefourTicketParser {
 
     private fun normalizeText(text: String): String {
         val hasSpacedLetters = Regex("""[A-Z]\s+[A-Z]""").containsMatchIn(text)
-        return if (hasSpacedLetters) {
+        val normalizedLetters = if (hasSpacedLetters) {
             text.replace(Regex("""([A-Z])\s+(?=[A-Z])"""), "$1")
                 .replace(Regex("""([a-z])\s+(?=[a-z])"""), "$1")
         } else text
+
+        return normalizedLetters
+            .replace(Regex("""(?<=\d)\s*([,.])\s*(?=\d)"""), "$1")
+            .replace(Regex("""(?<=[,.]\d)\s+(?=\d\b)"""), "")
     }
 
     private fun extractDate(lines: List<String>): Date {
@@ -103,7 +109,7 @@ object CarrefourTicketParser {
             val trailing = trailingPricePattern.find(line)
             if (trailing != null) {
                 val name = cleanProductName(trailing.groupValues[1])
-                val price = trailing.groupValues[2].replace(',', '.').toFloatOrNull()
+                val price = normalizePriceToken(trailing.groupValues[2])?.replace(',', '.')?.toFloatOrNull()
                 if (name.isNotBlank() && price != null && price > 0f) {
                     result.add(
                         TicketLine(
@@ -166,7 +172,7 @@ object CarrefourTicketParser {
             upper == "50%"
     }
 
-    private fun isNegativePriceLine(line: String): Boolean = line.matches(Regex("""^-\d+[,.]\d{1,2}$"""))
+    private fun isNegativePriceLine(line: String): Boolean = normalizePriceToken(line)?.startsWith("-") == true
     private fun isPositivePriceLine(line: String): Boolean = line.matches(priceLinePattern)
 
     private fun isProductNameLine(line: String): Boolean {
@@ -192,7 +198,21 @@ object CarrefourTicketParser {
 
     private fun extractPrice(line: String): Float? {
         val match = embeddedPricePattern.find(line) ?: return null
-        return match.groupValues[1].replace(',', '.').toFloatOrNull()
+        return normalizePriceToken(match.groupValues[1])?.replace(',', '.')?.toFloatOrNull()
+    }
+
+    private fun normalizePriceToken(value: String): String? {
+        val trimmed = value.trim()
+        if (trimmed.isEmpty()) return null
+
+        val negative = trimmed.startsWith('-')
+        val unsigned = if (negative) trimmed.drop(1) else trimmed
+        val collapsed = unsigned.replace(Regex("""\s+"""), "")
+        val normalized = collapsed.replace(',', '.')
+
+        if (!normalized.matches(Regex("""\d+\.\d{1,2}|\d+"""))) return null
+
+        return (if (negative) "-" else "") + normalized.replace('.', ',')
     }
 
     private fun extractSocioClub(lines: List<String>): String? {
