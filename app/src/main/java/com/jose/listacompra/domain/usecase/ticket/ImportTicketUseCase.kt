@@ -59,7 +59,7 @@ class ImportTicketUseCase @Inject constructor(
             }
 
             val firstName = section.firstOrNull { isNameCandidate(it) } ?: "-"
-            val firstPrice = section.firstOrNull { isPriceCandidate(it) } ?: "-"
+            val firstPrice = section.firstOrNull { isPriceCandidate(it) || hasTrailingPrice(it) } ?: "-"
             debug += "FirstName: ${firstName.take(45)}"
             debug += "FirstPrice: ${firstPrice.take(45)}"
 
@@ -119,6 +119,10 @@ class ImportTicketUseCase @Inject constructor(
 
     private fun isPriceCandidate(line: String): Boolean {
         return line.matches(Regex("""^\d+[,.]\d{1,2}$"""))
+    }
+
+    private fun hasTrailingPrice(line: String): Boolean {
+        return line.matches(Regex(""".+\s+\d+[,.]\d{1,2}$"""))
     }
 
     suspend fun saveTicket(ticket: Ticket): Long {

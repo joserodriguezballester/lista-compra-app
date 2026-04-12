@@ -9,6 +9,7 @@ import java.util.Locale
 object CarrefourTicketParser {
 
     private val priceLinePattern = Regex("""^-?\d+[,.]\d{1,2}$""")
+    private val trailingPricePattern = Regex("""(.+?)\s+(-?\d+[,.]\d{1,2})$""")
     private val embeddedPricePattern = Regex("""(\d+[,.]\d{1,2})""")
     private val datePattern = Regex("""(\d{2}/\d{2}/\d{4})\s+(\d{2}:\d{2}:\d{2})""")
     private val socioPattern = Regex("""SOCIO\s*CLUB.*?:\s*(\d+)""", RegexOption.IGNORE_CASE)
@@ -83,39 +84,56 @@ object CarrefourTicketParser {
     }
 
     private fun extractProducts(lines: List<String>): List<TicketLine> {
-        val startIndex = lines.indexOfFirst { line ->
-            line.count { it == '*' } > 10
-        }
-        val endIndex = lines.indexOfFirst { line ->
-            line.count { it == '=' } > 10
-        }
+        val startIndex = lines.indexOfFirst { line -> line.count { it == '*' } > 10 }
+        val endIndex = lines.indexOfFirst { line -> line.count { it == '=' } > 10 }
 
         val section = when {
             startIndex >= 0 && endIndex > startIndex -> lines.subList(startIndex + 1, endIndex)
-            else -> {
-                val subtotalIndex = lines.indexOfFirst { it.contains("SUBTOTAL", ignoreCase = true) }.let { if (it >= 0) it else lines.size }
-                val fallbackStart = lines.indexOfFirst { isLikelyProductStart(it) }.let { if (it >= 0) it else 0 }
-                lines.subList(fallbackStart, subtotalIndex)
-            }
-        }
-
-        val names = mutableListOf<String>()
-        val prices = mutableListOf<Float>()
-
-        for (line in section) {
-            when {
-                isSkippableLine(line) -> continue
-                isNegativePriceLine(line) -> continue
-                isPositivePriceLine(line) -> extractPrice(line)?.let { prices.add(it) }
-                isProductNameLine(line) -> names.add(cleanProductName(line))
-            }
+            else -> lines
         }
 
         val result = mutableListOf<TicketLine>()
-        val count = minOf(names.size, prices.size)
-        for (i in 0 until count) {
-            val name = names[i]
-            val price = prices[i]
+        val pendingNames = mutableListOf<String>()
+        val pendingPrices = mutableListOf<Float>()
+
+        for (line in section) {
+            if (isSkippableLine(line)) continue
+
+            // Caso ideal: producto y precio al final en la misma línea
+            val trailing = trailingPricePattern.find(line)
+            if (trailing != null) {
+                val name = cleanProductName(trailing.groupValues[1])
+                val price = trailing.groupValues[2].replace(',', '.').toFloatOrNull()
+                if (name.isNotBlank() && price != null && price > 0f) {
+                    result.add(
+                        TicketLine(
+                            ticketId = 0,
+                            nombreOriginal = name,
+                            nombreNormalizado = normalizeProductName(name),
+                            cantidad = 1,
+                            precioUnitario = price,
+                            precioTotal = price,
+                            esDescuento = false
+                        )
+                    )
+                    continue
+                }
+            }
+
+            if (isNegativePriceLine(line)) continue
+            if (isPositivePriceLine(line)) {
+                extractPrice(line)?.let { pendingPrices.add(it) }
+                continue
+            }
+            if (isProductNameLine(line)) {
+                pendingNames.add(cleanProductName(line))
+            }
+        }
+
+        val pairCount = minOf(pendingNames.size, pendingPrices.size)
+        for (i in 0 until pairCount) {
+            val name = pendingNames[i]
+            val price = pendingPrices[i]
             result.add(
                 TicketLine(
                     ticketId = 0,
@@ -128,12 +146,8 @@ object CarrefourTicketParser {
                 )
             )
         }
-        return result
-    }
 
-    private fun isLikelyProductStart(line: String): Boolean {
-        val upper = line.uppercase()
-        return upper.contains("ACEITE") || upper.contains("LECHE") || upper.contains("PIZZA") || upper.contains("PAN")
+        return result
     }
 
     private fun isSkippableLine(line: String): Boolean {
@@ -158,7 +172,7 @@ object CarrefourTicketParser {
     private fun isProductNameLine(line: String): Boolean {
         if (line.length < 3) return false
         if (isPositivePriceLine(line) || isNegativePriceLine(line)) return false
-        if (extractPrice(line) != null) return false
+        if (trailingPricePattern.containsMatchIn(line)) return false
         if (!line.any { it.isLetter() }) return false
         return true
     }
