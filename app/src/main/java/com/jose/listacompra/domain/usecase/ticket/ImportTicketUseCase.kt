@@ -76,11 +76,11 @@ class ImportTicketUseCase @Inject constructor(
             }
 
             val parseResult = CarrefourTicketParser.parse(rawText)
-            parseResult.ticket.lines.take(10).forEachIndexed { index, line ->
-                debug += "PARSED[$index]: ${line.nombreOriginal} | total=${line.precioTotal} | unit=${line.precioUnitario}"
+            debug += "PARSED_COUNT=${parseResult.ticket.lines.size}"
+            debug += "TICKET_TOTAL=%.2f".format(parseResult.ticket.total)
+            parseResult.ticket.lines.take(5).forEachIndexed { index, line ->
+                debug += "PARSED[$index]=${line.nombreOriginal} | total=${line.precioTotal} | unit=${line.precioUnitario}"
             }
-            debug += "Productos: ${parseResult.ticket.lines.size}"
-            debug += "Total: %.2f".format(parseResult.ticket.total)
 
             val matchedLines = parseResult.ticket.lines.map { line ->
                 val match = ProductMatcher.findBestMatch(
@@ -103,6 +103,8 @@ class ImportTicketUseCase @Inject constructor(
 
             val unmatchedCount = matchedLines.count { it.articuloId == null }
             val ticket = parseResult.ticket.copy(lines = matchedLines)
+            debug += "UNMATCHED_COUNT=$unmatchedCount"
+            debug += "FINAL_LINES=${ticket.lines.size}"
 
             if (ticket.lines.isEmpty() || ticket.total <= 0f) {
                 return Result.failure(Exception(debug.joinToString(" | ")))
