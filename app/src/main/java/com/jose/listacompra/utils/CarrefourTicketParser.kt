@@ -13,6 +13,10 @@ object CarrefourTicketParser {
     private val embeddedPricePattern = Regex("""(\d+,\d{2})""")
     private val datePattern = Regex("""(\d{2}/\d{2}/\d{4})\s+(\d{2}:\d{2}:\d{2})""")
     private val socioPattern = Regex("""SOCIO\s*CLUB.*?:\s*(\d+)""", RegexOption.IGNORE_CASE)
+    private val subtotalBlockPattern = Regex(
+        """SUBTOTAL\s*:?[\s\n\r]*([0-9]+[,.][0-9]{2})""",
+        setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL)
+    )
     private val totalBlockPattern = Regex(
         """TOTAL\s*A\s*PAGAR\s*:?[\s\n\r]*([0-9]+[,.][0-9]{2})""",
         setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL)
@@ -23,9 +27,9 @@ object CarrefourTicketParser {
         val lines = normalizedText.lines().map { it.trim() }.filter { it.isNotBlank() }
 
         val fecha = extractDate(lines)
-        val total = extractTotal(normalizedText, lines)
         val socioClub = extractSocioClub(lines)
         val productLines = extractProducts(lines)
+        val total = extractTotal(normalizedText, lines, productLines)
 
         return ParseResult(
             ticket = Ticket(
@@ -68,7 +72,18 @@ object CarrefourTicketParser {
         return Date()
     }
 
-    private fun extractTotal(rawText: String, lines: List<String>): Float {
+    private fun extractTotal(rawText: String, lines: List<String>, productLines: List<TicketLine>): Float {
+        subtotalBlockPattern.find(rawText)?.groupValues?.getOrNull(1)?.let {
+            return it.replace(',', '.').toFloatOrNull() ?: 0f
+        }
+        for ((i, line) in lines.withIndex()) {
+            if (line.contains("SUBTOTAL", ignoreCase = true)) {
+                extractPrice(line)?.let { return it }
+                for (j in i + 1..minOf(i + 3, lines.lastIndex)) {
+                    extractPrice(lines[j])?.let { return it }
+                }
+            }
+        }
         totalBlockPattern.find(rawText)?.groupValues?.getOrNull(1)?.let {
             return it.replace(',', '.').toFloatOrNull() ?: 0f
         }
@@ -80,7 +95,7 @@ object CarrefourTicketParser {
                 }
             }
         }
-        return 0f
+        return productLines.sumOf { it.precioTotal.toDouble() }.toFloat()
     }
 
     private fun extractProducts(lines: List<String>): List<TicketLine> {
