@@ -21,6 +21,7 @@ import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -36,6 +37,13 @@ fun AppDrawer(
     onNavigateToHistory: () -> Unit = {},
     onNavigateToTicketImport: () -> Unit = {}
 ) {
+    val context = LocalContext.current
+    val versionName = try {
+        context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "?"
+    } catch (_: Exception) {
+        "?"
+    }
+
     ModalDrawerSheet {
         Column(
             modifier = Modifier
@@ -110,10 +118,10 @@ fun AppDrawer(
         }
 
         Spacer(modifier = Modifier.weight(1f))
-        
+
         HorizontalDivider()
         Text(
-            text = "v1.0.0 • Jose Rodríguez",
+            text = "$versionName • Jose Rodríguez",
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),

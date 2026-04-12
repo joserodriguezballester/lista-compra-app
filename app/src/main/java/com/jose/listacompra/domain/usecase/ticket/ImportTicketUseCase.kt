@@ -43,15 +43,14 @@ class ImportTicketUseCase @Inject constructor(
             val lines = rawText.lines().map { it.trim() }.filter { it.isNotBlank() }
 
             debug += "Texto: ${rawText.length} chars"
-            debug += "L1: ${lines.getOrNull(0)?.take(40) ?: "-"}"
-            debug += "L2: ${lines.getOrNull(1)?.take(40) ?: "-"}"
-            debug += "L3: ${lines.getOrNull(2)?.take(40) ?: "-"}"
-            debug += "L4: ${lines.getOrNull(3)?.take(40) ?: "-"}"
+            for (i in 0 until minOf(12, lines.size)) {
+                debug += "L${i + 1}: ${lines[i].take(45)}"
+            }
 
             val firstPrice = lines.firstOrNull { it.matches(Regex(""".*\d+[,.]\d{2}.*""")) } ?: "-"
             val totalLine = lines.firstOrNull { it.contains("TOTAL", ignoreCase = true) } ?: "-"
-            debug += "P: ${firstPrice.take(40)}"
-            debug += "T: ${totalLine.take(40)}"
+            debug += "P: ${firstPrice.take(45)}"
+            debug += "T: ${totalLine.take(45)}"
 
             if (rawText.isBlank()) {
                 return Result.failure(Exception(debug.joinToString(" | ")))
