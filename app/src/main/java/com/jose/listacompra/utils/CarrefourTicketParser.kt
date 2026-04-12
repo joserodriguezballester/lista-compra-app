@@ -8,9 +8,9 @@ import java.util.Locale
 
 object CarrefourTicketParser {
 
-    private val priceLinePattern = Regex("""^-?\d+[,.]\d{1,2}$""")
-    private val trailingPricePattern = Regex("""(.+?)\s+(-?\d+[,.]\d{1,2})$""")
-    private val embeddedPricePattern = Regex("""(\d+[,.]\d{1,2})""")
+    private val priceLinePattern = Regex("""^-?\d+,\d{2}$""")
+    private val trailingPricePattern = Regex("""(.+?)\s+(-?\d+,\d{2})$""")
+    private val embeddedPricePattern = Regex("""(\d+,\d{2})""")
     private val datePattern = Regex("""(\d{2}/\d{2}/\d{4})\s+(\d{2}:\d{2}:\d{2})""")
     private val socioPattern = Regex("""SOCIO\s*CLUB.*?:\s*(\d+)""", RegexOption.IGNORE_CASE)
     private val totalBlockPattern = Regex(

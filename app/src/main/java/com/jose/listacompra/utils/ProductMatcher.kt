@@ -1,6 +1,5 @@
 package com.jose.listacompra.utils
 
-import android.util.LevenshteinDistance
 import com.jose.listacompra.domain.model.Articulo
 import com.jose.listacompra.domain.model.Category
 
@@ -127,9 +126,32 @@ object ProductMatcher {
      */
     private fun levenshteinSimilarity(s1: String, s2: String): Float {
         if (s1 == s2) return 1f
-        val distance = LevenshteinDistance.getDefaultInstance().apply(s1, s2)
+        val distance = levenshteinDistance(s1, s2)
         val maxLength = maxOf(s1.length, s2.length)
         return if (maxLength == 0) 1f else 1f - (distance.toFloat() / maxLength)
+    }
+
+    private fun levenshteinDistance(a: String, b: String): Int {
+        if (a.isEmpty()) return b.length
+        if (b.isEmpty()) return a.length
+
+        val prev = IntArray(b.length + 1) { it }
+        val curr = IntArray(b.length + 1)
+
+        for (i in 1..a.length) {
+            curr[0] = i
+            for (j in 1..b.length) {
+                val cost = if (a[i - 1] == b[j - 1]) 0 else 1
+                curr[j] = minOf(
+                    prev[j] + 1,
+                    curr[j - 1] + 1,
+                    prev[j - 1] + cost
+                )
+            }
+            for (j in prev.indices) prev[j] = curr[j]
+        }
+
+        return prev[b.length]
     }
 
     /**
