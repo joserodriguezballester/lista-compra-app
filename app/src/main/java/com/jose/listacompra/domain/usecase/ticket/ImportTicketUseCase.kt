@@ -12,50 +12,47 @@ import com.jose.listacompra.utils.ProductMatcher
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
-/**
- * Resultado de la importación de un ticket.
- */
 data class ImportResult(
     val ticket: Ticket,
     val unmatchedCount: Int,
-    val warnings: List<String> = emptyList()
+    val warnings: List<String> = emptyList(),
+    val debugLog: List<String> = emptyList()
 )
 
-/**
- * Importa un ticket desde PDF, extrae texto con OCR, parsea productos
- * y hace matching con el catálogo existente.
- */
 class ImportTicketUseCase @Inject constructor(
     @ApplicationContext private val context: Context,
     private val ticketRepository: ITicketRepository
 ) {
     private val ocrExtractor = PdfOcrExtractor(context)
 
-    /**
-     * Importa un ticket desde un archivo PDF.
-     * @param uri URI del archivo PDF
-     * @param articulos Lista de artículos del catálogo para matching
-     * @param categories Lista de categorías para asignación automática
-     * @return Resultado de la importación con el ticket parseado
-     */
     suspend operator fun invoke(
         uri: Uri,
         articulos: List<Articulo>,
         categories: List<Category>
     ): Result<ImportResult> {
+        val debug = mutableListOf<String>()
         return try {
-            // 1. Extraer texto del PDF con OCR
+            debug += "1. URI recibido: $uri"
+            debug += "2. Artículos cargados: ${articulos.size}"
+            debug += "3. Categorías cargadas: ${categories.size}"
+
             val ocrResult = ocrExtractor.extractTextFromPdf(uri)
             if (ocrResult.isFailure) {
-                return Result.failure(ocrResult.exceptionOrNull() ?: Exception("Error en OCR"))
+                debug += "4. Error extrayendo texto: ${ocrResult.exceptionOrNull()?.message ?: "desconocido"}"
+                return Result.failure(ocrResult.exceptionOrNull() ?: Exception("Error al extraer texto del PDF"))
             }
 
             val rawText = ocrResult.getOrNull() ?: ""
+            debug += "4. Texto extraído: ${rawText.length} caracteres"
+            debug += "5. Primeras líneas: ${rawText.lines().filter { it.isNotBlank() }.take(5).joinToString(" | ")}" 
 
-            // 2. Parsear el texto del ticket
+            if (rawText.isBlank()) {
+                return Result.failure(Exception("No se ha podido extraer texto del PDF"))
+            }
+
             val parseResult = CarrefourTicketParser.parse(rawText)
+            debug += "6. Parser -> productos: ${parseResult.ticket.lines.size}, total: ${parseResult.ticket.total}, fecha: ${parseResult.ticket.fecha}"
 
-            // 3. Hacer matching de productos con el catálogo
             val matchedLines = parseResult.ticket.lines.map { line ->
                 val match = ProductMatcher.findBestMatch(
                     normalizedName = line.nombreNormalizado,
@@ -75,34 +72,33 @@ class ImportTicketUseCase @Inject constructor(
                 )
             }
 
-            // 4. Contar productos sin match
             val unmatchedCount = matchedLines.count { it.articuloId == null }
-
-            // 5. Crear ticket con líneas actualizadas
             val ticket = parseResult.ticket.copy(lines = matchedLines)
+            debug += "7. Matching -> sin match: $unmatchedCount"
+
+            if (ticket.lines.isEmpty() || ticket.total <= 0f) {
+                debug += "8. Resultado inválido: sin productos o total 0"
+                return Result.failure(Exception("Importación vacía: no se han detectado productos o total del ticket"))
+            }
 
             Result.success(
                 ImportResult(
                     ticket = ticket,
                     unmatchedCount = unmatchedCount,
-                    warnings = parseResult.warnings
+                    warnings = parseResult.warnings,
+                    debugLog = debug
                 )
             )
         } catch (e: Exception) {
-            Result.failure(e)
+            debug += "X. Excepción: ${e.message ?: "desconocida"}"
+            Result.failure(Exception(debug.joinToString("\n"), e))
         }
     }
 
-    /**
-     * Guarda el ticket importado después de que el usuario lo revise.
-     */
     suspend fun saveTicket(ticket: Ticket): Long {
         return ticketRepository.saveTicket(ticket)
     }
 
-    /**
-     * Libera recursos del OCR.
-     */
     fun close() {
         ocrExtractor.close()
     }

@@ -6,10 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.jose.listacompra.domain.model.Articulo
 import com.jose.listacompra.domain.model.Category
 import com.jose.listacompra.domain.model.Ticket
-import com.jose.listacompra.domain.model.TicketLine
-import com.jose.listacompra.domain.usecase.articulo.GetArticulosUseCase
-import com.jose.listacompra.domain.usecase.category.GetCategoriesUseCase
-import com.jose.listacompra.domain.usecase.ticket.ImportResult
+import com.jose.listacompra.domain.usecase.articulo.GetAllArticulosUseCase
+import com.jose.listacompra.domain.usecase.category.GetAllCategoriesFlowUseCase
 import com.jose.listacompra.domain.usecase.ticket.ImportTicketUseCase
 import com.jose.listacompra.domain.usecase.ticket.SaveTicketUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -24,8 +22,8 @@ import javax.inject.Inject
 class TicketImportViewModel @Inject constructor(
     private val importTicketUseCase: ImportTicketUseCase,
     private val saveTicketUseCase: SaveTicketUseCase,
-    private val getArticulosUseCase: GetArticulosUseCase,
-    private val getCategoriesUseCase: GetCategoriesUseCase
+    private val getArticulosUseCase: GetAllArticulosUseCase,
+    private val getCategoriesUseCase: GetAllCategoriesFlowUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TicketImportUiState())
@@ -48,12 +46,16 @@ class TicketImportViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Importa un ticket desde un archivo PDF.
-     */
     fun importTicket(uri: Uri) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, error = null) }
+            _uiState.update {
+                it.copy(
+                    isLoading = true,
+                    error = null,
+                    step = ImportStep.LOADING,
+                    debugLog = listOf("Seleccionado PDF: $uri")
+                )
+            }
 
             val result = importTicketUseCase(
                 uri = uri,
@@ -69,6 +71,7 @@ class TicketImportViewModel @Inject constructor(
                             ticket = importResult.ticket,
                             unmatchedCount = importResult.unmatchedCount,
                             warnings = importResult.warnings,
+                            debugLog = importResult.debugLog,
                             step = ImportStep.REVIEW
                         )
                     }
@@ -77,7 +80,9 @@ class TicketImportViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            error = error.message ?: "Error desconocido"
+                            error = error.message ?: "Error desconocido",
+                            debugLog = (it.debugLog + listOf(error.message ?: "Error desconocido")),
+                            step = ImportStep.SELECT_FILE
                         )
                     }
                 }
@@ -85,9 +90,6 @@ class TicketImportViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Confirma el match de una línea con un artículo.
-     */
     fun confirmMatch(lineId: Int, articuloId: Long) {
         val ticket = _uiState.value.ticket ?: return
         val articulo = _uiState.value.articulos.find { it.id == articuloId } ?: return
@@ -112,14 +114,9 @@ class TicketImportViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Crea un nuevo artículo para una línea sin match.
-     */
     fun createArticuloForLine(lineId: Int, name: String, categoryId: Long?) {
         val ticket = _uiState.value.ticket ?: return
-        val line = ticket.lines.getOrNull(lineId) ?: return
 
-        // El artículo se creará al guardar el ticket
         val updatedLines = ticket.lines.mapIndexed { index, l ->
             if (index == lineId) {
                 l.copy(
@@ -140,17 +137,12 @@ class TicketImportViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Guarda el ticket importado.
-     */
     fun saveTicket() {
         val ticket = _uiState.value.ticket ?: return
 
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true) }
-
             val ticketId = saveTicketUseCase(ticket)
-
             _uiState.update {
                 it.copy(
                     isSaving = false,
@@ -161,16 +153,14 @@ class TicketImportViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Cancela la importación actual.
-     */
+    fun clearError() {
+        _uiState.update { it.copy(error = null) }
+    }
+
     fun cancel() {
         _uiState.value = TicketImportUiState()
     }
 
-    /**
-     * Reinicia para importar otro ticket.
-     */
     fun reset() {
         _uiState.value = TicketImportUiState(step = ImportStep.SELECT_FILE)
     }
@@ -186,12 +176,13 @@ data class TicketImportUiState(
     val categories: List<Category> = emptyList(),
     val unmatchedCount: Int = 0,
     val warnings: List<String> = emptyList(),
-    val savedTicketId: Long? = null
+    val savedTicketId: Long? = null,
+    val debugLog: List<String> = emptyList()
 )
 
 enum class ImportStep {
-    SELECT_FILE,  // Seleccionar PDF
-    LOADING,      // OCR + parsing
-    REVIEW,       // Revisar matches
-    COMPLETE      // Guardado
+    SELECT_FILE,
+    LOADING,
+    REVIEW,
+    COMPLETE
 }
