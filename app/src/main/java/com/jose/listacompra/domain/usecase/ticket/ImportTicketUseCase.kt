@@ -32,26 +32,23 @@ class ImportTicketUseCase @Inject constructor(
     ): Result<ImportResult> {
         val debug = mutableListOf<String>()
         return try {
-            debug += "1. URI recibido: $uri"
-            debug += "2. Artículos cargados: ${articulos.size}"
-            debug += "3. Categorías cargadas: ${categories.size}"
+            debug += "PDF OK"
 
             val ocrResult = ocrExtractor.extractTextFromPdf(uri)
             if (ocrResult.isFailure) {
-                debug += "4. Error extrayendo texto: ${ocrResult.exceptionOrNull()?.message ?: "desconocido"}"
-                return Result.failure(ocrResult.exceptionOrNull() ?: Exception("Error al extraer texto del PDF"))
+                return Result.failure(Exception("PDF error"))
             }
 
             val rawText = ocrResult.getOrNull() ?: ""
-            debug += "4. Texto extraído: ${rawText.length} caracteres"
-            debug += "5. Primeras líneas: ${rawText.lines().filter { it.isNotBlank() }.take(5).joinToString(" | ")}" 
+            debug += "Texto: ${rawText.length} chars"
 
             if (rawText.isBlank()) {
-                return Result.failure(Exception("No se ha podido extraer texto del PDF"))
+                return Result.failure(Exception(debug.joinToString(" | ")))
             }
 
             val parseResult = CarrefourTicketParser.parse(rawText)
-            debug += "6. Parser -> productos: ${parseResult.ticket.lines.size}, total: ${parseResult.ticket.total}, fecha: ${parseResult.ticket.fecha}"
+            debug += "Productos: ${parseResult.ticket.lines.size}"
+            debug += "Total: %.2f".format(parseResult.ticket.total)
 
             val matchedLines = parseResult.ticket.lines.map { line ->
                 val match = ProductMatcher.findBestMatch(
@@ -74,11 +71,9 @@ class ImportTicketUseCase @Inject constructor(
 
             val unmatchedCount = matchedLines.count { it.articuloId == null }
             val ticket = parseResult.ticket.copy(lines = matchedLines)
-            debug += "7. Matching -> sin match: $unmatchedCount"
 
             if (ticket.lines.isEmpty() || ticket.total <= 0f) {
-                debug += "8. Resultado inválido: sin productos o total 0"
-                return Result.failure(Exception("Importación vacía: no se han detectado productos o total del ticket"))
+                return Result.failure(Exception(debug.joinToString(" | ")))
             }
 
             Result.success(
@@ -90,8 +85,7 @@ class ImportTicketUseCase @Inject constructor(
                 )
             )
         } catch (e: Exception) {
-            debug += "X. Excepción: ${e.message ?: "desconocida"}"
-            Result.failure(Exception(debug.joinToString("\n"), e))
+            Result.failure(Exception(e.message ?: debug.joinToString(" | "), e))
         }
     }
 
