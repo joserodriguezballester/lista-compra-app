@@ -8,21 +8,26 @@ import java.util.Locale
 
 /**
  * Parser para tickets de Carrefour.
- * Soporta tickets donde los nombres de producto y los precios aparecen en bloques separados.
+ * Intenta soportar tanto tickets con nombre+precio en una línea como tickets
+ * donde nombres y precios vienen en bloques separados.
  */
 object CarrefourTicketParser {
 
-    private val priceOnlyPattern = Regex("""^-?\d+[,\.]\d{2}$""")
-    private val pricePattern = Regex("""(\d+[,\.]\d{2})""")
+    private val priceLinePattern = Regex("""^-?\d+[,.]\d{1,2}$""")
+    private val embeddedPricePattern = Regex("""(\d+[,.]\d{1,2})""")
     private val datePattern = Regex("""(\d{2}/\d{2}/\d{4})\s+(\d{2}:\d{2}:\d{2})""")
     private val socioPattern = Regex("""SOCIO\s*CLUB.*?:\s*(\d+)""", RegexOption.IGNORE_CASE)
+    private val totalBlockPattern = Regex(
+        """TOTAL\s*A\s*PAGAR\s*:?[\s\n\r]*([0-9]+[,.][0-9]{2})""",
+        setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL)
+    )
 
     fun parse(rawText: String): ParseResult {
         val normalizedText = normalizeText(rawText)
         val lines = normalizedText.lines().map { it.trim() }.filter { it.isNotBlank() }
 
         val fecha = extractDate(lines)
-        val total = extractTotal(lines)
+        val total = extractTotal(normalizedText, lines)
         val socioClub = extractSocioClub(lines)
         val productLines = extractProducts(lines)
 
@@ -49,9 +54,7 @@ object CarrefourTicketParser {
         return if (hasSpacedLetters) {
             text.replace(Regex("""([A-Z])\s+(?=[A-Z])"""), "$1")
                 .replace(Regex("""([a-z])\s+(?=[a-z])"""), "$1")
-        } else {
-            text
-        }
+        } else text
     }
 
     private fun extractDate(lines: List<String>): Date {
@@ -69,13 +72,16 @@ object CarrefourTicketParser {
         return Date()
     }
 
-    private fun extractTotal(lines: List<String>): Float {
-        for ((index, line) in lines.withIndex()) {
+    private fun extractTotal(rawText: String, lines: List<String>): Float {
+        totalBlockPattern.find(rawText)?.groupValues?.getOrNull(1)?.let {
+            return it.replace(',', '.').toFloatOrNull() ?: 0f
+        }
+
+        for ((i, line) in lines.withIndex()) {
             if (line.contains("TOTAL A PAGAR", ignoreCase = true)) {
-                // a veces el total está en la línea siguiente
                 extractPrice(line)?.let { return it }
-                if (index + 1 < lines.size) {
-                    extractPrice(lines[index + 1])?.let { return it }
+                for (j in i + 1..minOf(i + 3, lines.lastIndex)) {
+                    extractPrice(lines[j])?.let { return it }
                 }
             }
         }
@@ -83,48 +89,51 @@ object CarrefourTicketParser {
     }
 
     private fun extractProducts(lines: List<String>): List<TicketLine> {
-        val subtotalIndex = lines.indexOfFirst { it.contains("SUBTOTAL", ignoreCase = true) }
-        val productSection = if (subtotalIndex > 0) lines.take(subtotalIndex) else lines
+        val startIndex = lines.indexOfFirst { isLikelyFirstProductLine(it) }.let { if (it >= 0) it else 0 }
+        val subtotalIndex = lines.indexOfFirst { it.contains("SUBTOTAL", ignoreCase = true) }.let { if (it >= 0) it else lines.size }
+        val section = lines.subList(startIndex, subtotalIndex)
 
-        val nameCandidates = mutableListOf<String>()
-        val positivePrices = mutableListOf<Float>()
+        val names = mutableListOf<String>()
+        val prices = mutableListOf<Float>()
 
-        for (line in productSection) {
+        for (line in section) {
             when {
                 isSkippableLine(line) -> continue
                 isNegativePriceLine(line) -> continue
-                isPositivePriceLine(line) -> {
-                    extractPrice(line)?.let { positivePrices.add(it) }
-                }
-                isProductNameLine(line) -> nameCandidates.add(cleanProductName(line))
+                isPositivePriceLine(line) -> extractPrice(line)?.let { prices.add(it) }
+                isProductNameLine(line) -> names.add(cleanProductName(line))
             }
         }
 
-        val count = minOf(nameCandidates.size, positivePrices.size)
         val result = mutableListOf<TicketLine>()
-
+        val count = minOf(names.size, prices.size)
         for (i in 0 until count) {
-            val nombre = nameCandidates[i]
-            val precio = positivePrices[i]
+            val name = names[i]
+            val price = prices[i]
             result.add(
                 TicketLine(
                     ticketId = 0,
-                    nombreOriginal = nombre,
-                    nombreNormalizado = normalizeProductName(nombre),
+                    nombreOriginal = name,
+                    nombreNormalizado = normalizeProductName(name),
                     cantidad = 1,
-                    precioUnitario = precio,
-                    precioTotal = precio,
+                    precioUnitario = price,
+                    precioTotal = price,
                     esDescuento = false
                 )
             )
         }
-
         return result
+    }
+
+    private fun isLikelyFirstProductLine(line: String): Boolean {
+        val upper = line.uppercase()
+        return upper.contains("ACEITE") || upper.contains("LECHE") || upper.contains("PAN") || upper.contains("PIZZA")
     }
 
     private fun isSkippableLine(line: String): Boolean {
         val upper = line.uppercase()
         return upper.startsWith("***") ||
+            upper.contains("CENTROS COMERCIALES") ||
             upper.contains("CARREFOUR S.A") ||
             upper.contains("CAMPANAR") ||
             upper.startsWith("CIF:") ||
@@ -132,40 +141,46 @@ object CarrefourTicketParser {
             upper.startsWith("TELÉFONO") ||
             upper.startsWith("TELEFONO") ||
             upper.contains("ATENCIÓN AL CLIENTE") ||
-            upper.contains("SUBTOTAL") ||
-            upper.contains("TOTAL A PAGAR") ||
+            upper.contains("ATENCION AL CLIENTE") ||
+            upper.contains("DESCUENTO EN") ||
+            upper.contains("DTO. CUPON") ||
+            upper.contains("GRATIS FOXY") ||
             upper.contains("VENTAJAS OBTENIDAS") ||
+            upper.contains("ACUMULADO") ||
+            upper.contains("DESCUENTOS:") ||
+            upper.contains("TOTAL VENTAJAS") ||
             upper.contains("TIPO") ||
             upper.contains("BASE") ||
             upper.contains("CUOTA") ||
-            upper.contains("VENTA") ||
+            upper == "VENTA" ||
             upper.contains("MASTERCARD") ||
             upper.contains("CONTACTLESS") ||
             upper.contains("CAMBIO RECIBIDO") ||
             upper.contains("SOCIO CLUB") ||
             upper.contains("SALDO") ||
             upper.contains("SUPERFAMILIAS") ||
-            upper.contains("DÍAS PARA CAMBIOS") ||
+            upper.contains("METALICO ENTREGADO") ||
+            upper.contains("METÁLICO ENTREGADO") ||
             upper.contains("DIAS PARA CAMBIOS") ||
+            upper.contains("DÍAS PARA CAMBIOS") ||
             upper.matches(Regex("""^[A-Z]{1,3}\d{2,4}$""")) ||
-            upper.matches(Regex("""^\d+\s*x\s*\($""", RegexOption.IGNORE_CASE)) ||
-            upper.matches(Regex("""^\d+\)$""")) ||
-            upper.matches(Regex("""^\d+$""")) ||
+            upper.matches(Regex("""^\d+\s*X\s*\($""")) ||
+            upper.matches(Regex("""^[0-9]{6,}$""")) ||
             upper.matches(Regex("""^=+$""")) ||
             upper == "50%"
     }
 
-    private fun isNegativePriceLine(line: String): Boolean = line.matches(Regex("""^-\d+[,\.]\d{2}$"""))
+    private fun isNegativePriceLine(line: String): Boolean = line.matches(Regex("""^-\d+[,.]\d{1,2}$"""))
 
-    private fun isPositivePriceLine(line: String): Boolean = line.matches(priceOnlyPattern)
+    private fun isPositivePriceLine(line: String): Boolean = line.matches(priceLinePattern)
 
     private fun isProductNameLine(line: String): Boolean {
         if (line.length < 3) return false
+        if (isPositivePriceLine(line) || isNegativePriceLine(line)) return false
         if (extractPrice(line) != null) return false
         if (line.contains("DESCUENTO", ignoreCase = true)) return false
-        if (line.contains("DTO.", ignoreCase = true)) return false
-        if (line.contains("DCTO.", ignoreCase = true)) return false
-        return line.any { it.isLetter() }
+        if (!line.any { it.isLetter() }) return false
+        return true
     }
 
     private fun cleanProductName(line: String): String {
@@ -182,8 +197,8 @@ object CarrefourTicketParser {
     }
 
     private fun extractPrice(line: String): Float? {
-        val match = pricePattern.find(line) ?: return null
-        return match.groupValues[1].replace(",", ".").toFloatOrNull()
+        val match = embeddedPricePattern.find(line) ?: return null
+        return match.groupValues[1].replace(',', '.').toFloatOrNull()
     }
 
     private fun extractSocioClub(lines: List<String>): String? {
