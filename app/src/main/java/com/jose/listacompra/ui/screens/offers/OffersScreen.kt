@@ -77,7 +77,8 @@ fun OffersScreen(
                 onNavigateToCatalogo = {
                     scope.launch { drawerState.close() }
                     onNavigateToCatalogo()
-                }
+                },
+                onNavigateToTicketImport = {}
             )
         }
     ) {

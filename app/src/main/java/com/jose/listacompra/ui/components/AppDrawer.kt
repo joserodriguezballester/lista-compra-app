@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Inventory
 import androidx.compose.material.icons.filled.LocalOffer
+import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Store
 import androidx.compose.material3.HorizontalDivider
@@ -24,10 +25,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-/**
- * Drawer solo navegación.
- * Los ajustes (modo oscuro, cambiar color) están en el menú overflow de cada pantalla.
- */
 @Composable
 fun AppDrawer(
     onNavigateToHome: () -> Unit = {},
@@ -36,10 +33,10 @@ fun AppDrawer(
     onNavigateToSupermarkets: () -> Unit,
     onNavigateToCatalogo: () -> Unit,
     onNavigateToCategories: () -> Unit,
-    onNavigateToHistory: () -> Unit = {}
+    onNavigateToHistory: () -> Unit = {},
+    onNavigateToTicketImport: () -> Unit = {}
 ) {
     ModalDrawerSheet {
-        // Header
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -60,7 +57,6 @@ fun AppDrawer(
 
         HorizontalDivider()
 
-        // Navigation items
         Column(modifier = Modifier.padding(vertical = 8.dp)) {
             NavigationDrawerItem(
                 icon = { Icon(Icons.Default.Home, contentDescription = null) },
@@ -104,11 +100,17 @@ fun AppDrawer(
                 selected = false,
                 onClick = onNavigateToHistory
             )
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+            NavigationDrawerItem(
+                icon = { Icon(Icons.Default.Receipt, contentDescription = null) },
+                label = { Text("Importar Ticket") },
+                selected = false,
+                onClick = onNavigateToTicketImport
+            )
         }
 
         Spacer(modifier = Modifier.weight(1f))
         
-        // Footer
         HorizontalDivider()
         Text(
             text = "v1.0.0 • Jose Rodríguez",

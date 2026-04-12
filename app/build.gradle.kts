@@ -124,6 +124,8 @@ dependencies {
     implementation("com.google.mlkit:barcode-scanning:17.2.0")
     
     // ML Kit - Text Recognition (OCR para tickets)
+    // PDFBox Android para extracción de texto PDF
+    implementation("com.tom-roush:pdfbox-android:2.0.27.0")
     implementation("com.google.mlkit:text-recognition:16.0.0")
     
     implementation("androidx.camera:camera-core:1.3.0")

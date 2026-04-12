@@ -202,7 +202,8 @@ fun CatalogoScreen(
                 onNavigateToCatalogo = {
                     scope.launch { drawerState.close() }
                     // Ya estamos en catálogo
-                }
+                },
+                onNavigateToTicketImport = {}
             )
         }
     ) {

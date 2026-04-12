@@ -8,49 +8,74 @@ import android.os.ParcelFileDescriptor
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
-import kotlinx.coroutines.tasks.await
-import java.io.File
+import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
+import com.tom_roush.pdfbox.pdmodel.PDDocument
+import com.tom_roush.pdfbox.text.PDFTextStripper
+import kotlinx.coroutines.suspendCancellableCoroutine
+import java.io.InputStream
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 /**
- * Utilidad para extraer texto de PDFs usando OCR.
- * Usa ML Kit de Google para reconocimiento de texto.
+ * Utilidad para extraer texto de PDFs.
+ * Usa PDFBox para texto vectorial y ML Kit OCR como fallback para PDFs escaneados.
  */
 class PdfOcrExtractor(private val context: Context) {
 
     private val textRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
 
-    /**
-     * Extrae texto de un archivo PDF desde su URI.
-     * @param uri URI del archivo PDF
-     * @return Texto extraído de todas las páginas
-     */
+    init {
+        PDFBoxResourceLoader.init(context)
+    }
+
     suspend fun extractTextFromPdf(uri: Uri): Result<String> {
+        return try {
+            val directText = extractTextDirectly(uri)
+            
+            if (directText.isSuccess && directText.getOrNull()?.isNotBlank() == true) {
+                val text = directText.getOrNull()!!
+                if (text.lines().filter { it.isNotBlank() }.size >= 5) {
+                    return Result.success(text)
+                }
+            }
+            
+            val ocrText = extractTextWithOcr(uri)
+            ocrText
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    private fun extractTextDirectly(uri: Uri): Result<String> {
+        return try {
+            val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
+                ?: return Result.failure(Exception("No se pudo abrir el archivo"))
+            
+            inputStream.use { stream ->
+                val document = PDDocument.load(stream)
+                val stripper = PDFTextStripper()
+                stripper.sortByPosition = true
+                val text = stripper.getText(document)
+                document.close()
+                Result.success(text)
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    private suspend fun extractTextWithOcr(uri: Uri): Result<String> {
         return try {
             val parcelFileDescriptor = context.contentResolver.openFileDescriptor(uri, "r")
                 ?: return Result.failure(Exception("No se pudo abrir el archivo"))
-
-            val text = extractTextFromPdfInternal(parcelFileDescriptor)
+            val text = extractTextWithOcrInternal(parcelFileDescriptor)
             Result.success(text)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    /**
-     * Extrae texto de un archivo PDF desde su ruta.
-     */
-    suspend fun extractTextFromPdf(filePath: String): Result<String> {
-        val file = File(filePath)
-        if (!file.exists()) {
-            return Result.failure(Exception("Archivo no encontrado: $filePath"))
-        }
-        return extractTextFromPdf(Uri.fromFile(file))
-    }
-
-    /**
-     * Implementación interna de extracción.
-     */
-    private suspend fun extractTextFromPdfInternal(pfd: ParcelFileDescriptor): String {
+    private suspend fun extractTextWithOcrInternal(pfd: ParcelFileDescriptor): String {
         val pdfRenderer = PdfRenderer(pfd)
         val textBuilder = StringBuilder()
 
@@ -58,44 +83,30 @@ class PdfOcrExtractor(private val context: Context) {
             val page = pdfRenderer.openPage(pageIndex)
             val bitmap = renderPageToBitmap(page)
             page.close()
-
             val pageText = extractTextFromBitmap(bitmap)
             textBuilder.append(pageText).append("\n")
         }
 
         pdfRenderer.close()
         pfd.close()
-
         return textBuilder.toString()
     }
 
-    /**
-     * Renderiza una página del PDF a Bitmap.
-     */
     private fun renderPageToBitmap(page: PdfRenderer.Page): Bitmap {
-        // Escalar para mejor OCR (2x para mejor precisión)
         val scale = 2.0f
         val width = (page.width * scale).toInt()
         val height = (page.height * scale).toInt()
-
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
         return bitmap
     }
 
-    /**
-     * Extrae texto de un Bitmap usando ML Kit.
-     */
-    private suspend fun extractTextFromBitmap(bitmap: Bitmap): String {
+    private suspend fun extractTextFromBitmap(bitmap: Bitmap): String = suspendCancellableCoroutine { continuation ->
         val inputImage = InputImage.fromBitmap(bitmap, 0)
-        val result = textRecognizer.process(inputImage).await()
-        return result.text
+        textRecognizer.process(inputImage)
+            .addOnSuccessListener { result -> continuation.resume(result.text) }
+            .addOnFailureListener { e -> continuation.resumeWithException(e) }
     }
 
-    /**
-     * Libera los recursos del reconocedor.
-     */
-    fun close() {
-        textRecognizer.close()
-    }
+    fun close() { textRecognizer.close() }
 }

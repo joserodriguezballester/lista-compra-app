@@ -154,7 +154,8 @@ fun ProductListScreen(
                 onNavigateToHistory = {
                     scope.launch { drawerState.close() }
                     onNavigateToHistory()
-                }
+                },
+                onNavigateToTicketImport = {}
             )
         }
     ) {

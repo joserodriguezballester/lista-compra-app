@@ -77,7 +77,8 @@ fun CategoriesScreen(
                 onNavigateToCatalogo = {
                     scope.launch { drawerState.close() }
                     onNavigateToCatalogo()
-                }
+                },
+                onNavigateToTicketImport = {}
             )
         }
     ) {

@@ -75,6 +75,10 @@ fun HomeScreen(
                 onNavigateToCatalogo = {
                     scope.launch { drawerState.close() }
                     onNavigateToCatalogo()
+                },
+                onNavigateToTicketImport = {
+                    scope.launch { drawerState.close() }
+                    onNavigateToTicketImport()
                 }
             )
         }

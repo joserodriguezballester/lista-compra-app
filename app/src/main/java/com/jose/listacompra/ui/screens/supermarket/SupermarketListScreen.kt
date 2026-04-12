@@ -82,7 +82,8 @@ fun SupermarketListScreen(
                 onNavigateToCatalogo = {
                     scope.launch { drawerState.close() }
                     onNavigateToCatalogo()
-                }
+                },
+                onNavigateToTicketImport = {}
             )
         }
     ) {
