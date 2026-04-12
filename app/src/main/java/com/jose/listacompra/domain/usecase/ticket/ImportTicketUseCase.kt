@@ -44,10 +44,10 @@ class ImportTicketUseCase @Inject constructor(
             debug += "Texto: ${rawText.length} chars"
 
             val starsIndex = lines.indexOfFirst { line ->
-                line.isNotBlank() && line.all { ch -> ch == '*' }
+                line.count { it == '*' } > 10
             }
             val equalsIndex = lines.indexOfFirst { line ->
-                line.isNotBlank() && line.all { ch -> ch == '=' }
+                line.count { it == '=' } > 10
             }
             debug += "***: $starsIndex"
             debug += "===: $equalsIndex"

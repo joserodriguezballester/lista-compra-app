@@ -84,10 +84,10 @@ object CarrefourTicketParser {
 
     private fun extractProducts(lines: List<String>): List<TicketLine> {
         val startIndex = lines.indexOfFirst { line ->
-            line.isNotBlank() && line.all { ch -> ch == '*' }
+            line.count { it == '*' } > 10
         }
         val endIndex = lines.indexOfFirst { line ->
-            line.isNotBlank() && line.all { ch -> ch == '=' }
+            line.count { it == '=' } > 10
         }
 
         val section = when {
