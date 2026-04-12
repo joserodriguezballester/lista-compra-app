@@ -5,6 +5,8 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
@@ -141,7 +143,14 @@ private fun SelectFileStep(
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text("Error", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onErrorContainer)
                     Spacer(modifier = Modifier.height(4.dp))
-                    Text(error, color = MaterialTheme.colorScheme.onErrorContainer)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 260.dp)
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        Text(error, color = MaterialTheme.colorScheme.onErrorContainer)
+                    }
                     Spacer(modifier = Modifier.height(8.dp))
                     TextButton(onClick = onDismissError) { Text("Cerrar") }
                 }
@@ -184,9 +193,18 @@ private fun DebugLogCard(debugLog: List<String>) {
         Column(modifier = Modifier.padding(12.dp)) {
             Text("Traza", fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(8.dp))
-            debugLog.takeLast(10).forEach { line ->
-                Text("• $line", style = MaterialTheme.typography.bodySmall)
-                Spacer(modifier = Modifier.height(2.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 260.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                Column {
+                    debugLog.forEach { line ->
+                        Text("• $line", style = MaterialTheme.typography.bodySmall)
+                        Spacer(modifier = Modifier.height(2.dp))
+                    }
+                }
             }
         }
     }

@@ -1,6 +1,5 @@
 package com.jose.listacompra.utils
 
-
 import com.jose.listacompra.domain.model.Articulo
 import com.jose.listacompra.domain.model.Category
 
@@ -11,27 +10,28 @@ object ProductMatcher {
     /**
      * Calcula la distancia de Levenshtein entre dos strings.
      */
-    private fun levenshteinDistance(s1: String, s2: String): Int {
-        val dp = Array(s1.length + 1) { IntArray(s2.length + 1) }
-        
-        for (i in 0..s1.length) dp[i][0] = i
-        for (j in 0..s2.length) dp[0][j] = j
-        
-        for (i in 1..s1.length) {
-            for (j in 1..s2.length) {
-                val cost = if (s1[i - 1] == s2[j - 1]) 0 else 1
-                dp[i][j] = minOf(
-                    dp[i - 1][j] + 1,
-                    dp[i][j - 1] + 1,
-                    dp[i - 1][j - 1] + cost
+    private fun levenshteinDistance(a: String, b: String): Int {
+        if (a.isEmpty()) return b.length
+        if (b.isEmpty()) return a.length
+
+        val prev = IntArray(b.length + 1) { it }
+        val curr = IntArray(b.length + 1)
+
+        for (i in 1..a.length) {
+            curr[0] = i
+            for (j in 1..b.length) {
+                val cost = if (a[i - 1] == b[j - 1]) 0 else 1
+                curr[j] = minOf(
+                    prev[j] + 1,
+                    curr[j - 1] + 1,
+                    prev[j - 1] + cost
                 )
             }
+            for (j in prev.indices) prev[j] = curr[j]
         }
-        
-        return dp[s1.length][s2.length]
+
+        return prev[b.length]
     }
-
-
 
     // Palabras clave para categorías automáticas
     private val categoryKeywords = mapOf(
@@ -57,13 +57,6 @@ object ProductMatcher {
         "gr", "g", "ml", "l", "kg", "uds", "ud", "unidad", "unidades"
     )
 
-    /**
-     * Busca el mejor match para un nombre de producto en el catálogo.
-     * @param normalizedName Nombre normalizado del producto del ticket
-     * @param articulos Lista de artículos del catálogo
-     * @param threshold Umbral mínimo de similitud (0-1)
-     * @return El artículo que mejor matchea, o null si no hay match suficiente
-     */
     fun findBestMatch(
         normalizedName: String,
         articulos: List<Articulo>,
@@ -77,16 +70,9 @@ object ProductMatcher {
         }.sortedByDescending { it.second }
 
         val bestMatch = scores.firstOrNull()
-        return if (bestMatch != null && bestMatch.second >= threshold) {
-            bestMatch.first
-        } else {
-            null
-        }
+        return if (bestMatch != null && bestMatch.second >= threshold) bestMatch.first else null
     }
 
-    /**
-     * Busca todos los matches posibles ordenados por similitud.
-     */
     fun findAllMatches(
         normalizedName: String,
         articulos: List<Articulo>,
@@ -100,55 +86,34 @@ object ProductMatcher {
             .take(maxResults)
     }
 
-    /**
-     * Calcula la similitud entre dos nombres de producto.
-     * Combina múltiples técnicas para mejor matching.
-     */
     private fun calculateSimilarity(name1: String, name2: String): Float {
         val n1 = preprocessForMatching(name1)
         val n2 = preprocessForMatching(name2)
 
         if (n1.isEmpty() || n2.isEmpty()) return 0f
-
-        // 1. Match exacto
         if (n1 == n2) return 1f
-
-        // 2. Contiene el otro
         if (n1.contains(n2) || n2.contains(n1)) return 0.9f
 
-        // 3. Similitud de palabras clave
         val words1 = n1.split(" ").filter { it.length > 2 && it !in stopWords }.toSet()
         val words2 = n2.split(" ").filter { it.length > 2 && it !in stopWords }.toSet()
 
-        if (words1.isEmpty() || words2.isEmpty()) {
-            // Fallback a Levenshtein
-            return levenshteinSimilarity(n1, n2)
-        }
+        if (words1.isEmpty() || words2.isEmpty()) return levenshteinSimilarity(n1, n2)
 
         val commonWords = words1.intersect(words2)
         val wordSimilarity = commonWords.size.toFloat() / maxOf(words1.size, words2.size)
-
-        // 4. Similitud de caracteres (Levenshtein)
         val charSimilarity = levenshteinSimilarity(n1, n2)
 
-        // Combinar scores con pesos
         return (wordSimilarity * 0.6f + charSimilarity * 0.4f)
     }
 
-    /**
-     * Preprocesa un nombre para matching.
-     */
     private fun preprocessForMatching(name: String): String {
         return name.lowercase()
-            .replace(Regex("""[^\w\s]"""), " ") // Quitar puntuación
-            .replace(Regex("""\d+"""), " ") // Quitar números
+            .replace(Regex("""[^\w\s]"""), " ")
+            .replace(Regex("""\d+"""), " ")
             .replace(Regex("""\s+"""), " ")
             .trim()
     }
 
-    /**
-     * Calcula similitud usando distancia de Levenshtein.
-     */
     private fun levenshteinSimilarity(s1: String, s2: String): Float {
         if (s1 == s2) return 1f
         val distance = levenshteinDistance(s1, s2)
@@ -156,9 +121,6 @@ object ProductMatcher {
         return if (maxLength == 0) 1f else 1f - (distance.toFloat() / maxLength)
     }
 
-    /**
-     * Asigna categoría automáticamente basada en palabras clave.
-     */
     fun assignCategory(productName: String, categories: List<Category>): Long? {
         val normalized = productName.lowercase()
 
@@ -176,9 +138,6 @@ object ProductMatcher {
         return null
     }
 
-    /**
-     * Obtiene el nombre de categoría sugerido para un producto.
-     */
     fun getSuggestedCategoryName(productName: String): String? {
         val normalized = productName.lowercase()
 
