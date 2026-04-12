@@ -43,8 +43,12 @@ class ImportTicketUseCase @Inject constructor(
             val lines = rawText.lines().map { it.trim() }.filter { it.isNotBlank() }
             debug += "Texto: ${rawText.length} chars"
 
-            val starsIndex = lines.indexOfFirst { it.all { ch -> ch == '*' } || it.contains("***") }
-            val equalsIndex = lines.indexOfFirst { it.all { ch -> ch == '=' } || it.contains("===") }
+            val starsIndex = lines.indexOfFirst { line ->
+                line.isNotBlank() && line.all { ch -> ch == '*' }
+            }
+            val equalsIndex = lines.indexOfFirst { line ->
+                line.isNotBlank() && line.all { ch -> ch == '=' }
+            }
             debug += "***: $starsIndex"
             debug += "===: $equalsIndex"
 

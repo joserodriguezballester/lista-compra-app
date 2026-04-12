@@ -83,8 +83,12 @@ object CarrefourTicketParser {
     }
 
     private fun extractProducts(lines: List<String>): List<TicketLine> {
-        val startIndex = lines.indexOfFirst { it.all { ch -> ch == '*' } || it.contains("***") }
-        val endIndex = lines.indexOfFirst { it.all { ch -> ch == '=' } || it.contains("===") }
+        val startIndex = lines.indexOfFirst { line ->
+            line.isNotBlank() && line.all { ch -> ch == '*' }
+        }
+        val endIndex = lines.indexOfFirst { line ->
+            line.isNotBlank() && line.all { ch -> ch == '=' }
+        }
 
         val section = when {
             startIndex >= 0 && endIndex > startIndex -> lines.subList(startIndex + 1, endIndex)
