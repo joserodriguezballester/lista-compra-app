@@ -41,20 +41,23 @@ class ImportTicketUseCase @Inject constructor(
 
             val rawText = ocrResult.getOrNull() ?: ""
             val lines = rawText.lines().map { it.trim() }.filter { it.isNotBlank() }
-
             debug += "Texto: ${rawText.length} chars"
-            for (i in 0 until minOf(12, lines.size)) {
-                debug += "L${i + 1}: ${lines[i].take(45)}"
+
+            val starsIndex = lines.indexOfFirst { it.all { ch -> ch == '*' } || it.contains("***") }
+            val equalsIndex = lines.indexOfFirst { it.all { ch -> ch == '=' } || it.contains("===") }
+            debug += "***: $starsIndex"
+            debug += "===: $equalsIndex"
+
+            val section = if (starsIndex >= 0 && equalsIndex > starsIndex) {
+                lines.subList(starsIndex + 1, equalsIndex)
+            } else {
+                lines
             }
 
-            val firstPrice = lines.firstOrNull { it.matches(Regex(""".*\d+[,.]\d{2}.*""")) } ?: "-"
-            val totalLine = lines.firstOrNull { it.contains("TOTAL", ignoreCase = true) } ?: "-"
-            debug += "P: ${firstPrice.take(45)}"
-            debug += "T: ${totalLine.take(45)}"
-
-            if (rawText.isBlank()) {
-                return Result.failure(Exception(debug.joinToString(" | ")))
-            }
+            val firstName = section.firstOrNull { isNameCandidate(it) } ?: "-"
+            val firstPrice = section.firstOrNull { isPriceCandidate(it) } ?: "-"
+            debug += "FirstName: ${firstName.take(45)}"
+            debug += "FirstPrice: ${firstPrice.take(45)}"
 
             val parseResult = CarrefourTicketParser.parse(rawText)
             debug += "Productos: ${parseResult.ticket.lines.size}"
@@ -97,6 +100,21 @@ class ImportTicketUseCase @Inject constructor(
         } catch (e: Exception) {
             Result.failure(Exception(e.message ?: debug.joinToString(" | "), e))
         }
+    }
+
+    private fun isNameCandidate(line: String): Boolean {
+        val upper = line.uppercase()
+        if (line.length < 3) return false
+        if (!line.any { it.isLetter() }) return false
+        if (upper.contains("DESCUENTO")) return false
+        if (upper.matches(Regex("""^[A-Z]{1,3}\d{2,4}$"""))) return false
+        if (line.matches(Regex("""^-?\d+[,.]\d{1,2}$"""))) return false
+        if (upper.matches(Regex("""^\d+\s*X\s*\($"""))) return false
+        return true
+    }
+
+    private fun isPriceCandidate(line: String): Boolean {
+        return line.matches(Regex("""^\d+[,.]\d{1,2}$"""))
     }
 
     suspend fun saveTicket(ticket: Ticket): Long {
