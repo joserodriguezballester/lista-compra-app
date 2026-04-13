@@ -1,4 +1,4 @@
-package com.jose.listacompra.utils
+﻿package com.jose.listacompra.utils
 
 import com.jose.listacompra.domain.model.Ticket
 import com.jose.listacompra.domain.model.TicketLine
@@ -26,6 +26,8 @@ object CarrefourTicketParser {
 
     fun parse(rawText: String): ParseResult {
         val normalizedText = normalizeText(rawText)
+        val debugRawLines = rawText.lines().mapIndexed { index, line -> "RAW[$index] = \"$line\"" }
+        val debugNormalizedLines = normalizedText.lines().mapIndexed { index, line -> "NORM[$index] = \"$line\"" }
         val lines = normalizedText.lines().map { it.trim() }.filter { it.isNotBlank() }
 
         val fecha = extractDate(lines)
@@ -47,30 +49,28 @@ object CarrefourTicketParser {
                 socioClub = socioClub,
                 lines = productLines
             ),
-            warnings = emptyList()
+            warnings = debugRawLines + debugNormalizedLines
         )
     }
-
     private fun normalizeText(text: String): String {
-        val marked = text
-            .replace(Regex("""[\u00C2\u00A0\u202F\u2007]"""), "¤")
-            .replace(Regex("""[\u200B-\u200D\u2060\uFEFF]"""), "")
+        return text.lines().joinToString("\n") { rawLine ->
+            val sanitized = rawLine
+                .replace(Regex("""[\u200B-\u200D\u2060\uFEFF]"""), "")
+                .replace(Regex("""[\u00A0\u202F\u2007]"""), " ")
+                .replace(Regex("""[\u00C2\u00C3\uFFFD]"""), " ")
 
-        val normalizedSeparators = marked
-            .replace(Regex("""¤{3,}"""), "   ")
-            .replace(Regex("""(?<=[A-Za-z])¤¤(?=[A-Za-z])"""), " ")
-            .replace(Regex("""(?<=[A-Za-z])¤(?=[A-Za-z])"""), "")
-            .replace(Regex("""(?<=\d)¤(?=\d\s*[,.])"""), "")
-            .replace(Regex("""(?<=\d)¤(?=[A-Za-z])"""), " ")
-            .replace(Regex("""(?<=[A-Za-z])¤(?=\d)"""), " ")
-            .replace("¤", " ")
+            val hasSpacedLetters = Regex("""[A-Z]\s+[A-Z]""").containsMatchIn(sanitized)
+            val normalizedLetters = if (hasSpacedLetters) {
+                sanitized.replace(Regex("""([A-Z])\s+(?=[A-Z])"""), "$1")
+                    .replace(Regex("""([a-z])\s+(?=[a-z])"""), "$1")
+            } else sanitized
 
-        return normalizedSeparators
-            .replace(Regex("""(?<=[,.]\s?\d)\s+(?=\d\b)"""), "")
-            .replace(Regex("""(?<=\d)\s*([,.])\s*(?=\d)"""), "$1")
-            .replace(Regex("""(?<!\d)(\d{2,})\s+(\d{2})(?!\d)"""), "$1,$2")
-            .replace(Regex("""\s+"""), " ")
-            .trim()
+            normalizedLetters
+                .replace(Regex("""(?<=\d)\s*([,.])\s*(?=\d)"""), "$1")
+                .replace(Regex("""(?<=[,.]\d)\s+(?=\d\b)"""), "")
+                .replace(Regex("""[ \t]+"""), " ")
+                .trim()
+        }.trim()
     }
 
     private fun extractDate(lines: List<String>): Date {
@@ -306,3 +306,5 @@ data class ParseResult(
     val ticket: Ticket,
     val warnings: List<String> = emptyList()
 )
+
+

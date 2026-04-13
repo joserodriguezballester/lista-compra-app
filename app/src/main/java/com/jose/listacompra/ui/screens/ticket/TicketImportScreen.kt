@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
+﻿@file:OptIn(ExperimentalMaterial3Api::class)
 package com.jose.listacompra.ui.screens.ticket
 
 import android.net.Uri
@@ -107,7 +107,7 @@ private fun SelectFileStep(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "Importar Ticket de Carrefour",
+            text = "Importar Ticket",
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold
         )
@@ -436,7 +436,7 @@ private fun TicketLineCard(
 
         AlertDialog(
             onDismissRequest = { showCreateDialog = false },
-            title = { Text("Crear nuevo artículo") },
+            title = { Text("Crear nuevo artÃ­culo") },
             text = {
                 Column {
                     OutlinedTextField(
@@ -446,7 +446,7 @@ private fun TicketLineCard(
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text("Categoría (opcional)", style = MaterialTheme.typography.labelMedium)
+                    Text("CategorÃ­a (opcional)", style = MaterialTheme.typography.labelMedium)
                     Spacer(modifier = Modifier.height(8.dp))
                     var expanded by remember { mutableStateOf(false) }
                     ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
@@ -458,7 +458,7 @@ private fun TicketLineCard(
                         )
                         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                             DropdownMenuItem(
-                                text = { Text("Sin categoría") },
+                                text = { Text("Sin categorÃ­a") },
                                 onClick = {
                                     selectedCategory = null
                                     expanded = false
@@ -523,3 +523,4 @@ private fun CompleteStep(
         TextButton(onClick = onImportAnother) { Text("Importar otro ticket") }
     }
 }
+

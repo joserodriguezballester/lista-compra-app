@@ -76,6 +76,22 @@ class ImportTicketUseCase @Inject constructor(
             }
 
             val parseResult = CarrefourTicketParser.parse(rawText)
+            val rawWindow = parseResult.warnings.filter {
+                it.startsWith("RAW[")
+            }.filter { warning ->
+                val index = Regex("""RAW\[(\d+)]""").find(warning)?.groupValues?.getOrNull(1)?.toIntOrNull()
+                index != null && index in 4..10
+            }
+            val normWindow = parseResult.warnings.filter {
+                it.startsWith("NORM[")
+            }.filter { warning ->
+                val index = Regex("""NORM\[(\d+)]""").find(warning)?.groupValues?.getOrNull(1)?.toIntOrNull()
+                index != null && index in 4..10
+            }
+            debug += "RAW_WINDOW_COUNT=${rawWindow.size}"
+            debug += rawWindow
+            debug += "NORM_WINDOW_COUNT=${normWindow.size}"
+            debug += normWindow
             debug += "PARSED_COUNT=${parseResult.ticket.lines.size}"
             debug += "TICKET_TOTAL=%.2f".format(parseResult.ticket.total)
             parseResult.ticket.lines.take(5).forEachIndexed { index, line ->
