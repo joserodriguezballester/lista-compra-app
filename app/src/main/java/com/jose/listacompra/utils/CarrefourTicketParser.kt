@@ -122,6 +122,7 @@ object CarrefourTicketParser {
         val result = mutableListOf<TicketLine>()
         val pendingNames = mutableListOf<String>()
         val pendingPrices = mutableListOf<Float>()
+        var pendingProductName: String? = null
 
         for (line in section) {
             val normalizedLine = line
@@ -132,6 +133,23 @@ object CarrefourTicketParser {
                 .replace(Regex("""(?<!\d)(\d{2,})\s+(\d{2})(?!\d)"""), "$1,$2")
 
             if (isSkippableLine(normalizedLine)) continue
+
+            val quantityDetail = extractQuantityDetail(normalizedLine)
+            if (quantityDetail != null && pendingProductName != null) {
+                result.add(
+                    TicketLine(
+                        ticketId = 0,
+                        nombreOriginal = pendingProductName!!,
+                        nombreNormalizado = normalizeProductName(pendingProductName!!),
+                        cantidad = quantityDetail.quantity,
+                        precioUnitario = quantityDetail.unitPrice,
+                        precioTotal = quantityDetail.totalPrice,
+                        esDescuento = false
+                    )
+                )
+                pendingProductName = null
+                continue
+            }
 
             val trailing = trailingPricePattern.find(normalizedLine)
             if (trailing != null) {
@@ -149,6 +167,7 @@ object CarrefourTicketParser {
                             esDescuento = false
                         )
                     )
+                    pendingProductName = null
                     continue
                 }
             }
@@ -159,7 +178,9 @@ object CarrefourTicketParser {
                 continue
             }
             if (isProductNameLine(normalizedLine)) {
-                pendingNames.add(cleanProductName(normalizedLine))
+                val cleanName = cleanProductName(normalizedLine)
+                pendingNames.add(cleanName)
+                pendingProductName = cleanName
             }
         }
 
@@ -221,6 +242,23 @@ object CarrefourTicketParser {
             .replace(Regex("""\s+(de|del|la|el|las|los|y|con|sin)\s+"""), " ")
             .replace(Regex("""\s+"""), " ")
             .trim()
+    }
+
+    private data class QuantityDetail(
+        val quantity: Int,
+        val unitPrice: Float,
+        val totalPrice: Float
+    )
+
+    private fun extractQuantityDetail(line: String): QuantityDetail? {
+        val detailPattern = Regex("""(\d+)\s*[xX]\s*\(?\s*(-?\d+[,.]\d{1,2})\s*\)?(?:.*?)(-?\d+[,.]\d{1,2})$""")
+        val match = detailPattern.find(line) ?: return null
+
+        val quantity = match.groupValues[1].toIntOrNull() ?: return null
+        val unitPrice = normalizePriceToken(match.groupValues[2])?.replace(',', '.')?.toFloatOrNull() ?: return null
+        val totalPrice = normalizePriceToken(match.groupValues[3])?.replace(',', '.')?.toFloatOrNull() ?: return null
+
+        return QuantityDetail(quantity, unitPrice, totalPrice)
     }
 
     private fun extractPrice(line: String): Float? {
