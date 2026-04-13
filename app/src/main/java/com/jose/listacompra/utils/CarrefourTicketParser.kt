@@ -9,7 +9,8 @@ import java.util.Locale
 object CarrefourTicketParser {
 
     private val compactPricePattern = """-?\d+[,.]\d{1,2}"""
-    private val spacedPricePattern = """-?\d+\s*[,.]\s*\d(?:\s*\d)?"""
+    private val spacedPricePattern = """-?(?:\d\s*){1,3}[,.]\s*(?:\d\s*){1,2}"""
+    private val tailPricePattern = Regex("""(-?(?:\d\s*){1,3}[,.]\s*(?:\d\s*){2})\s*$""")
     private val priceLinePattern = Regex("""^$compactPricePattern$|^$spacedPricePattern$""")
     private val trailingPricePattern = Regex("""(.+?)\s+($compactPricePattern|$spacedPricePattern)$""")
     private val embeddedPricePattern = Regex("""(?<!\d)($compactPricePattern|$spacedPricePattern)(?!\d)""")
@@ -155,11 +156,11 @@ object CarrefourTicketParser {
                 continue
             }
 
-            val trailing = trailingPricePattern.find(normalizedLine)
+            val trailing = extractTrailingPriceCase(normalizedLine)
             if (trailing != null) {
-                val name = cleanProductName(trailing.groupValues[1])
-                val price = normalizePriceToken(trailing.groupValues[2])?.replace(',', '.')?.toFloatOrNull()
-                if (name.isNotBlank() && price != null && price > 0f) {
+                val name = cleanProductName(trailing.first)
+                val price = trailing.second
+                if (name.isNotBlank() && price > 0f) {
                     result.add(
                         TicketLine(
                             ticketId = 0,
@@ -231,8 +232,22 @@ object CarrefourTicketParser {
         if (line.length < 3) return false
         if (isPositivePriceLine(line) || isNegativePriceLine(line)) return false
         if (trailingPricePattern.containsMatchIn(line)) return false
+        if (extractTrailingPriceCase(line) != null) return false
         if (!line.any { it.isLetter() }) return false
         return true
+    }
+
+    private fun extractTrailingPriceCase(line: String): Pair<String, Float>? {
+        val match = tailPricePattern.find(line) ?: return null
+        val rawPrice = match.groupValues[1]
+        val normalizedPrice = normalizePriceToken(rawPrice) ?: return null
+        val price = normalizedPrice.replace(',', '.').toFloatOrNull() ?: return null
+        if (price <= 0f || price > 999.99f) return null
+
+        val namePart = line.removeRange(match.range).trim()
+        if (namePart.isBlank()) return null
+
+        return namePart to price
     }
 
     private fun cleanProductName(line: String): String {
