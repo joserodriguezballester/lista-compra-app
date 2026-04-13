@@ -58,21 +58,16 @@ class ImportTicketUseCase @Inject constructor(
                 lines
             }
 
-            val firstName = section.firstOrNull { isNameCandidate(it) } ?: "-"
-            val firstPrice = section.firstOrNull { isPriceCandidate(it) || hasTrailingPrice(it) } ?: "-"
-            debug += "FirstName: ${firstName.take(45)}"
-            debug += "FirstPrice: ${firstPrice.take(45)}"
-
             section.take(20).forEachIndexed { index, line ->
-                debug += "SEC[$index]: $line"
-                debug += "SEC[$index]-isName=${isNameCandidate(line)} isPrice=${isPriceCandidate(line)} hasTrailing=${hasTrailingPrice(line)}"
-                val visibleLine = line.replace(" ", "Â·")
-                val tail = line.takeLast(minOf(20, line.length)).replace(" ", "Â·")
-                val commaIndex = line.lastIndexOf(",")
-                val afterComma = if (commaIndex >= 0) line.substring(maxOf(0, commaIndex - 6)).replace(" ", "Â·") else "NO_COMMA"
-                debug += "SEC[$index]-visible=$visibleLine"
-                debug += "SEC[$index]-tail=$tail"
-                debug += "SEC[$index]-afterComma=$afterComma"
+                val tail = line.takeLast(minOf(20, line.length))
+                val secNombre = line.dropLast(minOf(20, line.length)).trim()
+                val secPrecio = if (tail.contains(',')) tail.trim() else "-"
+                val caseType = if (tail.contains(',')) "1" else "2"
+                debug += "SEC[$index]=$line"
+                debug += "SEC[$index]_TAIL=${tail.replace(" ", "·")}"
+                debug += "SEC[$index]_CASE=$caseType"
+                debug += "SEC[$index]_NOMBRE=${if (secNombre.isBlank()) "-" else secNombre}"
+                debug += "SEC[$index]_PRECIO=$secPrecio"
             }
 
             val parseResult = CarrefourTicketParser.parse(rawText)

@@ -125,8 +125,6 @@ object CarrefourTicketParser {
         }
 
         val result = mutableListOf<TicketLine>()
-        val pendingNames = mutableListOf<String>()
-        val pendingPrices = mutableListOf<Float>()
         var pendingProductName: String? = null
 
         for (line in section) {
@@ -134,32 +132,13 @@ object CarrefourTicketParser {
                 .replace(Regex("""[^\p{L}\p{N},.\- ]+"""), " ")
                 .replace(Regex("""\s+"""), " ")
                 .trim()
-                .replace(Regex("""(\d+)\s*,\s*(\d)\s*(\d)"""), "$1,$2$3")
-                .replace(Regex("""(?<!\d)(\d{2,})\s+(\d{2})(?!\d)"""), "$1,$2")
 
             if (isSkippableLine(normalizedLine)) continue
 
-            val quantityDetail = extractQuantityDetail(normalizedLine)
-            if (quantityDetail != null && pendingProductName != null) {
-                result.add(
-                    TicketLine(
-                        ticketId = 0,
-                        nombreOriginal = pendingProductName!!,
-                        nombreNormalizado = normalizeProductName(pendingProductName!!),
-                        cantidad = quantityDetail.quantity,
-                        precioUnitario = quantityDetail.unitPrice,
-                        precioTotal = quantityDetail.totalPrice,
-                        esDescuento = false
-                    )
-                )
-                pendingProductName = null
-                continue
-            }
-
-            val trailing = extractTrailingPriceCase(normalizedLine)
-            if (trailing != null) {
-                val name = cleanProductName(trailing.first)
-                val price = trailing.second
+            val case1 = extractTrailingPriceCase(normalizedLine)
+            if (case1 != null) {
+                val name = cleanProductName(case1.first)
+                val price = case1.second
                 if (name.isNotBlank() && price > 0f) {
                     result.add(
                         TicketLine(
@@ -177,33 +156,27 @@ object CarrefourTicketParser {
                 }
             }
 
-            if (isNegativePriceLine(normalizedLine)) continue
-            if (isPositivePriceLine(normalizedLine)) {
-                extractPrice(normalizedLine)?.let { pendingPrices.add(it) }
+            val quantityDetail = extractQuantityDetail(normalizedLine)
+            if (quantityDetail != null && pendingProductName != null) {
+                val name = cleanProductName(pendingProductName!!)
+                result.add(
+                    TicketLine(
+                        ticketId = 0,
+                        nombreOriginal = name,
+                        nombreNormalizado = normalizeProductName(name),
+                        cantidad = quantityDetail.quantity,
+                        precioUnitario = quantityDetail.unitPrice,
+                        precioTotal = quantityDetail.totalPrice,
+                        esDescuento = false
+                    )
+                )
+                pendingProductName = null
                 continue
             }
-            if (isProductNameLine(normalizedLine)) {
-                val cleanName = cleanProductName(normalizedLine)
-                pendingNames.add(cleanName)
-                pendingProductName = cleanName
-            }
-        }
 
-        val pairCount = minOf(pendingNames.size, pendingPrices.size)
-        for (i in 0 until pairCount) {
-            val name = pendingNames[i]
-            val price = pendingPrices[i]
-            result.add(
-                TicketLine(
-                    ticketId = 0,
-                    nombreOriginal = name,
-                    nombreNormalizado = normalizeProductName(name),
-                    cantidad = 1,
-                    precioUnitario = price,
-                    precioTotal = price,
-                    esDescuento = false
-                )
-            )
+            if (normalizedLine.any { it.isLetter() }) {
+                pendingProductName = cleanProductName(normalizedLine)
+            }
         }
 
         return result
@@ -227,15 +200,6 @@ object CarrefourTicketParser {
 
     private fun isNegativePriceLine(line: String): Boolean = normalizePriceToken(line)?.startsWith("-") == true
     private fun isPositivePriceLine(line: String): Boolean = line.matches(priceLinePattern)
-
-    private fun isProductNameLine(line: String): Boolean {
-        if (line.length < 3) return false
-        if (isPositivePriceLine(line) || isNegativePriceLine(line)) return false
-        if (trailingPricePattern.containsMatchIn(line)) return false
-        if (extractTrailingPriceCase(line) != null) return false
-        if (!line.any { it.isLetter() }) return false
-        return true
-    }
 
     private fun extractTrailingPriceCase(line: String): Pair<String, Float>? {
         val match = tailPricePattern.find(line) ?: return null
