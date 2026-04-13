@@ -232,8 +232,10 @@ object CarrefourTicketParser {
     }
 
     private fun cleanProductName(line: String): String {
-        return line.replace(Regex("""\s+"""), " ")
+        return line
+            .replace(Regex("""\s+"""), " ")
             .replace(Regex("""\($"""), "")
+            .replace(Regex("""\s+[A-Z0-9]{4}$"""), "")
             .trim()
     }
 
