@@ -52,15 +52,21 @@ object CarrefourTicketParser {
     }
 
     private fun normalizeText(text: String): String {
-        val hasSpacedLetters = Regex("""[A-Z]\s+[A-Z]""").containsMatchIn(text)
+        val sanitized = text
+            .replace(Regex("""[\u200B-\u200D\u2060\uFEFF]"""), "")
+            .replace(Regex("""[\u00A0\u202F\u2007]"""), " ")
+
+        val hasSpacedLetters = Regex("""[A-Z]\s+[A-Z]""").containsMatchIn(sanitized)
         val normalizedLetters = if (hasSpacedLetters) {
-            text.replace(Regex("""([A-Z])\s+(?=[A-Z])"""), "$1")
+            sanitized.replace(Regex("""([A-Z])\s+(?=[A-Z])"""), "$1")
                 .replace(Regex("""([a-z])\s+(?=[a-z])"""), "$1")
-        } else text
+        } else sanitized
 
         return normalizedLetters
+            .replace(Regex("""(?<!\d)(\d)\s+(?=\d\s*[,.])"""), "$1")
+            .replace(Regex("""(?<=[,.]\s?\d)\s+(?=\d\b)"""), "")
             .replace(Regex("""(?<=\d)\s*([,.])\s*(?=\d)"""), "$1")
-            .replace(Regex("""(?<=[,.]\d)\s+(?=\d\b)"""), "")
+            .replace(Regex("""(?<!\d)(\d{2,})\s+(\d{2})(?!\d)"""), "$1,$2")
     }
 
     private fun extractDate(lines: List<String>): Date {
