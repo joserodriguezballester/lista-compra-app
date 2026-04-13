@@ -221,89 +221,90 @@ private fun ReviewStep(
 ) {
     val ticket = uiState.ticket ?: return
 
-    Column(modifier = modifier.fillMaxSize()) {
-        Card(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-            )
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = ticket.supermarketName ?: "Carrefour",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(ticket.fecha),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text("${ticket.lines.size} productos", style = MaterialTheme.typography.bodySmall)
-                    Text(
-                        text = "Total: %.2f €".format(ticket.total),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-                if (uiState.unmatchedCount > 0) {
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                )
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = ticket.supermarketName ?: "Carrefour",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(ticket.fecha),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "⚠️ ${uiState.unmatchedCount} productos sin matchear",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("${ticket.lines.size} productos", style = MaterialTheme.typography.bodySmall)
+                        Text(
+                            text = "Total: %.2f €".format(ticket.total),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    if (uiState.unmatchedCount > 0) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "⚠️ ${uiState.unmatchedCount} productos sin matchear",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
                 }
             }
         }
 
         if (uiState.debugLog.isNotEmpty()) {
-            Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+            item {
                 DebugLogCard(uiState.debugLog)
             }
-            Spacer(modifier = Modifier.height(8.dp))
         }
 
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            itemsIndexed(ticket.lines) { index, line ->
-                TicketLineCard(
-                    line = line,
-                    lineIndex = index,
-                    articulos = uiState.articulos,
-                    categories = uiState.categories,
-                    onConfirmMatch = { articuloId -> onConfirmMatch(index, articuloId) },
-                    onCreateArticulo = { name, catId -> onCreateArticulo(index, name, catId) }
-                )
-            }
+        itemsIndexed(ticket.lines) { index, line ->
+            TicketLineCard(
+                line = line,
+                lineIndex = index,
+                articulos = uiState.articulos,
+                categories = uiState.categories,
+                onConfirmMatch = { articuloId -> onConfirmMatch(index, articuloId) },
+                onCreateArticulo = { name, catId -> onCreateArticulo(index, name, catId) }
+            )
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            OutlinedButton(onClick = onCancel, modifier = Modifier.weight(1f)) {
-                Text("Cancelar")
-            }
-            Button(onClick = onSave, modifier = Modifier.weight(1f), enabled = !uiState.isSaving) {
-                if (uiState.isSaving) {
-                    CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-                } else {
-                    Text("Guardar")
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedButton(onClick = onCancel, modifier = Modifier.weight(1f)) {
+                    Text("Cancelar")
+                }
+                Button(onClick = onSave, modifier = Modifier.weight(1f), enabled = !uiState.isSaving) {
+                    if (uiState.isSaving) {
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                    } else {
+                        Text("Guardar")
+                    }
                 }
             }
         }
