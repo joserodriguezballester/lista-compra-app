@@ -12,7 +12,7 @@ object CarrefourTicketParser {
     private val spacedPricePattern = """-?\d+\s*[,.]\s*\d(?:\s*\d)?"""
     private val priceLinePattern = Regex("""^$compactPricePattern$|^$spacedPricePattern$""")
     private val trailingPricePattern = Regex("""(.+?)\s+($compactPricePattern|$spacedPricePattern)$""")
-    private val embeddedPricePattern = Regex("""($compactPricePattern|$spacedPricePattern)""")
+    private val embeddedPricePattern = Regex("""(?<!\d)($compactPricePattern|$spacedPricePattern)(?!\d)""")
     private val datePattern = Regex("""(\d{2}/\d{2}/\d{4})\s+(\d{2}:\d{2}:\d{2})""")
     private val socioPattern = Regex("""SOCIO\s*CLUB.*?:\s*(\d+)""", RegexOption.IGNORE_CASE)
     private val subtotalBlockPattern = Regex(
@@ -123,6 +123,7 @@ object CarrefourTicketParser {
                 .replace(Regex("""\s+"""), " ")
                 .trim()
                 .replace(Regex("""(\d+)\s*,\s*(\d)\s*(\d)"""), "$1,$2$3")
+                .replace(Regex("""(?<!\d)(\d{2,})\s+(\d{2})(?!\d)"""), "$1,$2")
 
             if (isSkippableLine(normalizedLine)) continue
 
@@ -217,8 +218,15 @@ object CarrefourTicketParser {
     }
 
     private fun extractPrice(line: String): Float? {
-        val match = embeddedPricePattern.find(line) ?: return null
-        return normalizePriceToken(match.groupValues[1])?.replace(',', '.')?.toFloatOrNull()
+        val candidate = line.trim()
+
+        normalizePriceToken(candidate)?.replace(',', '.')?.toFloatOrNull()?.let { return it }
+
+        val allMatches = embeddedPricePattern.findAll(candidate)
+            .mapNotNull { normalizePriceToken(it.groupValues[1])?.replace(',', '.')?.toFloatOrNull() }
+            .toList()
+
+        return allMatches.maxByOrNull { it.toString().length }
     }
 
     private fun normalizePriceToken(value: String): String? {
