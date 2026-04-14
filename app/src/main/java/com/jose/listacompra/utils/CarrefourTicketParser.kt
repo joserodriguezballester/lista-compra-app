@@ -1,4 +1,4 @@
-﻿package com.jose.listacompra.utils
+package com.jose.listacompra.utils
 
 import com.jose.listacompra.domain.model.Ticket
 import com.jose.listacompra.domain.model.TicketLine
@@ -6,13 +6,15 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+data class ParseResult(
+    val ticket: Ticket,
+    val warnings: List<String> = emptyList()
+)
+
 object CarrefourTicketParser {
 
     private val compactPricePattern = """-?\d+[,.]\d{1,2}"""
     private val spacedPricePattern = """-?(?:\d\s*){1,3}[,.]\s*(?:\d\s*){1,2}"""
-    private val tailPricePattern = Regex("""(-?(?:\d\s*){1,3}[,.]\s*(?:\d\s*){2})\s*$""")
-    private val priceLinePattern = Regex("""^$compactPricePattern$|^$spacedPricePattern$""")
-    private val trailingPricePattern = Regex("""(.+?)\s+($compactPricePattern|$spacedPricePattern)$""")
     private val embeddedPricePattern = Regex("""(?<!\d)($compactPricePattern|$spacedPricePattern)(?!\d)""")
     private val datePattern = Regex("""(\d{2}/\d{2}/\d{4})\s+(\d{2}:\d{2}:\d{2})""")
     private val socioPattern = Regex("""SOCIO\s*CLUB.*?:\s*(\d+)""", RegexOption.IGNORE_CASE)
@@ -24,6 +26,9 @@ object CarrefourTicketParser {
         """TOTAL\s*A\s*PAGAR\s*:?[\s\n\r]*([0-9]+[,.][0-9]{2})""",
         setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL)
     )
+    private val wideGapPattern = Regex("""(?:\s|[#@&€§%!£¥¤†‡]){5,}""")
+    private val trailingAmountPattern = Regex("""(-?(?:\s|[#@&€§%!£¥¤†‡])*(?:\d(?:\s|[#@&€§%!£¥¤†‡])*){1,3}[,.](?:\s|[#@&€§%!£¥¤†‡])*(?:\d(?:\s|[#@&€§%!£¥¤†‡])*){2})$""")
+    private val quantityLeadPattern = Regex("""^\s*(\d+)\s*[xX]\s*\(?\s*(-?(?:\d\s*)+[,.](?:\d\s*){1,2})""")
 
     fun parse(rawText: String): ParseResult {
         val normalizedText = normalizeText(rawText)
@@ -33,7 +38,7 @@ object CarrefourTicketParser {
 
         val fecha = extractDate(lines)
         val socioClub = extractSocioClub(lines)
-        val productLines = extractProducts(lines)
+        val productLines = extractProducts(rawText.lines())
         val total = extractTotal(normalizedText, lines, productLines)
 
         return ParseResult(
@@ -53,6 +58,7 @@ object CarrefourTicketParser {
             warnings = debugRawLines + debugNormalizedLines
         )
     }
+
     private fun normalizeText(text: String): String {
         return text.lines().joinToString("\n") { rawLine ->
             val sanitized = rawLine
@@ -112,74 +118,153 @@ object CarrefourTicketParser {
                 }
             }
         }
-        return productLines.sumOf { it.precioTotal.toDouble() }.toFloat()
+        return productLines.filterNot { it.esDescuento }.sumOf { it.precioTotal.toDouble() }.toFloat()
     }
 
-    private fun extractProducts(lines: List<String>): List<TicketLine> {
-        val startIndex = lines.indexOfFirst { line -> line.count { it == '*' } > 10 }
-        val endIndex = lines.indexOfFirst { line -> line.count { it == '=' } > 10 }
+    private fun extractProducts(rawLines: List<String>): List<TicketLine> {
+        val startIndex = rawLines.indexOfFirst { line -> line.count { it == '*' } > 10 }
+        val endIndex = rawLines.indexOfFirst { line -> line.count { it == '=' } > 10 }
 
         val section = when {
-            startIndex >= 0 && endIndex > startIndex -> lines.subList(startIndex + 1, endIndex)
-            else -> lines
+            startIndex >= 0 && endIndex > startIndex -> rawLines.subList(startIndex + 1, endIndex)
+            else -> rawLines
         }
 
         val result = mutableListOf<TicketLine>()
-        var pendingProductName: String? = null
+        var index = 0
 
-        for (line in section) {
-            val normalizedLine = line
-                .replace(Regex("""[^\p{L}\p{N},.\- ]+"""), " ")
-                .replace(Regex("""\s+"""), " ")
-                .trim()
+        while (index < section.size) {
+            val rawLine = section[index]
+            val softLine = softNormalizeLine(rawLine)
+            if (softLine.isBlank() || isSkippableLine(softLine)) {
+                index++
+                continue
+            }
 
-            if (isSkippableLine(normalizedLine)) continue
+            val trailingAmount = extractTrailingAmount(rawLine)
+            if (trailingAmount != null) {
+                if (trailingAmount < 0f) {
+                    index++
+                    continue
+                }
 
-            val case1 = extractTrailingPriceCase(normalizedLine)
-            if (case1 != null) {
-                val name = cleanProductName(case1.first)
-                val price = case1.second
-                if (name.isNotBlank() && price > 0f) {
+                val multiDetail = parseMultiUnitLead(rawLine)
+                if (multiDetail != null) {
+                    val name = cleanProductName(extractLeadingNameByWideGap(section.getOrNull(index - 1).orEmpty()))
+                    if (name.isNotBlank()) {
+                        result.add(
+                            TicketLine(
+                                ticketId = 0,
+                                nombreOriginal = name,
+                                nombreNormalizado = normalizeProductName(name),
+                                cantidad = multiDetail.quantity,
+                                precioUnitario = multiDetail.unitPrice,
+                                precioTotal = trailingAmount,
+                                esDescuento = false
+                            )
+                        )
+                    }
+                    index++
+                    continue
+                }
+
+                val name = cleanProductName(removeTrailingAmount(rawLine))
+                if (name.isNotBlank()) {
                     result.add(
                         TicketLine(
                             ticketId = 0,
                             nombreOriginal = name,
                             nombreNormalizado = normalizeProductName(name),
                             cantidad = 1,
-                            precioUnitario = price,
-                            precioTotal = price,
+                            precioUnitario = trailingAmount,
+                            precioTotal = trailingAmount,
                             esDescuento = false
                         )
                     )
-                    pendingProductName = null
+                }
+                index++
+                continue
+            }
+
+            if (endsWithSeparator(rawLine)) {
+                val name = cleanProductName(extractLeadingNameByWideGap(rawLine))
+                val nextLine = section.getOrNull(index + 1)
+                val nextAmount = nextLine?.let { extractTrailingAmount(it) }
+                val nextDetail = nextLine?.let { parseMultiUnitLead(it) }
+
+                if (name.isNotBlank() && nextLine != null && nextAmount != null && nextAmount > 0f && nextDetail != null) {
+                    result.add(
+                        TicketLine(
+                            ticketId = 0,
+                            nombreOriginal = name,
+                            nombreNormalizado = normalizeProductName(name),
+                            cantidad = nextDetail.quantity,
+                            precioUnitario = nextDetail.unitPrice,
+                            precioTotal = nextAmount,
+                            esDescuento = false
+                        )
+                    )
+                    index += 2
                     continue
                 }
             }
 
-            val quantityDetail = extractQuantityDetail(normalizedLine)
-            if (quantityDetail != null && pendingProductName != null) {
-                val name = cleanProductName(pendingProductName!!)
-                result.add(
-                    TicketLine(
-                        ticketId = 0,
-                        nombreOriginal = name,
-                        nombreNormalizado = normalizeProductName(name),
-                        cantidad = quantityDetail.quantity,
-                        precioUnitario = quantityDetail.unitPrice,
-                        precioTotal = quantityDetail.totalPrice,
-                        esDescuento = false
-                    )
-                )
-                pendingProductName = null
-                continue
-            }
-
-            if (normalizedLine.any { it.isLetter() }) {
-                pendingProductName = cleanProductName(normalizedLine)
-            }
+            index++
         }
 
         return result
+    }
+
+    private fun softNormalizeLine(line: String): String {
+        return line
+            .replace(Regex("""[\u200B-\u200D\u2060\uFEFF]"""), "")
+            .replace(Regex("""[\u00A0\u202F\u2007]"""), " ")
+            .replace(Regex("""[ \t]+"""), " ")
+            .trim()
+    }
+
+    private fun endsWithSeparator(line: String): Boolean {
+        if (line.isEmpty()) return false
+        val last = line.last()
+        return last.isWhitespace() || last in setOf('#', '@', '&', '€', '§', '%', '!', '?', '£', '¥', '¤', '†', '‡')
+    }
+
+    private fun extractTrailingAmount(line: String): Float? {
+        val match = trailingAmountPattern.find(line) ?: return null
+        val token = match.groupValues[1]
+            .replace(Regex("""[^\d,.-]"""), "")
+        val normalized = normalizePriceToken(token) ?: return null
+        return normalized.replace(',', '.').toFloatOrNull()
+    }
+
+    private fun removeTrailingAmount(line: String): String {
+        val match = trailingAmountPattern.find(line) ?: return line
+        return line.removeRange(match.range).trimEnd()
+    }
+
+    private fun extractLeadingNameByWideGap(line: String): String {
+        val sanitized = line
+            .replace(Regex("""[\u200B-\u200D\u2060\uFEFF]"""), "")
+            .replace(Regex("""[\u00A0\u202F\u2007]"""), " ")
+            .trimEnd()
+
+        return wideGapPattern.split(sanitized)
+            .firstOrNull { it.isNotBlank() }
+            ?.trim()
+            ?: sanitized.trim()
+    }
+
+    private data class QuantityDetail(
+        val quantity: Int,
+        val unitPrice: Float
+    )
+
+    private fun parseMultiUnitLead(line: String): QuantityDetail? {
+        val soft = softNormalizeLine(line)
+        val match = quantityLeadPattern.find(soft) ?: return null
+        val quantity = match.groupValues[1].toIntOrNull() ?: return null
+        val unitPrice = normalizePriceToken(match.groupValues[2])?.replace(',', '.')?.toFloatOrNull() ?: return null
+        return QuantityDetail(quantity, unitPrice)
     }
 
     private fun isSkippableLine(line: String): Boolean {
@@ -193,29 +278,13 @@ object CarrefourTicketParser {
             upper.contains("TOTAL VENTAJAS") ||
             upper.contains("SOCIO CLUB") ||
             upper.matches(Regex("""^[A-Z]{1,3}\d{2,4}$""")) ||
-            upper.matches(Regex("""^\d+\s*X\s*\($""")) ||
             upper.matches(Regex("""^[0-9]{6,}$""")) ||
             upper == "50%"
     }
 
-    private fun isNegativePriceLine(line: String): Boolean = normalizePriceToken(line)?.startsWith("-") == true
-    private fun isPositivePriceLine(line: String): Boolean = line.matches(priceLinePattern)
-
-    private fun extractTrailingPriceCase(line: String): Pair<String, Float>? {
-        val match = tailPricePattern.find(line) ?: return null
-        val rawPrice = match.groupValues[1]
-        val normalizedPrice = normalizePriceToken(rawPrice) ?: return null
-        val price = normalizedPrice.replace(',', '.').toFloatOrNull() ?: return null
-        if (price <= 0f || price > 999.99f) return null
-
-        val namePart = line.removeRange(match.range).trim()
-        if (namePart.isBlank()) return null
-
-        return namePart to price
-    }
-
     private fun cleanProductName(line: String): String {
         return line
+            .replace(Regex("""[^\p{L}\p{N} ]+"""), " ")
             .replace(Regex("""\s+"""), " ")
             .replace(Regex("""\($"""), "")
             .replace(Regex("""\s+[A-Z0-9]{4}$"""), "")
@@ -227,23 +296,6 @@ object CarrefourTicketParser {
             .replace(Regex("""\s+(de|del|la|el|las|los|y|con|sin)\s+"""), " ")
             .replace(Regex("""\s+"""), " ")
             .trim()
-    }
-
-    private data class QuantityDetail(
-        val quantity: Int,
-        val unitPrice: Float,
-        val totalPrice: Float
-    )
-
-    private fun extractQuantityDetail(line: String): QuantityDetail? {
-        val detailPattern = Regex("""(\d+)\s*[xX]\s*\(?\s*(-?\d+[,.]\d{1,2})\s*\)?(?:.*?)(-?\d+[,.]\d{1,2})$""")
-        val match = detailPattern.find(line) ?: return null
-
-        val quantity = match.groupValues[1].toIntOrNull() ?: return null
-        val unitPrice = normalizePriceToken(match.groupValues[2])?.replace(',', '.')?.toFloatOrNull() ?: return null
-        val totalPrice = normalizePriceToken(match.groupValues[3])?.replace(',', '.')?.toFloatOrNull() ?: return null
-
-        return QuantityDetail(quantity, unitPrice, totalPrice)
     }
 
     private fun extractPrice(line: String): Float? {
@@ -280,10 +332,3 @@ object CarrefourTicketParser {
         return null
     }
 }
-
-data class ParseResult(
-    val ticket: Ticket,
-    val warnings: List<String> = emptyList()
-)
-
-
