@@ -107,7 +107,7 @@ private fun SelectFileStep(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "Importar Ticket - Test 8",
+            text = "Importar Ticket - Test 9",
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold
         )
@@ -131,7 +131,7 @@ private fun SelectFileStep(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Test 8: traza SEC y flujo simple caso 1/caso 2",
+            text = "Test 9: RAW[6..12], RAW_VISIBLE, normalización ligera y actual",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center

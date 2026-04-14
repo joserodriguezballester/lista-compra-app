@@ -1,4 +1,4 @@
-﻿package com.jose.listacompra.domain.usecase.ticket
+package com.jose.listacompra.domain.usecase.ticket
 
 import android.content.Context
 import android.net.Uri
@@ -40,53 +40,13 @@ class ImportTicketUseCase @Inject constructor(
             }
 
             val rawText = ocrResult.getOrNull() ?: ""
-            val lines = rawText.lines().map { it.trim() }.filter { it.isNotBlank() }
             debug += "Texto: ${rawText.length} chars"
 
-            val starsIndex = lines.indexOfFirst { line ->
-                line.count { it == '*' } > 10
-            }
-            val equalsIndex = lines.indexOfFirst { line ->
-                line.count { it == '=' } > 10
-            }
-            debug += "***: $starsIndex"
-            debug += "===: $equalsIndex"
-
-            val section = if (starsIndex >= 0 && equalsIndex > starsIndex) {
-                lines.subList(starsIndex + 1, equalsIndex)
-            } else {
-                lines
-            }
-
-            section.take(20).forEachIndexed { index, line ->
-                val tail = line.takeLast(minOf(20, line.length))
-                val secNombre = line.dropLast(minOf(20, line.length)).trim()
-                val secPrecio = if (tail.contains(',')) tail.trim() else "-"
-                val caseType = if (tail.contains(',')) "1" else "2"
-                debug += "SEC[$index]=$line"
-                debug += "SEC[$index]_TAIL=${tail.replace(" ", "·")}"
-                debug += "SEC[$index]_CASE=$caseType"
-                debug += "SEC[$index]_NOMBRE=${if (secNombre.isBlank()) "-" else secNombre}"
-                debug += "SEC[$index]_PRECIO=$secPrecio"
-            }
+            val rawLines = rawText.lines()
+            debug += "RAW_TRACE_RANGE=6..12"
+            debug += buildRawWindowDebug(rawLines, 6, 12)
 
             val parseResult = CarrefourTicketParser.parse(rawText)
-            val rawWindow = parseResult.warnings.filter {
-                it.startsWith("RAW[")
-            }.filter { warning ->
-                val index = Regex("""RAW\[(\d+)]""").find(warning)?.groupValues?.getOrNull(1)?.toIntOrNull()
-                index != null && index in 4..10
-            }
-            val normWindow = parseResult.warnings.filter {
-                it.startsWith("NORM[")
-            }.filter { warning ->
-                val index = Regex("""NORM\[(\d+)]""").find(warning)?.groupValues?.getOrNull(1)?.toIntOrNull()
-                index != null && index in 4..10
-            }
-            debug += "RAW_WINDOW_COUNT=${rawWindow.size}"
-            debug += rawWindow
-            debug += "NORM_WINDOW_COUNT=${normWindow.size}"
-            debug += normWindow
             debug += "PARSED_COUNT=${parseResult.ticket.lines.size}"
             debug += "TICKET_TOTAL=%.2f".format(parseResult.ticket.total)
             parseResult.ticket.lines.take(5).forEachIndexed { index, line ->
@@ -134,23 +94,80 @@ class ImportTicketUseCase @Inject constructor(
         }
     }
 
-    private fun isNameCandidate(line: String): Boolean {
-        val upper = line.uppercase()
-        if (line.length < 3) return false
-        if (!line.any { it.isLetter() }) return false
-        if (upper.contains("DESCUENTO")) return false
-        if (upper.matches(Regex("""^[A-Z]{1,3}\d{2,4}$"""))) return false
-        if (line.matches(Regex("""^-?\d+[,.]\d{1,2}$"""))) return false
-        if (upper.matches(Regex("""^\d+\s*X\s*\($"""))) return false
-        return true
+    private fun buildRawWindowDebug(rawLines: List<String>, start: Int, end: Int): List<String> {
+        val output = mutableListOf<String>()
+        val currentNormLines = normalizeCurrentLines(rawLines)
+        val softNormLines = normalizeSoftLines(rawLines)
+
+        for (index in start..end) {
+            val raw = rawLines.getOrNull(index) ?: ""
+            val visible = toVisibleNoiseMap(raw)
+            val soft = softNormLines.getOrNull(index) ?: ""
+            val norm = currentNormLines.getOrNull(index) ?: ""
+            output += "RAW[$index]=$raw"
+            output += "RAW_VISIBLE[$index]=$visible"
+            output += "SOFT[$index]=$soft"
+            output += "NORM[$index]=$norm"
+        }
+
+        return output
     }
 
-    private fun isPriceCandidate(line: String): Boolean {
-        return line.matches(Regex("""^\d+[,.]\d{1,2}$"""))
+    private fun normalizeSoftLines(lines: List<String>): List<String> {
+        return lines.map { rawLine ->
+            rawLine
+                .replace(Regex("""[\u200B-\u200D\u2060\uFEFF]"""), "")
+                .replace(Regex("""[\u00A0\u202F\u2007]"""), " ")
+                .replace(Regex("""[ \t]+"""), " ")
+                .trim()
+        }
     }
 
-    private fun hasTrailingPrice(line: String): Boolean {
-        return line.matches(Regex(""".+\s+\d+[,.]\d{1,2}$"""))
+    private fun normalizeCurrentLines(lines: List<String>): List<String> {
+        return lines.map { rawLine ->
+            val sanitized = rawLine
+                .replace(Regex("""[\u200B-\u200D\u2060\uFEFF]"""), "")
+                .replace(Regex("""[\u00A0\u202F\u2007]"""), " ")
+                .replace(Regex("""[\u00C2\u00C3\uFFFD]"""), " ")
+
+            val hasSpacedLetters = Regex("""[A-Z]\s+[A-Z]""").containsMatchIn(sanitized)
+            val normalizedLetters = if (hasSpacedLetters) {
+                sanitized.replace(Regex("""([A-Z])\s+(?=[A-Z])"""), "$1")
+                    .replace(Regex("""([a-z])\s+(?=[a-z])"""), "$1")
+            } else sanitized
+
+            normalizedLetters
+                .replace(Regex("""(?<=\d)\s*([,.])\s*(?=\d)"""), "$1")
+                .replace(Regex("""(?<=[,.]\d)\s+(?=\d\b)"""), "")
+                .replace(Regex("""[ \t]+"""), " ")
+                .trim()
+        }
+    }
+
+    private fun toVisibleNoiseMap(line: String): String {
+        if (line.isEmpty()) return "∅"
+
+        val noiseMap = linkedMapOf<Char, Char>()
+        val noiseSymbols = listOf('&', '@', '€', '§', '%', '!', '?', '£', '¥', '¤', '†', '‡')
+        var noiseIndex = 0
+
+        return buildString {
+            line.forEach { ch ->
+                when {
+                    ch == ' ' -> append('#')
+                    ch.isLetterOrDigit() || ch in setOf(',', '.', '-', '/', ':', '(', ')', '*', '=') -> append(ch)
+                    ch.isWhitespace() -> append('#')
+                    else -> {
+                        val symbol = noiseMap.getOrPut(ch) {
+                            noiseSymbols.getOrElse(noiseIndex) {
+                                noiseSymbols.last()
+                            }.also { noiseIndex += 1 }
+                        }
+                        append(symbol)
+                    }
+                }
+            }
+        }
     }
 
     suspend fun saveTicket(ticket: Ticket): Long {
@@ -161,4 +178,3 @@ class ImportTicketUseCase @Inject constructor(
         ocrExtractor.close()
     }
 }
-
