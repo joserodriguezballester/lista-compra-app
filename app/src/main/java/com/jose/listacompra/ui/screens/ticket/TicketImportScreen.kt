@@ -25,7 +25,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.jose.listacompra.domain.model.Articulo
 import com.jose.listacompra.domain.model.Category
 import com.jose.listacompra.domain.model.TicketLine
-import com.jose.listacompra.ui.screens.productlist.AddProductToListDialog
+import com.jose.listacompra.ui.screens.catalogo.AddEditArticuloDialog
 import com.jose.listacompra.ui.viewmodel.ImportStep
 import com.jose.listacompra.ui.viewmodel.TicketImportUiState
 import com.jose.listacompra.ui.viewmodel.TicketImportViewModel
@@ -542,21 +542,21 @@ private fun TicketLineCard(
     }
 
     if (showCreateDialog) {
-        AddProductToListDialog(
-            aisles = emptyList(),
-            offers = emptyList(),
-            supermarkets = emptyList(),
-            suggestions = articulos,
-            initialName = line.nombreOriginal,
-            initialCategoryId = line.categoriaId,
-            initialQuantity = line.cantidad.toString(),
-            onSearch = {},
-            onOpenScanner = {},
+        AddEditArticuloDialog(
+            articulo = null,
+            ean = null,
+            selectedImageUri = null,
+            categories = categories,
+            prefillName = line.nombreOriginal,
+            prefillQuantity = line.cantidad.toString(),
+            prefillCategoryId = line.categoriaId?.toString(),
             onDismiss = { showCreateDialog = false },
-            onAdd = { name, _quantity, aisleId, _price, _offerId, _notes, _photoUri, _supermarketId ->
-                onCreateArticulo(name, aisleId)
+            onSave = { articulo ->
+                onCreateArticulo(articulo.name, articulo.categoryId.takeIf { it != 0L })
                 showCreateDialog = false
-            }
+            },
+            onScanBarcode = {},
+            onSelectImage = {}
         )
     }
 

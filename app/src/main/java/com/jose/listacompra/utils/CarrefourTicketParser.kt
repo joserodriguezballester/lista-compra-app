@@ -17,7 +17,7 @@ object CarrefourTicketParser {
     private val compactPricePattern = """-?\d+[,.]\d{1,2}"""
     private val spacedPricePattern = """-?(?:\d\s*){1,3}[,.]\s*(?:\d\s*){1,2}"""
     private val embeddedPricePattern = Regex("""(?<!\d)($compactPricePattern|$spacedPricePattern)(?!\d)""")
-    private val datePattern = Regex("""(\d{2}/\d{2}/\d{4})\s+(\d{2}:\d{2}:\d{2})""")
+    private val datePattern = Regex("""(\d{1,2}/\d{1,2}/\d{2,4})\s+(\d{1,2}:\d{1,2}:\d{1,2})""")
     private val socioPattern = Regex("""SOCIO\s*CLUB.*?:\s*(\d+)""", RegexOption.IGNORE_CASE)
     private val subtotalBlockPattern = Regex("""SUBTOTAL\s*:?\s*([0-9]+[,.][0-9]{2})""", setOf(RegexOption.IGNORE_CASE))
     private val totalBlockPattern = Regex("""TOTAL\s*A\s*PAGAR\s*:?\s*([0-9]+[,.][0-9]{2})""", setOf(RegexOption.IGNORE_CASE))
@@ -101,10 +101,51 @@ object CarrefourTicketParser {
                     Date()
                 }
             }
+
+            val flexible = extractFlexibleDateTime(line)
+            if (flexible != null) {
+                debug += "FECHA_RAW[$index]=$line"
+                debug += "FECHA_CANDIDATA_FLEX[$index]=$flexible"
+                return try {
+                    val parsed = formatter.parse(flexible) ?: Date()
+                    debug += "FECHA_PARSEADA=${formatter.format(parsed)}"
+                    debug += "FECHA_FALLBACK=NO"
+                    parsed
+                } catch (_: Exception) {
+                    debug += "FECHA_PARSE_ERROR_FLEX[$index]=$flexible"
+                    Date()
+                }
+            }
         }
         debug += "FECHA_CANDIDATA=NONE"
         debug += "FECHA_FALLBACK=SI"
         return Date()
+    }
+
+    private fun extractFlexibleDateTime(line: String): String? {
+        val raw = line.trim()
+        if (raw.none { it.isDigit() }) return null
+
+        val window = raw.take(100)
+        val match = Regex("""(\d{1,2})\D+(\d{1,2})\D+(\d{2,4}).*?(\d{1,2})\D+(\d{1,2})\D+(\d{1,2})""").find(window)
+            ?: return null
+
+        val dd = match.groupValues[1].toIntOrNull() ?: return null
+        val mm = match.groupValues[2].toIntOrNull() ?: return null
+        val yyRaw = match.groupValues[3]
+        val hh = match.groupValues[4].toIntOrNull() ?: return null
+        val mi = match.groupValues[5].toIntOrNull() ?: return null
+        val ss = match.groupValues[6].toIntOrNull() ?: return null
+
+        if (dd !in 1..31 || mm !in 1..12 || hh !in 0..23 || mi !in 0..59 || ss !in 0..59) return null
+
+        val year = when (yyRaw.length) {
+            2 -> "20$yyRaw"
+            4 -> yyRaw
+            else -> yyRaw.padStart(4, '0')
+        }
+
+        return "%02d/%02d/%s %02d:%02d:%02d".format(dd, mm, year, hh, mi, ss)
     }
 
     private fun extractStructuredDateTime(line: String): String? {
