@@ -60,6 +60,7 @@ fun AddEditArticuloDialog(
     prefillName: String? = null,
     prefillQuantity: String? = null,
     prefillCategoryId: String? = null,
+    prefillPrice: String? = null,
     onDismiss: () -> Unit,
     onSave: (Articulo) -> Unit,
     onScanBarcode: () -> Unit = {},
@@ -68,7 +69,7 @@ fun AddEditArticuloDialog(
     var name by remember { mutableStateOf(prefillName ?: articulo?.name ?: "") }
     var size by remember { mutableStateOf("") }
     var unit by remember { mutableStateOf(articulo?.unit ?: "") }
-    var price by remember { mutableStateOf(articulo?.finalPrice?.toString() ?: "") }
+    var price by remember { mutableStateOf(prefillPrice ?: articulo?.finalPrice?.toString() ?: "") }
     var eanValue by remember { mutableStateOf(articulo?.ean ?: ean ?: "") }
     var selectedCategory by remember { mutableStateOf(
         categories.find { it.id.toString() == prefillCategoryId }
