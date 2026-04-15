@@ -29,31 +29,48 @@ class ImportTicketUseCase @Inject constructor(
         uri: Uri,
         articulos: List<Articulo>,
         categories: List<Category>
+    ): Result<ImportResult> = processTextResult(
+        textResult = ocrExtractor.extractTextFromPdf(uri),
+        sourceLabel = "PDF: $uri",
+        articulos = articulos,
+        categories = categories
+    )
+
+    suspend fun invokeDebugAsset(
+        assetName: String,
+        articulos: List<Articulo>,
+        categories: List<Category>
+    ): Result<ImportResult> = processTextResult(
+        textResult = ocrExtractor.extractTextFromAsset(assetName),
+        sourceLabel = "ASSET: $assetName",
+        articulos = articulos,
+        categories = categories
+    )
+
+    private fun processTextResult(
+        textResult: Result<String>,
+        sourceLabel: String,
+        articulos: List<Articulo>,
+        categories: List<Category>
     ): Result<ImportResult> {
         val debug = mutableListOf<String>()
         return try {
-            debug += "PDF OK"
+            debug += "SOURCE=$sourceLabel"
 
-            val ocrResult = ocrExtractor.extractTextFromPdf(uri)
-            if (ocrResult.isFailure) {
+            if (textResult.isFailure) {
                 return Result.failure(Exception("PDF error"))
             }
 
-            val rawText = ocrResult.getOrNull() ?: ""
+            val rawText = textResult.getOrNull() ?: ""
             debug += "Texto: ${rawText.length} chars"
 
-            val rawLines = rawText.lines()
-            debug += "RAW_TRACE_RANGE=6..12"
-            debug += buildRawWindowDebug(rawLines, 6, 12)
-
             val parseResult = CarrefourTicketParser.parse(rawText)
+            debug += parseResult.debugDate
+            debug += parseResult.warnings
             debug += "PARSED_COUNT=${parseResult.ticket.lines.size}"
             debug += "TICKET_TOTAL=%.2f".format(parseResult.ticket.total)
-            parseResult.ticket.lines.take(5).forEachIndexed { index: Int, line ->
-                debug += "PARSED[$index]=${line.nombreOriginal} | total=${line.precioTotal} | unit=${line.precioUnitario}"
-            }
 
-            val matchedLines = parseResult.ticket.lines.map { line: com.jose.listacompra.domain.model.TicketLine ->
+            val matchedLines = parseResult.ticket.lines.mapIndexed { index, line ->
                 val match = ProductMatcher.findBestMatch(
                     normalizedName = line.nombreNormalizado,
                     articulos = articulos
@@ -63,6 +80,13 @@ class ImportTicketUseCase @Inject constructor(
                     ProductMatcher.assignCategory(line.nombreOriginal, categories)
                 } else {
                     articulos.find { it.id == match.id }?.categoryId
+                }
+
+                debug += "MATCH_INPUT[$index]={name=${line.nombreOriginal}, normalized=${line.nombreNormalizado}, qty=${line.cantidad}, unit=${"%.2f".format(line.precioUnitario)}, total=${"%.2f".format(line.precioTotal)}}"
+                debug += if (match != null) {
+                    "MATCH_RESULT[$index]={articuloId=${match.id}, articulo=${match.name}}"
+                } else {
+                    "MATCH_RESULT[$index]={articuloId=null, articulo=null}"
                 }
 
                 line.copy(
@@ -94,87 +118,6 @@ class ImportTicketUseCase @Inject constructor(
         }
     }
 
-    private fun buildRawWindowDebug(rawLines: List<String>, start: Int, end: Int): List<String> {
-        val output = mutableListOf<String>()
-        val currentNormLines = normalizeCurrentLines(rawLines)
-        val softNormLines = normalizeSoftLines(rawLines)
-
-        for (index in start..end) {
-            val raw = rawLines.getOrNull(index) ?: ""
-            val visible = toVisibleNoiseMap(raw)
-            val soft = softNormLines.getOrNull(index) ?: ""
-            val norm = currentNormLines.getOrNull(index) ?: ""
-            output += "RAW[$index]=$raw"
-            output += "RAW_VISIBLE[$index]=$visible"
-            output += "SOFT[$index]=$soft"
-            output += "NORM[$index]=$norm"
-        }
-
-        return output
-    }
-
-    private fun normalizeSoftLines(lines: List<String>): List<String> {
-        return lines.map { rawLine ->
-            rawLine
-                .replace(Regex("""[\u200B-\u200D\u2060\uFEFF]"""), "")
-                .replace(Regex("""[\u00A0\u202F\u2007]"""), " ")
-                .replace(Regex("""[ \t]+"""), " ")
-                .trim()
-        }
-    }
-
-    private fun normalizeCurrentLines(lines: List<String>): List<String> {
-        return lines.map { rawLine ->
-            val sanitized = rawLine
-                .replace(Regex("""[\u200B-\u200D\u2060\uFEFF]"""), "")
-                .replace(Regex("""[\u00A0\u202F\u2007]"""), " ")
-                .replace(Regex("""[\u00C2\u00C3\uFFFD]"""), " ")
-
-            val hasSpacedLetters = Regex("""[A-Z]\s+[A-Z]""").containsMatchIn(sanitized)
-            val normalizedLetters = if (hasSpacedLetters) {
-                sanitized.replace(Regex("""([A-Z])\s+(?=[A-Z])"""), "$1")
-                    .replace(Regex("""([a-z])\s+(?=[a-z])"""), "$1")
-            } else sanitized
-
-            normalizedLetters
-                .replace(Regex("""(?<=\d)\s*([,.])\s*(?=\d)"""), "$1")
-                .replace(Regex("""(?<=[,.]\d)\s+(?=\d\b)"""), "")
-                .replace(Regex("""[ \t]+"""), " ")
-                .trim()
-        }
-    }
-
-    private fun toVisibleNoiseMap(line: String): String {
-        if (line.isEmpty()) return "∅"
-
-        val noiseMap = linkedMapOf<Char, Char>()
-        val noiseSymbols = listOf('&', '@', '€', '§', '%', '!', '?', '£', '¥', '¤', '†', '‡')
-        var noiseIndex = 0
-
-        return buildString {
-            line.forEach { ch ->
-                when {
-                    ch == ' ' -> append('#')
-                    ch.isLetterOrDigit() || ch in setOf(',', '.', '-', '/', ':', '(', ')', '*', '=') -> append(ch)
-                    ch.isWhitespace() -> append('#')
-                    else -> {
-                        val symbol = noiseMap.getOrPut(ch) {
-                            noiseSymbols.getOrElse(noiseIndex) {
-                                noiseSymbols.last()
-                            }.also { noiseIndex += 1 }
-                        }
-                        append(symbol)
-                    }
-                }
-            }
-        }
-    }
-
-    suspend fun saveTicket(ticket: Ticket): Long {
-        return ticketRepository.saveTicket(ticket)
-    }
-
-    fun close() {
-        ocrExtractor.close()
-    }
+    suspend fun saveTicket(ticket: Ticket): Long = ticketRepository.saveTicket(ticket)
+    fun close() { ocrExtractor.close() }
 }

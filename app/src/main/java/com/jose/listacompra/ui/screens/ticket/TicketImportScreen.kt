@@ -4,8 +4,10 @@ package com.jose.listacompra.ui.screens.ticket
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -23,6 +25,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.jose.listacompra.domain.model.Articulo
 import com.jose.listacompra.domain.model.Category
 import com.jose.listacompra.domain.model.TicketLine
+import com.jose.listacompra.ui.screens.productlist.AddProductToListDialog
 import com.jose.listacompra.ui.viewmodel.ImportStep
 import com.jose.listacompra.ui.viewmodel.TicketImportUiState
 import com.jose.listacompra.ui.viewmodel.TicketImportViewModel
@@ -54,7 +57,8 @@ fun TicketImportScreen(
                 error = uiState.error,
                 debugLog = uiState.debugLog,
                 onDismissError = { viewModel.clearError() },
-                onFileSelected = { viewModel.importTicket(it) }
+                onFileSelected = { viewModel.importTicket(it) },
+                onDebugTicket = { viewModel.importDebugTicket() }
             )
             ImportStep.LOADING -> LoadingStep(
                 modifier = Modifier.padding(padding),
@@ -84,7 +88,8 @@ private fun SelectFileStep(
     error: String?,
     debugLog: List<String>,
     onDismissError: () -> Unit,
-    onFileSelected: (Uri) -> Unit
+    onFileSelected: (Uri) -> Unit,
+    onDebugTicket: () -> Unit
 ) {
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
@@ -107,7 +112,7 @@ private fun SelectFileStep(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "Importar Ticket - Test 10",
+            text = "Importar Ticket - Test 17",
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold
         )
@@ -128,10 +133,18 @@ private fun SelectFileStep(
             Text("Seleccionar PDF")
         }
 
+        Spacer(modifier = Modifier.height(12.dp))
+
+        OutlinedButton(onClick = onDebugTicket) {
+            Icon(Icons.Default.BugReport, contentDescription = null)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Debug ticket ejemplo (AAA.pdf)")
+        }
+
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Test 10: parser por final de línea, huecos amplios y detalle multiunidad",
+            text = "Test 17: fecha por patrón / / : : + nombre por hueco grande",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -211,6 +224,77 @@ private fun DebugLogCard(debugLog: List<String>) {
 }
 
 @Composable
+private fun SectionHeader(title: String, subtitle: String) {
+    Column(modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 4.dp)) {
+        Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+@Composable
+private fun InfoPill(text: String) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(12.dp),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+private fun MatchedTicketLineRow(line: TicketLine) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(28.dp)
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f), RoundedCornerShape(999.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("✓", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = line.articuloNombre ?: line.nombreOriginal,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "${line.cantidad} uds × %.2f €".format(line.precioUnitario),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Text(
+                text = "%.2f €".format(line.precioTotal),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+    }
+}
+
+@Composable
 private fun ReviewStep(
     modifier: Modifier,
     uiState: TicketImportUiState,
@@ -220,6 +304,9 @@ private fun ReviewStep(
     onCancel: () -> Unit
 ) {
     val ticket = uiState.ticket ?: return
+    val indexedLines = ticket.lines.mapIndexed { index, line -> index to line }
+    val unresolved = indexedLines.filter { (_, line) -> line.articuloId == null && line.articuloNombre == null }
+    val resolved = indexedLines.filter { (_, line) -> line.articuloId != null || line.articuloNombre != null }
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -262,33 +349,57 @@ private fun ReviewStep(
                             color = MaterialTheme.colorScheme.primary
                         )
                     }
-                    if (uiState.unmatchedCount > 0) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "⚠️ ${uiState.unmatchedCount} productos sin matchear",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = if (unresolved.isEmpty()) "✅ Todo matcheado" else "⚠️ ${unresolved.size} productos sin matchear",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (unresolved.isEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                    )
                 }
             }
         }
 
         if (uiState.debugLog.isNotEmpty()) {
-            item {
-                DebugLogCard(uiState.debugLog)
+            item { DebugLogCard(uiState.debugLog) }
+        }
+
+        item {
+            SectionHeader(
+                title = "Sin machear",
+                subtitle = if (unresolved.isEmpty()) "Nada pendiente" else "Resuelve estos productos antes de guardar si quieres dejarlos finos"
+            )
+        }
+
+        if (unresolved.isEmpty()) {
+            item { InfoPill("No hay productos pendientes de macheo") }
+        } else {
+            items(unresolved.size) { pos ->
+                val (index, line) = unresolved[pos]
+                TicketLineCard(
+                    line = line,
+                    lineIndex = index,
+                    articulos = uiState.articulos,
+                    categories = uiState.categories,
+                    onConfirmMatch = { articuloId -> onConfirmMatch(index, articuloId) },
+                    onCreateArticulo = { name, catId -> onCreateArticulo(index, name, catId) }
+                )
             }
         }
 
-        itemsIndexed(ticket.lines) { index, line ->
-            TicketLineCard(
-                line = line,
-                lineIndex = index,
-                articulos = uiState.articulos,
-                categories = uiState.categories,
-                onConfirmMatch = { articuloId -> onConfirmMatch(index, articuloId) },
-                onCreateArticulo = { name, catId -> onCreateArticulo(index, name, catId) }
+        item {
+            SectionHeader(
+                title = "Ya macheados",
+                subtitle = if (resolved.isEmpty()) "Todavía no hay productos resueltos" else "Productos resueltos listos para guardarse en el ticket"
             )
+        }
+
+        if (resolved.isEmpty()) {
+            item { InfoPill("Todavía no hay productos macheados") }
+        } else {
+            items(resolved.size) { pos ->
+                val (_, line) = resolved[pos]
+                MatchedTicketLineRow(line)
+            }
         }
 
         item {
@@ -303,7 +414,7 @@ private fun ReviewStep(
                     if (uiState.isSaving) {
                         CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                     } else {
-                        Text("Guardar")
+                        Text("Guardar ticket")
                     }
                 }
             }
@@ -431,63 +542,24 @@ private fun TicketLineCard(
     }
 
     if (showCreateDialog) {
-        var newName by remember { mutableStateOf(line.nombreOriginal) }
-        var selectedCategory by remember { mutableStateOf<Long?>(line.categoriaId) }
-
-        AlertDialog(
-            onDismissRequest = { showCreateDialog = false },
-            title = { Text("Crear nuevo artÃ­culo") },
-            text = {
-                Column {
-                    OutlinedTextField(
-                        value = newName,
-                        onValueChange = { newName = it },
-                        label = { Text("Nombre") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text("CategorÃ­a (opcional)", style = MaterialTheme.typography.labelMedium)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    var expanded by remember { mutableStateOf(false) }
-                    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
-                        OutlinedTextField(
-                            value = categories.find { it.id == selectedCategory }?.name ?: "Seleccionar",
-                            onValueChange = {},
-                            readOnly = true,
-                            modifier = Modifier.menuAnchor().fillMaxWidth()
-                        )
-                        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                            DropdownMenuItem(
-                                text = { Text("Sin categorÃ­a") },
-                                onClick = {
-                                    selectedCategory = null
-                                    expanded = false
-                                }
-                            )
-                            categories.forEach { cat ->
-                                DropdownMenuItem(
-                                    text = { Text("${cat.icon} ${cat.name}") },
-                                    onClick = {
-                                        selectedCategory = cat.id
-                                        expanded = false
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    onCreateArticulo(newName, selectedCategory)
-                    showCreateDialog = false
-                }) { Text("Crear") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showCreateDialog = false }) { Text("Cancelar") }
+        AddProductToListDialog(
+            aisles = emptyList(),
+            offers = emptyList(),
+            supermarkets = emptyList(),
+            suggestions = articulos,
+            initialName = line.nombreOriginal,
+            initialCategoryId = line.categoriaId,
+            initialQuantity = line.cantidad.toString(),
+            onSearch = {},
+            onOpenScanner = {},
+            onDismiss = { showCreateDialog = false },
+            onAdd = { name, _quantity, aisleId, _price, _offerId, _notes, _photoUri, _supermarketId ->
+                onCreateArticulo(name, aisleId)
+                showCreateDialog = false
             }
         )
     }
+
 }
 
 @Composable
