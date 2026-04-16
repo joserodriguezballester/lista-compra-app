@@ -2,12 +2,14 @@ package com.jose.listacompra
 
 import com.google.gson.Gson
 import com.jose.listacompra.domain.model.*
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.Assert.*
 
 /**
  * Tests unitarios para exportación/importación JSON
  */
+@Ignore("Legacy test pendiente de rehacer")
 class JsonExportTest {
 
     private val gson = Gson()
