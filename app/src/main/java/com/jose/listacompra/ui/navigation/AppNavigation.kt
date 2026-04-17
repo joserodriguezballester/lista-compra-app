@@ -109,6 +109,7 @@ fun AppNavigation(
         
         composable(NavScreen.Offers.route) {
             OffersScreen(
+                navigator = appNavigator,
                 onNavigateToHome = navigateToHome,
                 onNavigateToList = navigateToList,
                 onNavigateToCatalogo = { navController.navigate(NavScreen.Catalogo.route) },
@@ -123,6 +124,7 @@ fun AppNavigation(
         
         composable(NavScreen.Categories.route) {
             CategoriesScreen(
+                navigator = appNavigator,
                 onNavigateToHome = navigateToHome,
                 onNavigateToList = navigateToList,
                 onNavigateToOffers = { navController.navigate(NavScreen.Offers.route) },
@@ -137,6 +139,7 @@ fun AppNavigation(
         
         composable(NavScreen.History.route) {
             HistoryScreen(
+                navigator = appNavigator,
                 onNavigateToHome = navigateToHome,
                 onNavigateToList = navigateToList,
                 onNavigateToOffers = { navController.navigate(NavScreen.Offers.route) },
@@ -181,6 +184,7 @@ fun AppNavigation(
         
         composable(NavScreen.Supermarkets.route) {
             SupermarketListScreen(
+                navigator = appNavigator,
                 onNavigateToAisles = { supermarketId ->
                     navController.navigate(NavScreen.SupermarketAisles.createRoute(supermarketId))
                 },
