@@ -25,12 +25,7 @@ class SaveTicketUseCaseTest {
     fun `saveTicket uses ticket date and line unit price for matched products`() = runBlocking {
         val ticketRepository = FakeTicketRepository()
         val historyRepository = FakeHistoryRepository()
-        val useCase = SaveTicketUseCase(
-            ticketRepository = ticketRepository,
-            historyRepository = historyRepository,
-            completePurchaseUseCase = CompletePurchaseUseCase(historyRepository),
-            savePriceHistoryUseCase = SavePriceHistoryUseCase(historyRepository)
-        )
+        val useCase = buildUseCase(ticketRepository, historyRepository)
 
         val ticketDate = 1_710_000_123_000L
         val ticket = Ticket(
@@ -46,39 +41,28 @@ class SaveTicketUseCaseTest {
             pdfPath = "/tickets/demo.pdf",
             importado = true,
             lines = listOf(
-                TicketLine(
-                    ticketId = 0,
+                matchedLine(
                     nombreOriginal = "LECHE ENTERA",
                     nombreNormalizado = "leche entera",
                     cantidad = 2,
                     precioUnitario = 1.35f,
                     precioTotal = 2.70f,
                     articuloId = 100L,
-                    articuloNombre = "Leche entera",
-                    confirmado = true
+                    articuloNombre = "Leche entera"
                 ),
-                TicketLine(
-                    ticketId = 0,
+                unmatchedLine(
                     nombreOriginal = "PAN",
                     nombreNormalizado = "pan",
                     cantidad = 1,
                     precioUnitario = 0.99f,
-                    precioTotal = 0.99f,
-                    articuloId = null,
-                    articuloNombre = null,
-                    confirmado = false
+                    precioTotal = 0.99f
                 ),
-                TicketLine(
-                    ticketId = 0,
+                discountLine(
                     nombreOriginal = "DTO CLUB",
                     nombreNormalizado = "dto club",
-                    cantidad = 1,
                     precioUnitario = -0.25f,
-                    precioTotal = -0.25f,
                     articuloId = 200L,
-                    articuloNombre = "Descuento club",
-                    esDescuento = true,
-                    confirmado = true
+                    articuloNombre = "Descuento club"
                 )
             )
         )
@@ -117,6 +101,226 @@ class SaveTicketUseCaseTest {
         assertNull(historyRepository.getFrequency("pan"))
         assertNotNull(ticketRepository.savedTicket)
     }
+
+    @Test
+    fun `saveTicket stores one history entry per matched line`() = runBlocking {
+        val ticketDate = 1_720_000_000_000L
+
+        val historyRepository = FakeHistoryRepository()
+        val localUseCase = buildUseCase(historyRepository = historyRepository)
+
+        localUseCase(
+            Ticket(
+                fecha = Date(ticketDate),
+                supermarketId = 11L,
+                supermarketName = "Mercadona",
+                total = 7.10f,
+                subtotal = 7.10f,
+                descuentos = 0f,
+                numProductos = 2,
+                socioClub = null,
+                formaPago = null,
+                pdfPath = null,
+                importado = true,
+                lines = listOf(
+                    matchedLine(
+                        nombreOriginal = "ARROZ REDONDO",
+                        nombreNormalizado = "arroz redondo",
+                        cantidad = 1,
+                        precioUnitario = 1.20f,
+                        precioTotal = 1.20f,
+                        articuloId = 300L,
+                        articuloNombre = "Arroz redondo"
+                    ),
+                    matchedLine(
+                        nombreOriginal = "HUEVOS L",
+                        nombreNormalizado = "huevos l",
+                        cantidad = 2,
+                        precioUnitario = 2.95f,
+                        precioTotal = 5.90f,
+                        articuloId = 301L,
+                        articuloNombre = "Huevos L"
+                    )
+                )
+            )
+        )
+
+        assertEquals(1, historyRepository.purchaseHistoryRecords.size)
+        assertEquals(2, historyRepository.priceHistoryRecords.size)
+        assertEquals(2, historyRepository.frequencyRecords.size)
+
+        val first = historyRepository.priceHistoryRecords[0]
+        val second = historyRepository.priceHistoryRecords[1]
+        assertEquals(321L, first.purchaseId)
+        assertEquals(321L, second.purchaseId)
+        assertEquals(ticketDate, first.fecha)
+        assertEquals(ticketDate, second.fecha)
+        assertEquals("arroz redondo", first.productName)
+        assertEquals("huevos l", second.productName)
+    }
+
+    @Test
+    fun `saveTicket falls back to original name when article name is blank`() = runBlocking {
+        val historyRepository = FakeHistoryRepository()
+        val useCase = buildUseCase(historyRepository = historyRepository)
+        val ticketDate = 1_730_000_000_000L
+
+        useCase(
+            Ticket(
+                fecha = Date(ticketDate),
+                supermarketId = 5L,
+                supermarketName = null,
+                total = 1.49f,
+                subtotal = 1.49f,
+                descuentos = 0f,
+                numProductos = 1,
+                socioClub = null,
+                formaPago = null,
+                pdfPath = null,
+                importado = true,
+                lines = listOf(
+                    matchedLine(
+                        nombreOriginal = "YOGUR NATURAL",
+                        nombreNormalizado = "yogur natural",
+                        cantidad = 1,
+                        precioUnitario = 1.49f,
+                        precioTotal = 1.49f,
+                        articuloId = 400L,
+                        articuloNombre = "   "
+                    )
+                )
+            )
+        )
+
+        val priceHistory = historyRepository.priceHistoryRecords.single()
+        assertEquals("yogur natural", priceHistory.productName)
+
+        val frequency = historyRepository.frequencyRecords.values.single()
+        assertEquals("yogur natural", frequency.productName)
+        assertEquals("YOGUR NATURAL", frequency.originalName)
+
+        val purchase = historyRepository.purchaseHistoryRecords.single()
+        assertEquals("Carrefour", purchase.tienda)
+    }
+
+    @Test
+    fun `saveTicket updates existing frequency instead of resetting it`() = runBlocking {
+        val historyRepository = FakeHistoryRepository().apply {
+            frequencyRecords["leche entera"] = ProductFrequencyEntity(
+                productName = "leche entera",
+                originalName = "Leche entera",
+                timesPurchased = 4,
+                lastQuantity = 1f,
+                lastPrice = 1.10f,
+                lastSupermarketId = 2L,
+                lastPurchaseDate = 1_700_000_000_000L
+            )
+        }
+        val useCase = buildUseCase(historyRepository = historyRepository)
+        val ticketDate = 1_740_000_000_000L
+
+        useCase(
+            Ticket(
+                fecha = Date(ticketDate),
+                supermarketId = 9L,
+                supermarketName = "Consum",
+                total = 2.40f,
+                subtotal = 2.40f,
+                descuentos = 0f,
+                numProductos = 1,
+                socioClub = null,
+                formaPago = null,
+                pdfPath = null,
+                importado = true,
+                lines = listOf(
+                    matchedLine(
+                        nombreOriginal = "LECHE ENTERA",
+                        nombreNormalizado = "leche entera",
+                        cantidad = 2,
+                        precioUnitario = 1.20f,
+                        precioTotal = 2.40f,
+                        articuloId = 500L,
+                        articuloNombre = "Leche entera"
+                    )
+                )
+            )
+        )
+
+        val frequency = historyRepository.frequencyRecords.getValue("leche entera")
+        assertEquals(5, frequency.timesPurchased)
+        assertEquals(2f, frequency.lastQuantity)
+        assertEquals(1.20f, frequency.lastPrice)
+        assertEquals(9L, frequency.lastSupermarketId)
+        assertEquals(ticketDate, frequency.lastPurchaseDate)
+    }
+
+
+    private fun buildUseCase(
+        ticketRepository: FakeTicketRepository = FakeTicketRepository(),
+        historyRepository: FakeHistoryRepository = FakeHistoryRepository()
+    ) = SaveTicketUseCase(
+        ticketRepository = ticketRepository,
+        historyRepository = historyRepository,
+        completePurchaseUseCase = CompletePurchaseUseCase(historyRepository),
+        savePriceHistoryUseCase = SavePriceHistoryUseCase(historyRepository)
+    )
+
+    private fun matchedLine(
+        nombreOriginal: String,
+        nombreNormalizado: String,
+        cantidad: Int,
+        precioUnitario: Float,
+        precioTotal: Float,
+        articuloId: Long,
+        articuloNombre: String?
+    ) = TicketLine(
+        ticketId = 0,
+        nombreOriginal = nombreOriginal,
+        nombreNormalizado = nombreNormalizado,
+        cantidad = cantidad,
+        precioUnitario = precioUnitario,
+        precioTotal = precioTotal,
+        articuloId = articuloId,
+        articuloNombre = articuloNombre,
+        confirmado = true
+    )
+
+    private fun unmatchedLine(
+        nombreOriginal: String,
+        nombreNormalizado: String,
+        cantidad: Int,
+        precioUnitario: Float,
+        precioTotal: Float
+    ) = TicketLine(
+        ticketId = 0,
+        nombreOriginal = nombreOriginal,
+        nombreNormalizado = nombreNormalizado,
+        cantidad = cantidad,
+        precioUnitario = precioUnitario,
+        precioTotal = precioTotal,
+        articuloId = null,
+        articuloNombre = null,
+        confirmado = false
+    )
+
+    private fun discountLine(
+        nombreOriginal: String,
+        nombreNormalizado: String,
+        precioUnitario: Float,
+        articuloId: Long,
+        articuloNombre: String
+    ) = TicketLine(
+        ticketId = 0,
+        nombreOriginal = nombreOriginal,
+        nombreNormalizado = nombreNormalizado,
+        cantidad = 1,
+        precioUnitario = precioUnitario,
+        precioTotal = precioUnitario,
+        articuloId = articuloId,
+        articuloNombre = articuloNombre,
+        esDescuento = true,
+        confirmado = true
+    )
 
     private class FakeTicketRepository : ITicketRepository {
         var savedTicket: Ticket? = null
