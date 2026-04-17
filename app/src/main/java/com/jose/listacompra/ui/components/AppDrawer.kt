@@ -4,17 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Category
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Inventory
-import androidx.compose.material.icons.filled.LocalOffer
-import androidx.compose.material.icons.filled.Receipt
-import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material.icons.filled.Store
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.NavigationDrawerItem
@@ -25,15 +15,18 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.jose.listacompra.ui.navigation.DrawerDestination
 
 @Composable
 fun AppDrawer(
+    currentDestination: DrawerDestination? = null,
+    onDestinationSelected: ((DrawerDestination) -> Unit)? = null,
     onNavigateToHome: () -> Unit = {},
     onNavigateToList: () -> Unit = {},
-    onNavigateToOffers: () -> Unit,
-    onNavigateToSupermarkets: () -> Unit,
-    onNavigateToCatalogo: () -> Unit,
-    onNavigateToCategories: () -> Unit,
+    onNavigateToOffers: () -> Unit = {},
+    onNavigateToSupermarkets: () -> Unit = {},
+    onNavigateToCatalogo: () -> Unit = {},
+    onNavigateToCategories: () -> Unit = {},
     onNavigateToHistory: () -> Unit = {},
     onNavigateToTicketImport: () -> Unit = {}
 ) {
@@ -42,6 +35,23 @@ fun AppDrawer(
         context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "?"
     } catch (_: Exception) {
         "?"
+    }
+
+    fun resolveDestination(destination: DrawerDestination) {
+        if (onDestinationSelected != null) {
+            onDestinationSelected(destination)
+            return
+        }
+        when (destination) {
+            DrawerDestination.Home -> onNavigateToHome()
+            DrawerDestination.ShoppingList -> onNavigateToList()
+            DrawerDestination.Catalog -> onNavigateToCatalogo()
+            DrawerDestination.Categories -> onNavigateToCategories()
+            DrawerDestination.Offers -> onNavigateToOffers()
+            DrawerDestination.Supermarkets -> onNavigateToSupermarkets()
+            DrawerDestination.History -> onNavigateToHistory()
+            DrawerDestination.TicketImport -> onNavigateToTicketImport()
+        }
     }
 
     ModalDrawerSheet {
@@ -66,55 +76,17 @@ fun AppDrawer(
         HorizontalDivider()
 
         Column(modifier = Modifier.padding(vertical = 8.dp)) {
-            NavigationDrawerItem(
-                icon = { Icon(Icons.Default.Home, contentDescription = null) },
-                label = { Text("Home") },
-                selected = false,
-                onClick = onNavigateToHome
-            )
-            NavigationDrawerItem(
-                icon = { Icon(Icons.Default.ShoppingCart, contentDescription = null) },
-                label = { Text("Mi Lista") },
-                selected = false,
-                onClick = onNavigateToList
-            )
-            NavigationDrawerItem(
-                icon = { Icon(Icons.Default.Inventory, contentDescription = null) },
-                label = { Text("Catálogo") },
-                selected = false,
-                onClick = onNavigateToCatalogo
-            )
-            NavigationDrawerItem(
-                icon = { Icon(Icons.Default.Category, contentDescription = null) },
-                label = { Text("Categorías") },
-                selected = false,
-                onClick = onNavigateToCategories
-            )
-            NavigationDrawerItem(
-                icon = { Icon(Icons.Default.LocalOffer, contentDescription = null) },
-                label = { Text("Ofertas") },
-                selected = false,
-                onClick = onNavigateToOffers
-            )
-            NavigationDrawerItem(
-                icon = { Icon(Icons.Default.Store, contentDescription = null) },
-                label = { Text("Supermercados") },
-                selected = false,
-                onClick = onNavigateToSupermarkets
-            )
-            NavigationDrawerItem(
-                icon = { Icon(Icons.Default.History, contentDescription = null) },
-                label = { Text("Historial") },
-                selected = false,
-                onClick = onNavigateToHistory
-            )
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-            NavigationDrawerItem(
-                icon = { Icon(Icons.Default.Receipt, contentDescription = null) },
-                label = { Text("Importar Ticket") },
-                selected = false,
-                onClick = onNavigateToTicketImport
-            )
+            DrawerDestination.all.forEach { destination ->
+                if (destination == DrawerDestination.TicketImport) {
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                }
+                NavigationDrawerItem(
+                    icon = { Text(destination.emoji) },
+                    label = { Text(destination.label) },
+                    selected = currentDestination == destination,
+                    onClick = { resolveDestination(destination) }
+                )
+            }
         }
 
         Spacer(modifier = Modifier.weight(1f))
