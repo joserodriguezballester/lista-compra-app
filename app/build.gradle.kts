@@ -15,8 +15,8 @@ android {
         applicationId = "com.jose.listacompra"
         minSdk = 26
         targetSdk = 34
-        versionCode = 91
-        versionName = "0.8.12"
+        versionCode = 92
+        versionName = "0.8.13"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

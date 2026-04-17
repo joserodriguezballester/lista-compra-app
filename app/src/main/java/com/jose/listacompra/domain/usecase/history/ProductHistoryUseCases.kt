@@ -55,11 +55,12 @@ class UpdateProductFrequencyUseCase @Inject constructor(
         aisleId: Long?,
         quantity: Float,
         price: Float?,
-        supermarketId: Long?
+        supermarketId: Long?,
+        purchaseDate: Long = System.currentTimeMillis()
     ) {
         val normalizedName = name.lowercase().trim()
         val existing = historyRepository.getFrequency(normalizedName)
-        
+
         if (existing != null) {
             historyRepository.updateFrequency(
                 existing.copy(
@@ -68,7 +69,7 @@ class UpdateProductFrequencyUseCase @Inject constructor(
                     lastPrice = price ?: existing.lastPrice,
                     lastAisleId = aisleId ?: existing.lastAisleId,
                     lastSupermarketId = supermarketId ?: existing.lastSupermarketId,
-                    lastPurchaseDate = System.currentTimeMillis()
+                    lastPurchaseDate = purchaseDate
                 )
             )
         } else {
@@ -81,7 +82,7 @@ class UpdateProductFrequencyUseCase @Inject constructor(
                     lastPrice = price ?: 0f,
                     lastAisleId = aisleId ?: 0L,
                     lastSupermarketId = supermarketId ?: 0L,
-                    lastPurchaseDate = System.currentTimeMillis()
+                    lastPurchaseDate = purchaseDate
                 )
             )
         }
@@ -99,16 +100,18 @@ class SavePriceHistoryUseCase @Inject constructor(
         productName: String,
         price: Float,
         quantity: Int,
-        aisle: String? = null
+        aisle: String? = null,
+        purchaseId: Long = 0L,
+        purchaseDate: Long = System.currentTimeMillis()
     ) {
         historyRepository.savePriceHistory(
             ProductPriceHistoryEntity(
-                purchaseId = 0L, // Se asignará cuando haya una compra real
+                purchaseId = purchaseId,
                 productName = productName.lowercase().trim(),
                 price = price,
                 quantity = quantity,
                 aisle = aisle,
-                fecha = System.currentTimeMillis()
+                fecha = purchaseDate
             )
         )
     }

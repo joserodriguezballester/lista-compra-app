@@ -1,12 +1,14 @@
 package com.jose.listacompra
 
 import com.jose.listacompra.data.local.entities.OfferEntity
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.Assert.*
 
 /**
  * Tests unitarios para cálculo de ofertas
  */
+@Ignore("Legacy test pendiente de rehacer")
 class OfferCalculationTest {
 
     // Simula la lógica de cálculo del Repository

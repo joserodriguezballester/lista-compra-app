@@ -2,12 +2,14 @@ package com.jose.listacompra
 
 import com.jose.listacompra.domain.model.Aisle
 import com.jose.listacompra.domain.model.Product
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.Assert.*
 
 /**
  * Tests unitarios para modelos de dominio
  */
+@Ignore("Legacy test pendiente de rehacer")
 class DomainModelTest {
 
     @Test

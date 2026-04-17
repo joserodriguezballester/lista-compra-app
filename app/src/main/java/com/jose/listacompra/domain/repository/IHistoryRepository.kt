@@ -19,7 +19,7 @@ interface IHistoryRepository {
     suspend fun savePriceHistory(priceHistory: ProductPriceHistoryEntity)
 
     // Purchase history
-    suspend fun insertPurchaseHistory(purchaseHistory: PurchaseHistoryEntity)
+    suspend fun insertPurchaseHistory(purchaseHistory: PurchaseHistoryEntity): Long
 
     // Consultas
     suspend fun getProductSuggestions(query: String): List<ProductFrequencyEntity>

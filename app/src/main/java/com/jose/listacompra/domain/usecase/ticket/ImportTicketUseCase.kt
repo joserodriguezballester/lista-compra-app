@@ -1,4 +1,4 @@
-﻿package com.jose.listacompra.domain.usecase.ticket
+package com.jose.listacompra.domain.usecase.ticket
 
 import android.content.Context
 import android.net.Uri
@@ -29,60 +29,48 @@ class ImportTicketUseCase @Inject constructor(
         uri: Uri,
         articulos: List<Articulo>,
         categories: List<Category>
+    ): Result<ImportResult> = processTextResult(
+        textResult = ocrExtractor.extractTextFromPdf(uri),
+        sourceLabel = "PDF: $uri",
+        articulos = articulos,
+        categories = categories
+    )
+
+    suspend fun invokeDebugAsset(
+        assetName: String,
+        articulos: List<Articulo>,
+        categories: List<Category>
+    ): Result<ImportResult> = processTextResult(
+        textResult = ocrExtractor.extractTextFromAsset(assetName),
+        sourceLabel = "ASSET: $assetName",
+        articulos = articulos,
+        categories = categories
+    )
+
+    private fun processTextResult(
+        textResult: Result<String>,
+        sourceLabel: String,
+        articulos: List<Articulo>,
+        categories: List<Category>
     ): Result<ImportResult> {
         val debug = mutableListOf<String>()
         return try {
-            debug += "PDF OK"
+            debug += "SOURCE=$sourceLabel"
 
-            val ocrResult = ocrExtractor.extractTextFromPdf(uri)
-            if (ocrResult.isFailure) {
+            if (textResult.isFailure) {
                 return Result.failure(Exception("PDF error"))
             }
 
-            val rawText = ocrResult.getOrNull() ?: ""
-            val lines = rawText.lines().map { it.trim() }.filter { it.isNotBlank() }
+            val rawText = textResult.getOrNull() ?: ""
             debug += "Texto: ${rawText.length} chars"
 
-            val starsIndex = lines.indexOfFirst { line ->
-                line.count { it == '*' } > 10
-            }
-            val equalsIndex = lines.indexOfFirst { line ->
-                line.count { it == '=' } > 10
-            }
-            debug += "***: $starsIndex"
-            debug += "===: $equalsIndex"
-
-            val section = if (starsIndex >= 0 && equalsIndex > starsIndex) {
-                lines.subList(starsIndex + 1, equalsIndex)
-            } else {
-                lines
-            }
-
-            val firstName = section.firstOrNull { isNameCandidate(it) } ?: "-"
-            val firstPrice = section.firstOrNull { isPriceCandidate(it) || hasTrailingPrice(it) } ?: "-"
-            debug += "FirstName: ${firstName.take(45)}"
-            debug += "FirstPrice: ${firstPrice.take(45)}"
-
-            section.take(20).forEachIndexed { index, line ->
-                debug += "SEC[$index]: $line"
-                debug += "SEC[$index]-isName=${isNameCandidate(line)} isPrice=${isPriceCandidate(line)} hasTrailing=${hasTrailingPrice(line)}"
-                val visibleLine = line.replace(" ", "Â·")
-                val tail = line.takeLast(minOf(20, line.length)).replace(" ", "Â·")
-                val commaIndex = line.lastIndexOf(",")
-                val afterComma = if (commaIndex >= 0) line.substring(maxOf(0, commaIndex - 6)).replace(" ", "Â·") else "NO_COMMA"
-                debug += "SEC[$index]-visible=$visibleLine"
-                debug += "SEC[$index]-tail=$tail"
-                debug += "SEC[$index]-afterComma=$afterComma"
-            }
-
             val parseResult = CarrefourTicketParser.parse(rawText)
+            debug += parseResult.debugDate
+            debug += parseResult.warnings
             debug += "PARSED_COUNT=${parseResult.ticket.lines.size}"
             debug += "TICKET_TOTAL=%.2f".format(parseResult.ticket.total)
-            parseResult.ticket.lines.take(5).forEachIndexed { index, line ->
-                debug += "PARSED[$index]=${line.nombreOriginal} | total=${line.precioTotal} | unit=${line.precioUnitario}"
-            }
 
-            val matchedLines = parseResult.ticket.lines.map { line ->
+            val matchedLines = parseResult.ticket.lines.mapIndexed { index, line ->
                 val match = ProductMatcher.findBestMatch(
                     normalizedName = line.nombreNormalizado,
                     articulos = articulos
@@ -94,6 +82,13 @@ class ImportTicketUseCase @Inject constructor(
                     articulos.find { it.id == match.id }?.categoryId
                 }
 
+                debug += "MATCH_INPUT[$index]={name=${line.nombreOriginal}, normalized=${line.nombreNormalizado}, qty=${line.cantidad}, unit=${"%.2f".format(line.precioUnitario)}, total=${"%.2f".format(line.precioTotal)}}"
+                debug += if (match != null) {
+                    "MATCH_RESULT[$index]={articuloId=${match.id}, articulo=${match.name}}"
+                } else {
+                    "MATCH_RESULT[$index]={articuloId=null, articulo=null}"
+                }
+
                 line.copy(
                     articuloId = match?.id,
                     articuloNombre = match?.name,
@@ -101,7 +96,7 @@ class ImportTicketUseCase @Inject constructor(
                 )
             }
 
-            val unmatchedCount = matchedLines.count { it.articuloId == null }
+            val unmatchedCount = matchedLines.count { line -> line.articuloId == null }
             val ticket = parseResult.ticket.copy(lines = matchedLines)
             debug += "UNMATCHED_COUNT=$unmatchedCount"
             debug += "FINAL_LINES=${ticket.lines.size}"
@@ -123,31 +118,6 @@ class ImportTicketUseCase @Inject constructor(
         }
     }
 
-    private fun isNameCandidate(line: String): Boolean {
-        val upper = line.uppercase()
-        if (line.length < 3) return false
-        if (!line.any { it.isLetter() }) return false
-        if (upper.contains("DESCUENTO")) return false
-        if (upper.matches(Regex("""^[A-Z]{1,3}\d{2,4}$"""))) return false
-        if (line.matches(Regex("""^-?\d+[,.]\d{1,2}$"""))) return false
-        if (upper.matches(Regex("""^\d+\s*X\s*\($"""))) return false
-        return true
-    }
-
-    private fun isPriceCandidate(line: String): Boolean {
-        return line.matches(Regex("""^\d+[,.]\d{1,2}$"""))
-    }
-
-    private fun hasTrailingPrice(line: String): Boolean {
-        return line.matches(Regex(""".+\s+\d+[,.]\d{1,2}$"""))
-    }
-
-    suspend fun saveTicket(ticket: Ticket): Long {
-        return ticketRepository.saveTicket(ticket)
-    }
-
-    fun close() {
-        ocrExtractor.close()
-    }
+    suspend fun saveTicket(ticket: Ticket): Long = ticketRepository.saveTicket(ticket)
+    fun close() { ocrExtractor.close() }
 }
-
