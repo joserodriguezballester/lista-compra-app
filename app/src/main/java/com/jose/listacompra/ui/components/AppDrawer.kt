@@ -1,5 +1,6 @@
 package com.jose.listacompra.ui.components
 
+import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -45,13 +46,21 @@ fun AppDrawer(
     }
 
     val entries = remember {
-        DrawerDestination.all.map { destination ->
-            DrawerEntry(
-                destination = destination,
-                label = destination.label,
-                emoji = destination.emoji
-            )
+        DrawerDestination.all.mapNotNull { destination ->
+            runCatching {
+                DrawerEntry(
+                    destination = destination,
+                    label = destination.label,
+                    emoji = destination.emoji
+                )
+            }.onFailure { error ->
+                Log.e("AppDrawer", "Skipping invalid drawer destination during transition", error)
+            }.getOrNull()
         }
+    }
+
+    if (entries.isEmpty()) {
+        Log.e("AppDrawer", "Drawer rendered with no valid entries")
     }
 
     fun resolveDestination(destination: DrawerDestination) {
