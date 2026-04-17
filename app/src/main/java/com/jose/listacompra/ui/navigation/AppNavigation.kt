@@ -164,7 +164,13 @@ fun AppNavigation(
         
         composable(NavScreen.TicketImport.route) {
             TicketImportScreen(
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToHome = navigateToHome,
+                onNavigateToHistory = {
+                    navController.navigate(NavScreen.History.route) {
+                        launchSingleTop = true
+                    }
+                }
             )
         }
         

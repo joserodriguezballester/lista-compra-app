@@ -42,6 +42,8 @@ import java.util.Locale
 @Composable
 fun TicketImportScreen(
     onNavigateBack: () -> Unit,
+    onNavigateToHome: () -> Unit,
+    onNavigateToHistory: () -> Unit,
     viewModel: TicketImportViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -82,7 +84,8 @@ fun TicketImportScreen(
             ImportStep.COMPLETE -> CompleteStep(
                 modifier = Modifier.padding(padding),
                 ticketId = uiState.savedTicketId,
-                onDone = onNavigateBack,
+                onNavigateToHome = onNavigateToHome,
+                onNavigateToHistory = onNavigateToHistory,
                 onImportAnother = { viewModel.reset() }
             )
         }
@@ -682,7 +685,8 @@ private fun TicketLineCard(
 private fun CompleteStep(
     modifier: Modifier,
     ticketId: Long?,
-    onDone: () -> Unit,
+    onNavigateToHome: () -> Unit,
+    onNavigateToHistory: () -> Unit,
     onImportAnother: () -> Unit
 ) {
     Column(
@@ -706,7 +710,19 @@ private fun CompleteStep(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(modifier = Modifier.height(32.dp))
-        Button(onClick = onDone) { Text("Volver al historial") }
+        Button(
+            onClick = onNavigateToHistory,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)
+        ) {
+            Text("Ir al historial")
+        }
+        Spacer(modifier = Modifier.height(12.dp))
+        OutlinedButton(
+            onClick = onNavigateToHome,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)
+        ) {
+            Text("Volver al inicio")
+        }
         Spacer(modifier = Modifier.height(8.dp))
         TextButton(onClick = onImportAnother) { Text("Importar otro ticket") }
     }

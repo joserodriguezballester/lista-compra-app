@@ -227,7 +227,19 @@ Estado actual:
 
 ---
 
-## 9. Próximos pasos recomendados
+## 9. Mejoras UX pendientes detectadas
+
+### Historial
+- **UX pendiente:** en la primera etiqueta/card del historial, permitir **añadir a la lista** con pulsación directa, evitando pasos intermedios.
+- **UX pendiente:** en esa misma primera etiqueta/card del historial, permitir también **navegar al detalle con gráfica de precios**, para consultar la evolución del producto desde la propia card.
+
+### Navegación general
+- **Revisar la navegación del drawer** para asegurar que el orden, las entradas visibles y el comportamiento real coinciden con la navegación deseada de la app.
+
+### Importación de tickets
+- **UI pendiente:** en la pantalla de **Importar ticket**, volver a mostrar el **número de test que corresponda** al parser/iteración actual. No dejarlo borrado sin más: si cambia el caso de prueba, actualizar el número visible al que toque.
+
+## 10. Próximos pasos recomendados
 
 ### Opción A — cerrar bien este bloque
 1. Probar visualmente en la app guardar ticket → histórico.
@@ -249,7 +261,7 @@ Estado actual:
 
 ---
 
-## 10. Regla práctica acordada
+## 11. Regla práctica acordada
 
 Cuando aparezcan:
 - errores viejos,
@@ -265,3 +277,57 @@ Este fichero debe funcionar como:
 - **bitácora técnica operativa**,
 - **estado real del proyecto**,
 - **sitio único para pendientes y rarezas**.
+
+---
+
+## 12. Checklist de validación — fase guardar ticket → historial
+
+### 1. Importación y parseo del ticket
+- **1.1** Se puede abrir la pantalla de **Importar ticket**
+- **1.2** El PDF se carga correctamente
+- **1.3** El parser extrae las líneas del ticket
+- **1.3-1 (fecha)** La **fecha** del ticket se detecta bien
+- **1.3-2 (total)** El **total** del ticket se detecta bien
+- **1.3-3 (líneas)** El número y contenido de líneas tiene sentido
+
+> Nota: el supermercado **no se fuerza como punto de validación** en esta fase, porque el caso real revisado ahora mismo es **Carrefour** y no estamos validando todavía importación multi-supermercado.
+
+### 2. Matching antes de guardar
+- **2.1** Las líneas ya macheadas salen correctas
+- **2.2** Las líneas sin match se pueden confirmar manualmente
+- **2.3** Las líneas sin match también se pueden dejar sin machear
+- **2.4** Las líneas de descuento no se comportan como producto normal
+
+### 3. Guardado del ticket
+- **3.1** El botón **Guardar ticket** responde
+- **3.2** El ticket se guarda sin error
+- **3.3** La pantalla termina correctamente el flujo de guardado
+
+### 4. Historial global de compra
+- **4.1** Tras guardar, aparece una compra nueva en **Historial**
+- **4.2** La **fecha mostrada** corresponde a la del ticket, no a la fecha actual
+- **4.3** El **total** mostrado coincide con el ticket
+- **4.4** El número de productos mostrado tiene sentido
+- **4.5** No aparece una compra duplicada al guardar una sola vez
+
+### 5. Historial por producto
+- **5.1** Los productos **macheados** aparecen en histórico
+- **5.2** El **precio guardado** es el del ticket, no el del artículo del catálogo
+- **5.3** La **fecha** del histórico del producto es la del ticket
+- **5.4** La **cantidad** guardada tiene sentido
+- **5.5** Si un producto tenía precio distinto en catálogo, en histórico sigue mandando el del ticket
+
+### 6. Exclusiones correctas
+- **6.1** Las líneas **no macheadas** no crean histórico por artículo
+- **6.2** Las líneas de **descuento** no contaminan el histórico por producto
+- **6.3** Guardar el ticket no rompe la pantalla de Historial
+
+### 7. Coherencia general
+- **7.1** El histórico visible en la app refleja el dato recién guardado
+- **7.2** No parece usar `now` en vez de `ticket.fecha`
+- **7.3** No parece usar el precio del catálogo en vez de `precioUnitario` del ticket
+
+### 8. Semillas de historial
+- **8.1** Distinguir si lo que se ve en Historial es dato real o seed
+- **8.2** Si la prueba real funciona, dejar apuntado quitar las seeds de historial
+- **8.3** Evitar mezclar validación funcional con datos fake viejos
