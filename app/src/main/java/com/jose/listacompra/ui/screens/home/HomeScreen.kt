@@ -10,7 +10,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -18,12 +17,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.jose.listacompra.ui.components.AppDrawer
+import com.jose.listacompra.ui.AppUiConfig
+import com.jose.listacompra.ui.components.AppDrawerScaffold
 import com.jose.listacompra.ui.components.CommonBottomBar
-import com.jose.listacompra.ui.components.CommonTopBar
 import com.jose.listacompra.ui.components.startDirectVoiceRecognition
-import androidx.compose.ui.platform.LocalContext
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,68 +37,29 @@ fun HomeScreen(
     onToggleDarkMode: () -> Unit = {},
     productListViewModel: com.jose.listacompra.ui.viewmodel.ProductListViewModel = hiltViewModel()
 ) {
-    val scope = rememberCoroutineScope()
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val context = LocalContext.current
-
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        gesturesEnabled = drawerState.isOpen,
-        drawerContent = {
-            AppDrawer(
-                onNavigateToHome = {
-                    scope.launch { drawerState.close() }
-                },
-                onNavigateToList = {
-                    scope.launch { drawerState.close() }
-                    onNavigateToList()
-                },
-                onNavigateToOffers = {
-                    scope.launch { drawerState.close() }
-                    onNavigateToOffers()
-                },
-                onNavigateToCategories = {
-                    scope.launch { drawerState.close() }
-                    onNavigateToCategories()
-                },
-                onNavigateToHistory = {
-                    scope.launch { drawerState.close() }
-                    onNavigateToHistory()
-                },
-                onNavigateToSupermarkets = {
-                    scope.launch { drawerState.close() }
-                    onNavigateToSupermarkets()
-                },
-                onNavigateToCatalogo = {
-                    scope.launch { drawerState.close() }
-                    onNavigateToCatalogo()
-                },
-                onNavigateToTicketImport = {
-                    scope.launch { drawerState.close() }
-                    onNavigateToTicketImport()
-                }
+    AppDrawerScaffold(
+        title = AppUiConfig.HOME_TOPBAR_TITLE,
+        onNavigateToHome = {},
+        onNavigateToList = onNavigateToList,
+        onNavigateToOffers = onNavigateToOffers,
+        onNavigateToSupermarkets = onNavigateToSupermarkets,
+        onNavigateToCatalogo = onNavigateToCatalogo,
+        onNavigateToCategories = onNavigateToCategories,
+        onNavigateToHistory = onNavigateToHistory,
+        onNavigateToTicketImport = onNavigateToTicketImport,
+        isCurrentHome = true,
+        onMicrophoneClick = { context, scope -> startDirectVoiceRecognition(context, productListViewModel, scope) },
+        onChangeColor = onChangeColor,
+        onToggleDarkMode = onToggleDarkMode,
+        isDarkMode = isDarkMode,
+        bottomBar = {
+            CommonBottomBar(
+                onNavigateToHome = { },
+                onNavigateToList = onNavigateToList,
+                currentRoute = "home"
             )
         }
-    ) {
-        Scaffold(
-            topBar = {
-                CommonTopBar(
-                    title = "Lista Compra",
-                    onOpenDrawer = { scope.launch { drawerState.open() } },
-                    onChangeColor = onChangeColor,
-                    onToggleDarkMode = onToggleDarkMode,
-                    isDarkMode = isDarkMode,
-                    onMicrophoneClick = { startDirectVoiceRecognition(context, productListViewModel, scope) }
-                )
-            },
-            bottomBar = {
-                CommonBottomBar(
-                    onNavigateToHome = { },
-                    onNavigateToList = onNavigateToList,
-                    currentRoute = "home"
-                )
-            }
-        ) { paddingValues ->
+    ) { paddingValues ->
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -191,7 +149,6 @@ fun HomeScreen(
                 )
             }
         }
-    }
 }
 
 @Composable

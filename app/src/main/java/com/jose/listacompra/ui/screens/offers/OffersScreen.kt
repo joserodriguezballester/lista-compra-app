@@ -13,13 +13,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.jose.listacompra.domain.model.Offer
-import com.jose.listacompra.ui.components.AppDrawer
+import com.jose.listacompra.ui.components.AppDrawerScaffold
 import com.jose.listacompra.ui.components.CommonBottomBar
-import com.jose.listacompra.ui.components.CommonTopBar
 import com.jose.listacompra.ui.components.startDirectVoiceRecognition
-import androidx.compose.ui.platform.LocalContext
 import com.jose.listacompra.ui.viewmodel.OffersViewModel
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,81 +33,44 @@ fun OffersScreen(
     viewModel: OffersViewModel = hiltViewModel(),
     productListViewModel: com.jose.listacompra.ui.viewmodel.ProductListViewModel = hiltViewModel() // T5 refactor
 ) {
-    val scope = rememberCoroutineScope()
-    val context = LocalContext.current
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val uiState by viewModel.uiState.collectAsState()
     
     var showAddDialog by remember { mutableStateOf(false) }
     var offerToEdit by remember { mutableStateOf<Offer?>(null) }
     var offerToDelete by remember { mutableStateOf<Offer?>(null) }
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        gesturesEnabled = drawerState.isOpen,
-        drawerContent = {
-            AppDrawer(
-                onNavigateToHome = {
-                    scope.launch { drawerState.close() }
-                    onNavigateToHome()
+    AppDrawerScaffold(
+        title = "🏷️ Ofertas",
+        onNavigateToHome = onNavigateToHome,
+        onNavigateToList = onNavigateToList,
+        onNavigateToOffers = {},
+        onNavigateToSupermarkets = onNavigateToSupermarkets,
+        onNavigateToCatalogo = onNavigateToCatalogo,
+        onNavigateToCategories = onNavigateToCategories,
+        onNavigateToHistory = onNavigateToHistory,
+        isCurrentOffers = true,
+        onMicrophoneClick = { context, scope -> startDirectVoiceRecognition(context, productListViewModel, scope) },
+        onChangeColor = onChangeColor,
+        onToggleDarkMode = onToggleDarkMode,
+        isDarkMode = isDarkMode,
+        overflowActions = { _, onDismiss ->
+            DropdownMenuItem(
+                text = { Text("Añadir oferta") },
+                onClick = {
+                    showAddDialog = true
+                    onDismiss()
                 },
-                onNavigateToList = {
-                    scope.launch { drawerState.close() }
-                    onNavigateToList()
-                },
-                onNavigateToOffers = {
-                    scope.launch { drawerState.close() }
-                    // Ya estamos en ofertas
-                },
-                onNavigateToCategories = {
-                    scope.launch { drawerState.close() }
-                    onNavigateToCategories()
-                },
-                onNavigateToHistory = {
-                    scope.launch { drawerState.close() }
-                    onNavigateToHistory()
-                },
-                onNavigateToSupermarkets = {
-                    scope.launch { drawerState.close() }
-                    onNavigateToSupermarkets()
-                },
-                onNavigateToCatalogo = {
-                    scope.launch { drawerState.close() }
-                    onNavigateToCatalogo()
-                },
-                onNavigateToTicketImport = {}
+                leadingIcon = { Icon(Icons.Default.Add, contentDescription = null) }
+            )
+        },
+        bottomBar = {
+            CommonBottomBar(
+                onNavigateToHome = onNavigateToHome,
+                onNavigateToList = onNavigateToList,
+                currentRoute = "ofertas"
             )
         }
-    ) {
-        Scaffold(
-            topBar = {
-                CommonTopBar(
-                    title = "🏷️ Ofertas",
-                    onOpenDrawer = { scope.launch { drawerState.open() } },
-                    onChangeColor = onChangeColor,
-                    onToggleDarkMode = onToggleDarkMode,
-                    isDarkMode = isDarkMode,
-                    onMicrophoneClick = { startDirectVoiceRecognition(context, productListViewModel, scope) },
-                    overflowActions = { _, onDismiss ->
-                        DropdownMenuItem(
-                            text = { Text("Añadir oferta") },
-                            onClick = {
-                                showAddDialog = true
-                                onDismiss()
-                            },
-                            leadingIcon = { Icon(Icons.Default.Add, contentDescription = null) }
-                        )
-                    }
-                )
-            },
-            bottomBar = {
-                CommonBottomBar(
-                    onNavigateToHome = onNavigateToHome,
-                    onNavigateToList = onNavigateToList,
-                    currentRoute = "ofertas"
-                )
-            }
-        ) { padding ->
+    ) { padding ->
             if (uiState.isLoading) {
                 Box(
                     modifier = Modifier
@@ -165,9 +125,8 @@ fun OffersScreen(
                     }
                 }
             }
-        }
     }
-    
+
     // Diálogo añadir
     if (showAddDialog) {
         OfferDialog(

@@ -27,27 +27,22 @@ import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.InputChip
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,7 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.jose.listacompra.domain.model.Articulo
-import com.jose.listacompra.ui.components.AppDrawer
+import com.jose.listacompra.ui.components.AppDrawerScaffold
 import com.jose.listacompra.ui.components.CatalogBottomBar
 import com.jose.listacompra.ui.components.CommonTopBar
 import com.jose.listacompra.ui.components.ImageSourceDialog
@@ -64,7 +59,6 @@ import com.jose.listacompra.ui.components.startDirectVoiceRecognition
 import com.jose.listacompra.ui.viewmodel.ProductListViewModel
 import com.jose.listacompra.ui.navigation.NavScreen
 import com.jose.listacompra.ui.viewmodel.ArticuloViewModel
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -83,9 +77,6 @@ fun CatalogoScreen(
     isDarkMode: Boolean = false,
     onChangeColor: () -> Unit = {}
 ) {
-    val scope = rememberCoroutineScope()
-    val context = LocalContext.current
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val articulos by viewModel.listaArticulos.collectAsState()
     val categorias by viewModel.categorias.collectAsState()
 
@@ -170,120 +161,60 @@ fun CatalogoScreen(
         selectedImageUri = uri
     }
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        gesturesEnabled = drawerState.isOpen,
-        drawerContent = {
-            AppDrawer(
-                onNavigateToHome = {
-                    scope.launch { drawerState.close() }
-                    onNavigateToHome()
-                },
-                onNavigateToList = {
-                    scope.launch { drawerState.close() }
-                    onNavigateToList()
-                },
-                onNavigateToOffers = {
-                    scope.launch { drawerState.close() }
-                    onNavigateToOffers()
-                },
-                onNavigateToCategories = {
-                    scope.launch { drawerState.close() }
-                    onNavigateToCategories()
-                },
-                onNavigateToHistory = {
-                    scope.launch { drawerState.close() }
-                    onNavigateToHistory()
-                },
-                onNavigateToSupermarkets = {
-                    scope.launch { drawerState.close() }
-                    onNavigateToSupermarkets()
-                },
-                onNavigateToCatalogo = {
-                    scope.launch { drawerState.close() }
-                    // Ya estamos en catálogo
-                },
-                onNavigateToTicketImport = {}
-            )
-        }
-    ) {
-        Scaffold(
-            topBar = {
-                if (showSearchBar) {
-                    TopAppBar(
-                        title = {
-                            OutlinedTextField(
-                                value = searchQuery,
-                                onValueChange = { searchQuery = it },
-                                modifier = Modifier.fillMaxWidth(),
-                                singleLine = true,
-                                placeholder = { Text("Buscar artículos...") }
-                            )
-                        },
-                        navigationIcon = {
-                            IconButton({ showSearchBar = false; searchQuery = "" }) {
-                                Icon(Icons.Default.Close, "Cerrar")
-                            }
-                        }
-                    )
-                } else {
-                    CommonTopBar(
-                        title = "📦 Catálogo",
-                        onOpenDrawer = { scope.launch { drawerState.open() } },
-                        onChangeColor = onChangeColor,
-                        onToggleDarkMode = onToggleDarkMode,
-                        isDarkMode = isDarkMode,
-                        onMicrophoneClick = { startDirectVoiceRecognition(context, productListViewModel, scope) },
-                        overflowActions = { _, onDismiss ->
-                            DropdownMenuItem(
-                                text = { Text("Añadir manual") },
-                                onClick = {
-                                    showAddDialog = true
-                                    onDismiss()
-                                },
-                                leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Escanear código") },
-                                onClick = {
-                                    navController?.navigate(NavScreen.BarcodeScanner.route)
-                                    onDismiss()
-                                },
-                                leadingIcon = { Icon(Icons.Default.QrCodeScanner, contentDescription = null) }
-                            )
-                        }
-                    )
-                }
-            },
-            bottomBar = {
-                CatalogBottomBar(
-                    onSearchClick = { showSearchBar = true },
-                    onFilterClick = { showFilterDialog = true },
-                    onCartClick = onNavigateToList,
-                    onHomeClick = onNavigateToHome,
-                    onScanClick = { navController?.navigate(NavScreen.BarcodeScanner.route) },
-                    onAddClick = { showAddDialog = true }
+    AppDrawerScaffold(
+        title = "📦 Catálogo",
+        onNavigateToHome = onNavigateToHome,
+        onNavigateToList = onNavigateToList,
+        onNavigateToOffers = onNavigateToOffers,
+        onNavigateToSupermarkets = onNavigateToSupermarkets,
+        onNavigateToCatalogo = {},
+        onNavigateToCategories = onNavigateToCategories,
+        onNavigateToHistory = onNavigateToHistory,
+        isCurrentCatalogo = true,
+        onChangeColor = onChangeColor,
+        onToggleDarkMode = onToggleDarkMode,
+        isDarkMode = isDarkMode,
+        topBar = { openDrawer, context, scope ->
+            if (showSearchBar) {
+                TopAppBar(
+                    title = {
+                        OutlinedTextField(value = searchQuery, onValueChange = { searchQuery = it }, modifier = Modifier.fillMaxWidth(), singleLine = true, placeholder = { Text("Buscar artículos...") })
+                    },
+                    navigationIcon = {
+                        IconButton({ showSearchBar = false; searchQuery = "" }) { Icon(Icons.Default.Close, "Cerrar") }
+                    }
+                )
+            } else {
+                CommonTopBar(
+                    title = "📦 Catálogo",
+                    onOpenDrawer = openDrawer,
+                    onChangeColor = onChangeColor,
+                    onToggleDarkMode = onToggleDarkMode,
+                    isDarkMode = isDarkMode,
+                    onMicrophoneClick = { startDirectVoiceRecognition(context, productListViewModel, scope) },
+                    overflowActions = { _, onDismiss ->
+                        DropdownMenuItem(text = { Text("Añadir manual") }, onClick = { showAddDialog = true; onDismiss() }, leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) })
+                        DropdownMenuItem(text = { Text("Escanear código") }, onClick = { navController?.navigate(NavScreen.BarcodeScanner.route); onDismiss() }, leadingIcon = { Icon(Icons.Default.QrCodeScanner, contentDescription = null) })
+                    }
                 )
             }
-        ) { paddingValues ->
+        },
+        bottomBar = {
+            CatalogBottomBar(
+                onSearchClick = { showSearchBar = true },
+                onFilterClick = { showFilterDialog = true },
+                onCartClick = onNavigateToList,
+                onHomeClick = onNavigateToHome,
+                onScanClick = { navController?.navigate(NavScreen.BarcodeScanner.route) },
+                onAddClick = { showAddDialog = true }
+            )
+        }
+    ) { paddingValues ->
             if (articulosFiltrados.isEmpty()) {
-                Column(
-                    modifier = Modifier.fillMaxSize().padding(paddingValues),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Inventory,
-                        contentDescription = null,
-                        modifier = Modifier.size(64.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                    )
+                Column(modifier = Modifier.fillMaxSize().padding(paddingValues), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(imageVector = Icons.Default.Inventory, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "No hay artículos",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Text(text = "No hay artículos", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(onClick = { showAddDialog = true }) {
                         Icon(Icons.Default.Add, contentDescription = null)
@@ -292,62 +223,27 @@ fun CatalogoScreen(
                     }
                 }
             } else {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
-                ) {
-                    // Chips de categorías seleccionadas
+                Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
                     if (selectedCategoryIds.isNotEmpty()) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .horizontalScroll(rememberScrollState())
-                                .padding(horizontal = 16.dp, vertical = 8.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
+                        Row(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             selectedCategoryIds.forEach { categoryId ->
                                 val category = categorias.find { it.id.toString() == categoryId }
                                 if (category != null) {
-                                    InputChip(
-                                        selected = true,
-                                        onClick = {
-                                            selectedCategoryIds = selectedCategoryIds - categoryId
-                                        },
-                                        label = { Text("${category.icon} ${category.name}") },
-                                        trailingIcon = {
-                                            Icon(
-                                                Icons.Default.Close,
-                                                contentDescription = "Quitar",
-                                                modifier = Modifier.size(16.dp)
-                                            )
-                                        }
-                                    )
+                                    InputChip(selected = true, onClick = { selectedCategoryIds = selectedCategoryIds - categoryId }, label = { Text("${category.icon} ${category.name}") }, trailingIcon = { Icon(Icons.Default.Close, contentDescription = "Quitar", modifier = Modifier.size(16.dp)) })
                                 }
                             }
                         }
                     }
-                    
-                    LazyVerticalGrid(
-                        columns = GridCells.Adaptive(150.dp),
-                        contentPadding = PaddingValues(16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
+                    LazyVerticalGrid(columns = GridCells.Adaptive(150.dp), contentPadding = PaddingValues(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         items(articulosFiltrados, { it.id }) { articulo ->
                             val category = categorias.find { it.id.toString() == articulo.categoryId?.toString() }
-                            ArticuloCard(
-                                articulo,
-                                { selectedArticulo = articulo; selectedImageUri = null },
-                                articulo.name.lowercase() in articuloNames,
-                                category
-                            )
+                            ArticuloCard(articulo, { selectedArticulo = articulo; selectedImageUri = null }, articulo.name.lowercase() in articuloNames, category)
                         }
                     }
                 }
             }
         }
-    }
+
 
     if (showImageSourceDialog) {
         ImageSourceDialog(
@@ -435,8 +331,3 @@ fun CatalogoScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun rememberDrawerState(initialValue: DrawerValue): androidx.compose.material3.DrawerState {
-    return androidx.compose.material3.rememberDrawerState(initialValue = initialValue)
-}

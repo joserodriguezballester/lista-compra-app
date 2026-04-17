@@ -18,13 +18,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.jose.listacompra.R
 import com.jose.listacompra.domain.model.Supermarket
-import com.jose.listacompra.ui.components.AppDrawer
+import com.jose.listacompra.ui.components.AppDrawerScaffold
 import com.jose.listacompra.ui.components.CommonBottomBar
-import com.jose.listacompra.ui.components.CommonTopBar
 import com.jose.listacompra.ui.components.startDirectVoiceRecognition
-import androidx.compose.ui.platform.LocalContext
 import com.jose.listacompra.ui.viewmodel.ProductListViewModel
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,9 +37,6 @@ fun SupermarketListScreen(
     isDarkMode: Boolean = false,
     onChangeColor: () -> Unit = {}
 ) {
-    val scope = rememberCoroutineScope()
-    val context = LocalContext.current
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val productListViewModel: ProductListViewModel = hiltViewModel()
     var supermarkets by remember { mutableStateOf(listOf<Supermarket>()) }
     
@@ -50,72 +44,38 @@ fun SupermarketListScreen(
     var showDeleteConfirm by remember { mutableStateOf<Supermarket?>(null) }
     var supermarketToEdit by remember { mutableStateOf<Supermarket?>(null) }
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        gesturesEnabled = drawerState.isOpen,
-        drawerContent = {
-            AppDrawer(
-                onNavigateToHome = {
-                    scope.launch { drawerState.close() }
-                    onNavigateToHome()
+    AppDrawerScaffold(
+        title = "🏪 Supermercados",
+        onNavigateToHome = onNavigateToHome,
+        onNavigateToList = onNavigateToList,
+        onNavigateToOffers = onNavigateToOffers,
+        onNavigateToSupermarkets = {},
+        onNavigateToCatalogo = onNavigateToCatalogo,
+        onNavigateToCategories = onNavigateToCategories,
+        onNavigateToHistory = onNavigateToHistory,
+        isCurrentSupermarkets = true,
+        onMicrophoneClick = { context, scope -> startDirectVoiceRecognition(context, productListViewModel, scope) },
+        onChangeColor = onChangeColor,
+        onToggleDarkMode = onToggleDarkMode,
+        isDarkMode = isDarkMode,
+        overflowActions = { _, onDismiss ->
+            DropdownMenuItem(
+                text = { Text("Añadir supermercado") },
+                onClick = {
+                    showAddDialog = true
+                    onDismiss()
                 },
-                onNavigateToList = {
-                    scope.launch { drawerState.close() }
-                    onNavigateToList()
-                },
-                onNavigateToOffers = {
-                    scope.launch { drawerState.close() }
-                    onNavigateToOffers()
-                },
-                onNavigateToCategories = {
-                    scope.launch { drawerState.close() }
-                    onNavigateToCategories()
-                },
-                onNavigateToHistory = {
-                    scope.launch { drawerState.close() }
-                    onNavigateToHistory()
-                },
-                onNavigateToSupermarkets = {
-                    scope.launch { drawerState.close() }
-                    // Ya estamos en supermercados
-                },
-                onNavigateToCatalogo = {
-                    scope.launch { drawerState.close() }
-                    onNavigateToCatalogo()
-                },
-                onNavigateToTicketImport = {}
+                leadingIcon = { Icon(Icons.Default.Add, contentDescription = null) }
+            )
+        },
+        bottomBar = {
+            CommonBottomBar(
+                onNavigateToHome = onNavigateToHome,
+                onNavigateToList = onNavigateToList,
+                currentRoute = "supermercados"
             )
         }
-    ) {
-        Scaffold(
-            topBar = {
-                CommonTopBar(
-                    title = "🏪 Supermercados",
-                    onOpenDrawer = { scope.launch { drawerState.open() } },
-                    onChangeColor = onChangeColor,
-                    onToggleDarkMode = onToggleDarkMode,
-                    isDarkMode = isDarkMode,
-                    onMicrophoneClick = { startDirectVoiceRecognition(context, productListViewModel, scope) },
-                    overflowActions = { _, onDismiss ->
-                        DropdownMenuItem(
-                            text = { Text("Añadir supermercado") },
-                            onClick = {
-                                showAddDialog = true
-                                onDismiss()
-                            },
-                            leadingIcon = { Icon(Icons.Default.Add, contentDescription = null) }
-                        )
-                    }
-                )
-            },
-            bottomBar = {
-                CommonBottomBar(
-                    onNavigateToHome = onNavigateToHome,
-                    onNavigateToList = onNavigateToList,
-                    currentRoute = "supermercados"
-                )
-            }
-        ) { paddingValues ->
+    ) { paddingValues ->
             if (supermarkets.isEmpty()) {
                 EmptyState(
                     modifier = Modifier
@@ -141,7 +101,6 @@ fun SupermarketListScreen(
                     }
                 }
             }
-        }
     }
 
     // Diálogo de añadir
@@ -404,10 +363,4 @@ private fun SupermarketDialog(
             }
         }
     )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun rememberDrawerState(initialValue: DrawerValue): androidx.compose.material3.DrawerState {
-    return androidx.compose.material3.rememberDrawerState(initialValue = initialValue)
 }
