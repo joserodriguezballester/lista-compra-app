@@ -10,12 +10,19 @@ import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jose.listacompra.ui.navigation.DrawerDestination
+
+private data class DrawerEntry(
+    val destination: DrawerDestination,
+    val label: String,
+    val emoji: String
+)
 
 @Composable
 fun AppDrawer(
@@ -35,6 +42,16 @@ fun AppDrawer(
         context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "?"
     } catch (_: Exception) {
         "?"
+    }
+
+    val entries = remember {
+        DrawerDestination.all.map { destination ->
+            DrawerEntry(
+                destination = destination,
+                label = destination.label,
+                emoji = destination.emoji
+            )
+        }
     }
 
     fun resolveDestination(destination: DrawerDestination) {
@@ -76,15 +93,15 @@ fun AppDrawer(
         HorizontalDivider()
 
         Column(modifier = Modifier.padding(vertical = 8.dp)) {
-            DrawerDestination.all.forEach { destination ->
-                if (destination == DrawerDestination.TicketImport) {
+            entries.forEach { entry ->
+                if (entry.destination == DrawerDestination.TicketImport) {
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                 }
                 NavigationDrawerItem(
-                    icon = { Text(destination.emoji) },
-                    label = { Text(destination.label) },
-                    selected = currentDestination == destination,
-                    onClick = { resolveDestination(destination) }
+                    icon = { Text(entry.emoji) },
+                    label = { Text(entry.label) },
+                    selected = currentDestination?.route == entry.destination.route,
+                    onClick = { resolveDestination(entry.destination) }
                 )
             }
         }
