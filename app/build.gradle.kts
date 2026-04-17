@@ -7,6 +7,9 @@ plugins {
 
 }
 
+val appVersionBase = providers.gradleProperty("APP_VERSION_BASE").orElse("0.8.13").get()
+val appTestNumber = providers.gradleProperty("APP_TEST_NUMBER").orElse("25").get().toInt()
+
 android {
     namespace = "com.jose.listacompra"
     compileSdk = 34
@@ -15,8 +18,8 @@ android {
         applicationId = "com.jose.listacompra"
         minSdk = 26
         targetSdk = 34
-        versionCode = 92
-        versionName = "0.8.13"
+        versionCode = 81300 + appTestNumber
+        versionName = "$appVersionBase-test$appTestNumber"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

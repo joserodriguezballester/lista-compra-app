@@ -102,7 +102,18 @@ fun AppDrawer(
         HorizontalDivider()
 
         Column(modifier = Modifier.padding(vertical = 8.dp)) {
-            entries.forEach { entry ->
+            val homeEntry = entries.firstOrNull { it.destination == DrawerDestination.Home }
+            if (homeEntry != null) {
+                NavigationDrawerItem(
+                    icon = { Text(homeEntry.emoji) },
+                    label = { Text(homeEntry.label) },
+                    selected = currentDestination?.route == homeEntry.destination.route,
+                    onClick = { resolveDestination(homeEntry.destination) }
+                )
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+            }
+
+            entries.filter { it.destination != DrawerDestination.Home }.forEach { entry ->
                 if (entry.destination == DrawerDestination.TicketImport) {
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                 }

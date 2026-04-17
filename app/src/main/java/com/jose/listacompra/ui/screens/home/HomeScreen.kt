@@ -14,6 +14,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -40,8 +41,15 @@ fun HomeScreen(
     onToggleDarkMode: () -> Unit = {},
     productListViewModel: com.jose.listacompra.ui.viewmodel.ProductListViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
+    val appVersionName = try {
+        context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "?"
+    } catch (_: Exception) {
+        "?"
+    }
+
     AppDrawerScaffold(
-        title = AppUiConfig.HOME_TOPBAR_TITLE,
+        title = "${AppUiConfig.HOME_TITLE} · $appVersionName",
         navigator = navigator,
         currentDestination = DrawerDestination.Home,
         onChangeColor = onChangeColor,
