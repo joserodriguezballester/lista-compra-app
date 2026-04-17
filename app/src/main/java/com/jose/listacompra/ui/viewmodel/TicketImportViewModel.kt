@@ -145,7 +145,14 @@ class TicketImportViewModel @Inject constructor(
 
     fun clearError() { _uiState.update { it.copy(error = null) } }
     fun cancel() { _uiState.value = TicketImportUiState() }
-    fun reset() { _uiState.value = TicketImportUiState(step = ImportStep.SELECT_FILE) }
+    fun reset() {
+        val current = _uiState.value
+        _uiState.value = TicketImportUiState(
+            step = ImportStep.SELECT_FILE,
+            articulos = current.articulos,
+            categories = current.categories
+        )
+    }
 }
 
 data class TicketImportUiState(
