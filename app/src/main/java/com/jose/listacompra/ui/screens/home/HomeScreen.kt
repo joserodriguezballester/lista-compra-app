@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.jose.listacompra.ui.AppUiConfig
 import com.jose.listacompra.ui.components.AppDrawerScaffold
 import com.jose.listacompra.ui.components.CommonBottomBar
 import com.jose.listacompra.ui.components.startDirectVoiceRecognition
@@ -40,7 +41,7 @@ fun HomeScreen(
     productListViewModel: com.jose.listacompra.ui.viewmodel.ProductListViewModel = hiltViewModel()
 ) {
     AppDrawerScaffold(
-        title = "Lista Compra",
+        title = AppUiConfig.HOME_TOPBAR_TITLE,
         navigator = navigator,
         currentDestination = DrawerDestination.Home,
         onChangeColor = onChangeColor,
