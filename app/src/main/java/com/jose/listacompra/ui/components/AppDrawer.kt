@@ -1,39 +1,40 @@
 package com.jose.listacompra.ui.components
 
+import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Category
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Inventory
-import androidx.compose.material.icons.filled.LocalOffer
-import androidx.compose.material.icons.filled.Receipt
-import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material.icons.filled.Store
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.jose.listacompra.ui.navigation.DrawerDestination
+
+private data class DrawerEntry(
+    val destination: DrawerDestination,
+    val label: String,
+    val emoji: String
+)
 
 @Composable
 fun AppDrawer(
+    currentDestination: DrawerDestination? = null,
+    onDestinationSelected: ((DrawerDestination) -> Unit)? = null,
     onNavigateToHome: () -> Unit = {},
     onNavigateToList: () -> Unit = {},
-    onNavigateToOffers: () -> Unit,
-    onNavigateToSupermarkets: () -> Unit,
-    onNavigateToCatalogo: () -> Unit,
-    onNavigateToCategories: () -> Unit,
+    onNavigateToOffers: () -> Unit = {},
+    onNavigateToSupermarkets: () -> Unit = {},
+    onNavigateToCatalogo: () -> Unit = {},
+    onNavigateToCategories: () -> Unit = {},
     onNavigateToHistory: () -> Unit = {},
     onNavigateToTicketImport: () -> Unit = {}
 ) {
@@ -42,6 +43,41 @@ fun AppDrawer(
         context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "?"
     } catch (_: Exception) {
         "?"
+    }
+
+    val entries = remember {
+        DrawerDestination.all.mapNotNull { destination ->
+            runCatching {
+                DrawerEntry(
+                    destination = destination,
+                    label = destination.label,
+                    emoji = destination.emoji
+                )
+            }.onFailure { error ->
+                Log.e("AppDrawer", "Skipping invalid drawer destination during transition", error)
+            }.getOrNull()
+        }
+    }
+
+    if (entries.isEmpty()) {
+        Log.e("AppDrawer", "Drawer rendered with no valid entries")
+    }
+
+    fun resolveDestination(destination: DrawerDestination) {
+        if (onDestinationSelected != null) {
+            onDestinationSelected(destination)
+            return
+        }
+        when (destination) {
+            DrawerDestination.Home -> onNavigateToHome()
+            DrawerDestination.ShoppingList -> onNavigateToList()
+            DrawerDestination.Catalog -> onNavigateToCatalogo()
+            DrawerDestination.Categories -> onNavigateToCategories()
+            DrawerDestination.Offers -> onNavigateToOffers()
+            DrawerDestination.Supermarkets -> onNavigateToSupermarkets()
+            DrawerDestination.History -> onNavigateToHistory()
+            DrawerDestination.TicketImport -> onNavigateToTicketImport()
+        }
     }
 
     ModalDrawerSheet {
@@ -67,54 +103,24 @@ fun AppDrawer(
 
         Column(modifier = Modifier.padding(vertical = 8.dp)) {
             NavigationDrawerItem(
-                icon = { Icon(Icons.Default.Home, contentDescription = null) },
-                label = { Text("Home") },
-                selected = false,
-                onClick = onNavigateToHome
-            )
-            NavigationDrawerItem(
-                icon = { Icon(Icons.Default.ShoppingCart, contentDescription = null) },
-                label = { Text("Mi Lista") },
-                selected = false,
-                onClick = onNavigateToList
-            )
-            NavigationDrawerItem(
-                icon = { Icon(Icons.Default.Inventory, contentDescription = null) },
-                label = { Text("Catálogo") },
-                selected = false,
-                onClick = onNavigateToCatalogo
-            )
-            NavigationDrawerItem(
-                icon = { Icon(Icons.Default.Category, contentDescription = null) },
-                label = { Text("Categorías") },
-                selected = false,
-                onClick = onNavigateToCategories
-            )
-            NavigationDrawerItem(
-                icon = { Icon(Icons.Default.LocalOffer, contentDescription = null) },
-                label = { Text("Ofertas") },
-                selected = false,
-                onClick = onNavigateToOffers
-            )
-            NavigationDrawerItem(
-                icon = { Icon(Icons.Default.Store, contentDescription = null) },
-                label = { Text("Supermercados") },
-                selected = false,
-                onClick = onNavigateToSupermarkets
-            )
-            NavigationDrawerItem(
-                icon = { Icon(Icons.Default.History, contentDescription = null) },
-                label = { Text("Historial") },
-                selected = false,
-                onClick = onNavigateToHistory
+                icon = { Text(DrawerDestination.Home.emoji) },
+                label = { Text(DrawerDestination.Home.label) },
+                selected = currentDestination?.route == DrawerDestination.Home.route,
+                onClick = { resolveDestination(DrawerDestination.Home) }
             )
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-            NavigationDrawerItem(
-                icon = { Icon(Icons.Default.Receipt, contentDescription = null) },
-                label = { Text("Importar Ticket") },
-                selected = false,
-                onClick = onNavigateToTicketImport
-            )
+
+            entries.filter { it.destination.route != DrawerDestination.Home.route }.forEach { entry ->
+                if (entry.destination == DrawerDestination.TicketImport) {
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                }
+                NavigationDrawerItem(
+                    icon = { Text(entry.emoji) },
+                    label = { Text(entry.label) },
+                    selected = currentDestination?.route == entry.destination.route,
+                    onClick = { resolveDestination(entry.destination) }
+                )
+            }
         }
 
         Spacer(modifier = Modifier.weight(1f))

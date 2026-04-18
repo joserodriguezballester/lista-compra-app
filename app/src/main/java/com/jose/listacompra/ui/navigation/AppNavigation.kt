@@ -29,6 +29,8 @@ fun AppNavigation(
     onToggleTheme: () -> Unit = {},
     onChangeColor: () -> Unit = {},
 ) {
+    val appNavigator = AppNavigatorImpl(navController)
+
     // Función común para navegar a Home
     val navigateToHome: () -> Unit = {
         navController.navigate(NavScreen.Home.route) {
@@ -61,6 +63,7 @@ fun AppNavigation(
         
         composable(NavScreen.Home.route) {
             HomeScreen(
+                navigator = appNavigator,
                 onNavigateToList = navigateToList,
                 onNavigateToCatalogo = { navController.navigate(NavScreen.Catalogo.route) },
                 onNavigateToSupermarkets = { navController.navigate(NavScreen.Supermarkets.route) },
@@ -76,6 +79,7 @@ fun AppNavigation(
         
         composable(NavScreen.ShoppingList.route) {
             ProductListScreen(
+                navigator = appNavigator,
                 onNavigateToHome = navigateToHome,
                 onNavigateToCatalogo = { navController.navigate(NavScreen.Catalogo.route) },
                 onNavigateToOffers = { navController.navigate(NavScreen.Offers.route) },
@@ -89,6 +93,7 @@ fun AppNavigation(
         
         composable(NavScreen.Catalogo.route) {
             CatalogoScreen(
+                navigator = appNavigator,
                 onNavigateToList = navigateToList,
                 onNavigateToHome = navigateToHome,
                 onNavigateToOffers = { navController.navigate(NavScreen.Offers.route) },
@@ -104,6 +109,7 @@ fun AppNavigation(
         
         composable(NavScreen.Offers.route) {
             OffersScreen(
+                navigator = appNavigator,
                 onNavigateToHome = navigateToHome,
                 onNavigateToList = navigateToList,
                 onNavigateToCatalogo = { navController.navigate(NavScreen.Catalogo.route) },
@@ -118,6 +124,7 @@ fun AppNavigation(
         
         composable(NavScreen.Categories.route) {
             CategoriesScreen(
+                navigator = appNavigator,
                 onNavigateToHome = navigateToHome,
                 onNavigateToList = navigateToList,
                 onNavigateToOffers = { navController.navigate(NavScreen.Offers.route) },
@@ -132,6 +139,7 @@ fun AppNavigation(
         
         composable(NavScreen.History.route) {
             HistoryScreen(
+                navigator = appNavigator,
                 onNavigateToHome = navigateToHome,
                 onNavigateToList = navigateToList,
                 onNavigateToOffers = { navController.navigate(NavScreen.Offers.route) },
@@ -164,18 +172,21 @@ fun AppNavigation(
         
         composable(NavScreen.TicketImport.route) {
             TicketImportScreen(
+                navigator = appNavigator,
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToHome = navigateToHome,
                 onNavigateToHistory = {
                     navController.navigate(NavScreen.History.route) {
                         launchSingleTop = true
                     }
-                }
+                },
+                onNavigateToList = navigateToList
             )
         }
         
         composable(NavScreen.Supermarkets.route) {
             SupermarketListScreen(
+                navigator = appNavigator,
                 onNavigateToAisles = { supermarketId ->
                     navController.navigate(NavScreen.SupermarketAisles.createRoute(supermarketId))
                 },

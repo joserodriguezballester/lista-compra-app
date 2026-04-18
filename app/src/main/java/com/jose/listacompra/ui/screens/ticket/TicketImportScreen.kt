@@ -32,6 +32,10 @@ import com.jose.listacompra.R
 import com.jose.listacompra.domain.model.Articulo
 import com.jose.listacompra.domain.model.Category
 import com.jose.listacompra.domain.model.TicketLine
+import com.jose.listacompra.ui.components.AppDrawerScaffold
+import com.jose.listacompra.ui.components.CommonBottomBar
+import com.jose.listacompra.ui.navigation.AppNavigator
+import com.jose.listacompra.ui.navigation.DrawerDestination
 import com.jose.listacompra.ui.screens.catalogo.AddEditArticuloDialog
 import com.jose.listacompra.ui.viewmodel.ImportStep
 import com.jose.listacompra.ui.viewmodel.TicketImportUiState
@@ -41,22 +45,24 @@ import java.util.Locale
 
 @Composable
 fun TicketImportScreen(
+    navigator: AppNavigator,
     onNavigateBack: () -> Unit,
     onNavigateToHome: () -> Unit,
     onNavigateToHistory: () -> Unit,
+    onNavigateToList: () -> Unit = {},
     viewModel: TicketImportViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Importar Ticket") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, "Volver")
-                    }
-                }
+    AppDrawerScaffold(
+        title = "Importar ticket",
+        navigator = navigator,
+        currentDestination = DrawerDestination.TicketImport,
+        bottomBar = {
+            CommonBottomBar(
+                onNavigateToHome = onNavigateToHome,
+                onNavigateToList = onNavigateToList,
+                currentRoute = "ticket"
             )
         }
     ) { padding ->

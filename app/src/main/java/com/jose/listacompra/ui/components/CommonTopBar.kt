@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 
@@ -34,35 +35,48 @@ data class ReleaseInfo(
 
 suspend fun fetchLatestRelease(): ReleaseInfo? = withContext(Dispatchers.IO) {
     try {
-        val url = java.net.URL("https://api.github.com/repos/joserodriguezballester/lista-compra-app/releases/latest")
+        val url = java.net.URL("https://api.github.com/repos/joserodriguezballester/lista-compra-app/releases?per_page=10")
         val connection = url.openConnection()
         connection.setRequestProperty("Accept", "application/vnd.github.v3+json")
         connection.connectTimeout = 5000
         connection.readTimeout = 5000
-        
+
         val response = connection.getInputStream().bufferedReader().readText()
-        val json = JSONObject(response)
-        
-        // Obtener URL del APK (primer asset)
-        val assets = json.optJSONArray("assets")
-        val apkAsset = if (assets != null && assets.length() > 0) {
-            val firstAsset = assets.getJSONObject(0)
-            Pair(
-                firstAsset.optString("browser_download_url"),
-                firstAsset.optLong("size", 0)
-            )
-        } else {
-            Pair(null, 0L)
+        val releases = JSONArray(response)
+
+        var selectedRelease: JSONObject? = null
+        var selectedApkUrl: String? = null
+        var selectedApkSize = 0L
+
+        for (i in 0 until releases.length()) {
+            val release = releases.getJSONObject(i)
+            if (release.optBoolean("draft", false)) continue
+
+            val assets = release.optJSONArray("assets") ?: continue
+            for (j in 0 until assets.length()) {
+                val asset = assets.getJSONObject(j)
+                val name = asset.optString("name")
+                val url = asset.optString("browser_download_url")
+                if (name.endsWith(".apk", ignoreCase = true) && url.isNotBlank()) {
+                    selectedRelease = release
+                    selectedApkUrl = url
+                    selectedApkSize = asset.optLong("size", 0)
+                    break
+                }
+            }
+            if (selectedRelease != null) break
         }
-        
-        ReleaseInfo(
-            tagName = json.getString("tag_name"),
-            name = json.optString("name", json.getString("tag_name")),
-            publishedAt = json.optString("published_at", ""),
-            htmlUrl = json.getString("html_url"),
-            apkUrl = apkAsset.first,
-            apkSize = apkAsset.second
-        )
+
+        selectedRelease?.let { json ->
+            ReleaseInfo(
+                tagName = json.getString("tag_name"),
+                name = json.optString("name", json.getString("tag_name")),
+                publishedAt = json.optString("published_at", ""),
+                htmlUrl = json.getString("html_url"),
+                apkUrl = selectedApkUrl,
+                apkSize = selectedApkSize
+            )
+        }
     } catch (e: Exception) {
         null
     }

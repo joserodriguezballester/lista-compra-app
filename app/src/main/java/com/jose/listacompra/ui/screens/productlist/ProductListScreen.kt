@@ -23,21 +23,17 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
-import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -45,31 +41,30 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.jose.listacompra.domain.model.Product
 import com.jose.listacompra.ui.components.AisleHeader
-import com.jose.listacompra.ui.components.AppDrawer
-import com.jose.listacompra.ui.components.CommonTopBar
+import com.jose.listacompra.ui.components.AppDrawerScaffold
 import com.jose.listacompra.ui.components.ListBottomBar
 import com.jose.listacompra.ui.components.ProductCard
 import com.jose.listacompra.ui.components.VoiceInputButton
 import com.jose.listacompra.ui.components.startDirectVoiceRecognition
+import com.jose.listacompra.ui.navigation.AppNavigator
+import com.jose.listacompra.ui.navigation.DrawerDestination
 import com.jose.listacompra.ui.screens.ColorSettingsDialog
 import com.jose.listacompra.ui.viewmodel.ProductListViewModel
 import com.jose.listacompra.utils.calculateOfferPrice
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductListScreen(
+    navigator: AppNavigator,
     onNavigateToHome: () -> Unit = {},
     onNavigateToCatalogo: () -> Unit = {},
     onNavigateToOffers: () -> Unit = {},
@@ -80,9 +75,6 @@ fun ProductListScreen(
     navController: NavController? = null,
     viewModel: ProductListViewModel = hiltViewModel()
 ) {
-    val scope = rememberCoroutineScope()
-    val context = LocalContext.current
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val uiState by viewModel.uiState.collectAsState()
 
     // Estados para diálogos
@@ -122,306 +114,100 @@ fun ProductListScreen(
             }
     }
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        gesturesEnabled = drawerState.isOpen,
-        drawerContent = {
-            AppDrawer(
-                onNavigateToHome = {
-                    scope.launch { drawerState.close() }
-                    onNavigateToHome()
-                },
-                onNavigateToList = {
-                    scope.launch { drawerState.close() }
-                    // Ya estamos en Mi Lista, solo cerrar drawer
-                },
-                onNavigateToOffers = {
-                    scope.launch { drawerState.close() }
-                    onNavigateToOffers()
-                },
-                onNavigateToSupermarkets = {
-                    scope.launch { drawerState.close() }
-                    onNavigateToSupermarkets()
-                },
-                onNavigateToCatalogo = {
-                    scope.launch { drawerState.close() }
-                    onNavigateToCatalogo()
-                },
-                onNavigateToCategories = {
-                    scope.launch { drawerState.close() }
-                    onNavigateToCategories()
-                },
-                onNavigateToHistory = {
-                    scope.launch { drawerState.close() }
-                    onNavigateToHistory()
-                },
-                onNavigateToTicketImport = {}
-            )
-        }
-    ) {
-        Scaffold(
-            topBar = {
-                CommonTopBar(
-                    title = "Mi lista",
-                    onOpenDrawer = { scope.launch { drawerState.open() } },
-                    onMicrophoneClick = { startDirectVoiceRecognition(context, viewModel, scope) },
-                    onAddClick = { showAddProductDialog = true },
-                    onChangeColor = { showColorDialog = true },
-                    overflowActions = { _, onDismiss ->
-                        // 📁 Añadir productos
-                        DropdownMenuItem(
-                            text = { Text("📁 Añadir productos") },
-                            onClick = { /* Header, no action */ },
-                            enabled = false,
-                            colors = MenuDefaults.itemColors(
-                                textColor = MaterialTheme.colorScheme.primary,
-                                disabledTextColor = MaterialTheme.colorScheme.primary
-                            )
-                        )
-                        DropdownMenuItem(
-                            text = { Text("    Manual") },
-                            onClick = {
-                                showAddProductDialog = true
-                                onDismiss()
-                            },
-                            leadingIcon = {
-                                Icon(Icons.Default.Edit, contentDescription = null)
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("    Scanner") },
-                            onClick = {
-                                onNavigateToScanner()
-                                onDismiss()
-                            },
-                            leadingIcon = {
-                                Icon(Icons.Default.QrCodeScanner, contentDescription = null)
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("    Desde historial") },
-                            onClick = {
-                                // TODO: Placeholder
-                                onDismiss()
-                            },
-                            leadingIcon = {
-                                Icon(Icons.Default.History, contentDescription = null)
-                            },
-                            enabled = false
-                        )
-
-                        HorizontalDivider()
-
-                        // 📁 Lista
-                        DropdownMenuItem(
-                            text = { Text("📁 Lista") },
-                            onClick = { /* Header, no action */ },
-                            enabled = false,
-                            colors = MenuDefaults.itemColors(
-                                textColor = MaterialTheme.colorScheme.primary,
-                                disabledTextColor = MaterialTheme.colorScheme.primary
-                            )
-                        )
-                        DropdownMenuItem(
-                            text = { Text("    Vaciar") },
-                            onClick = {
-                                showClearConfirmDialog = true
-                                onDismiss()
-                            },
-                            leadingIcon = {
-                                Icon(Icons.Default.Delete, contentDescription = null)
-                            },
-                            colors = MenuDefaults.itemColors(
-                                textColor = MaterialTheme.colorScheme.error
-                            )
-                        )
-                        
-                        HorizontalDivider()
-                        
-                        // 📁 Datos
-                        DropdownMenuItem(
-                            text = { Text("📁 Datos") },
-                            onClick = { /* Header, no action */ },
-                            enabled = false,
-                            colors = MenuDefaults.itemColors(
-                                textColor = MaterialTheme.colorScheme.primary,
-                                disabledTextColor = MaterialTheme.colorScheme.primary
-                            )
-                        )
-                        DropdownMenuItem(
-                            text = { Text("    Limpiar datos") },
-                            onClick = {
-                                showResetConfirmDialog = true
-                                onDismiss()
-                            },
-                            leadingIcon = {
-                                Icon(Icons.Default.Delete, contentDescription = null)
-                            },
-                            colors = MenuDefaults.itemColors(
-                                textColor = MaterialTheme.colorScheme.error
-                            )
-                        )
+    AppDrawerScaffold(
+        title = "Mi lista",
+        navigator = navigator,
+        currentDestination = DrawerDestination.ShoppingList,
+        onMicrophoneClick = { context, scope -> startDirectVoiceRecognition(context, viewModel, scope) },
+        onAddClick = { showAddProductDialog = true },
+        onChangeColor = { showColorDialog = true },
+        overflowActions = { _, onDismiss ->
+            DropdownMenuItem(text = { Text("📁 Añadir productos") }, onClick = { }, enabled = false, colors = MenuDefaults.itemColors(textColor = MaterialTheme.colorScheme.primary, disabledTextColor = MaterialTheme.colorScheme.primary))
+            DropdownMenuItem(text = { Text("    Manual") }, onClick = { showAddProductDialog = true; onDismiss() }, leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) })
+            DropdownMenuItem(text = { Text("    Scanner") }, onClick = { onNavigateToScanner(); onDismiss() }, leadingIcon = { Icon(Icons.Default.QrCodeScanner, contentDescription = null) })
+            DropdownMenuItem(text = { Text("    Desde historial") }, onClick = { onDismiss() }, leadingIcon = { Icon(Icons.Default.History, contentDescription = null) }, enabled = false)
+            HorizontalDivider()
+            DropdownMenuItem(text = { Text("📁 Lista") }, onClick = { }, enabled = false, colors = MenuDefaults.itemColors(textColor = MaterialTheme.colorScheme.primary, disabledTextColor = MaterialTheme.colorScheme.primary))
+            DropdownMenuItem(text = { Text("    Vaciar") }, onClick = { showClearConfirmDialog = true; onDismiss() }, leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) }, colors = MenuDefaults.itemColors(textColor = MaterialTheme.colorScheme.error))
+            HorizontalDivider()
+            DropdownMenuItem(text = { Text("📁 Datos") }, onClick = { }, enabled = false, colors = MenuDefaults.itemColors(textColor = MaterialTheme.colorScheme.primary, disabledTextColor = MaterialTheme.colorScheme.primary))
+            DropdownMenuItem(text = { Text("    Limpiar datos") }, onClick = { showResetConfirmDialog = true; onDismiss() }, leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) }, colors = MenuDefaults.itemColors(textColor = MaterialTheme.colorScheme.error))
+        },
+        bottomBar = {
+            if (uiState.productsByAisle.isNotEmpty()) {
+                val allProducts = uiState.productsByAisle.flatMap { it.value }
+                val purchasedProducts = allProducts.filter { it.isPurchased }
+                val totalProducts = allProducts.size
+                val purchasedCount = purchasedProducts.size
+                val purchasedTotal = purchasedProducts.sumOf { product ->
+                    val offer = uiState.offers.find { it.id == product.offerId }
+                    val unitPrice = product.finalPrice ?: product.estimatedPrice ?: 0f
+                    val finalPrice = when {
+                        offer != null -> calculateOfferPrice(unitPrice, product.quantity, offer)
+                        else -> unitPrice * product.quantity
                     }
-                )
-            },
-            bottomBar = {
-                Column {
-                    // Barra de totales (encima de la bottom bar)
-                    if (uiState.productsByAisle.isNotEmpty()) {
-                        val allProducts = uiState.productsByAisle.flatMap { it.value }
-                        val purchasedProducts = allProducts.filter { it.isPurchased }
-                        val totalProducts = allProducts.size
-                        val purchasedCount = purchasedProducts.size
-
-                        val purchasedTotal = purchasedProducts.sumOf { product ->
-                            val offer = uiState.offers.find { it.id == product.offerId }
-                            val unitPrice = product.finalPrice ?: product.estimatedPrice ?: 0f
-                            val finalPrice = when {
-                                offer != null -> calculateOfferPrice(unitPrice, product.quantity, offer)
-                                else -> unitPrice * product.quantity
-                            }
-                            finalPrice.toDouble()
-                        }
-
-                        val listTotal = allProducts.sumOf { product ->
-                            val offer = uiState.offers.find { it.id == product.offerId }
-                            val unitPrice = product.finalPrice ?: product.estimatedPrice ?: 0f
-                            val finalPrice = when {
-                                offer != null -> calculateOfferPrice(unitPrice, product.quantity, offer)
-                                else -> unitPrice * product.quantity
-                            }
-                            finalPrice.toDouble()
-                        }
-
-                        Surface(
-                            modifier = Modifier.fillMaxWidth(),
-                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.95f)
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column {
-                                    Text(
-                                        text = "Comprados: $purchasedCount/$totalProducts",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    if (purchasedCount > 0) {
-                                        Text(
-                                            text = "Llevas: €${String.format("%.2f", purchasedTotal)}",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.primary
-                                        )
-                                    }
-                                }
-                                Text(
-                                    text = "Total: €${String.format("%.2f", listTotal)}",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                        }
+                    finalPrice.toDouble()
+                }
+                val listTotal = allProducts.sumOf { product ->
+                    val offer = uiState.offers.find { it.id == product.offerId }
+                    val unitPrice = product.finalPrice ?: product.estimatedPrice ?: 0f
+                    val finalPrice = when {
+                        offer != null -> calculateOfferPrice(unitPrice, product.quantity, offer)
+                        else -> unitPrice * product.quantity
                     }
-
-                    ListBottomBar(
-                        supermarkets = uiState.supermarkets,
-                        selectedSupermarketId = uiState.selectedSupermarketId,
-                        onSupermarketSelected = { viewModel.selectSupermarket(it) },
-                        onHomeClick = onNavigateToHome
-                    )
+                    finalPrice.toDouble()
+                }
+                Surface(modifier = Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.95f)) {
+                    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Column {
+                            Text(text = "Comprados: $purchasedCount/$totalProducts", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                            if (purchasedCount > 0) {
+                                Text(text = "Llevas: €${String.format("%.2f", purchasedTotal)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                            }
+                        }
+                        Text(text = "Total: €${String.format("%.2f", listTotal)}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    }
                 }
             }
-        ) { paddingValues ->
-            if (uiState.isLoading) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            } else if (uiState.productsByAisle.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            text = "🛒",
-                            style = MaterialTheme.typography.displayLarge
-                        )
-                        Text(
-                            text = "Lista vacía",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        Text(
-                            text = "Pulsa + para añadir productos",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+            ListBottomBar(supermarkets = uiState.supermarkets, selectedSupermarketId = uiState.selectedSupermarketId, onSupermarketSelected = viewModel::selectSupermarket, onHomeClick = onNavigateToHome)
+        }
+    ) { paddingValues ->
+        if (uiState.isLoading) {
+            Box(
+                modifier = Modifier.fillMaxSize().padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+        } else {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                modifier = Modifier.fillMaxSize().padding(paddingValues),
+                contentPadding = PaddingValues(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                uiState.productsByAisle.forEach { (aisle, products) ->
+                    item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(2) }) {
+                        AisleHeader(
+                            aisleName = aisle.name,
+                            aisleIcon = aisle.emoji,
+                            productCount = products.size,
+                            purchasedCount = products.count { it.isPurchased },
+                            isCollapsed = false,
+                            onToggle = {}
                         )
                     }
-                }
-            } else {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentPadding = PaddingValues(8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    uiState.productsByAisle.forEach { (aisle, products) ->
-                        item(
-                            key = "header_${aisle.id}",
-                            contentType = "header",
-                            span = { androidx.compose.foundation.lazy.grid.GridItemSpan(2) }
-                        ) {
-                            AisleHeader(
-                                aisleName = aisle.name,
-                                aisleIcon = aisle.emoji,
-                                productCount = products.size,
-                                purchasedCount = products.count { it.isPurchased },
-                                isCollapsed = aisle.id in uiState.collapsedAisles,
-                                onToggle = { viewModel.toggleAisleCollapse(aisle.id) },
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
-
-                        if (aisle.id !in uiState.collapsedAisles) {
-                            items(
-                                items = products,
-                                key = { "product_${it.id}" },
-                                contentType = { "product" }
-                            ) { product ->
-                                val offer = uiState.offers.find { it.id == product.offerId }
-                                if (product.offerId != null && product.offerId > 0) {
-                                    Log.d(
-                                        "ProductListScreen",
-                                        "🔍 ${product.name}: offerId=${product.offerId}, found offer=${offer?.name}, total offers=${uiState.offers.size}"
-                                    )
-                                }
-                                SwipeableProductCard(
-                                    product = product,
-                                    offer = offer,
-                                    onClick = { productToEdit = product },
-                                    onTogglePurchased = { viewModel.toggleProductPurchased(product) },
-                                    onRemove = { viewModel.removeProduct(product) },
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                            }
-                        }
+                    items(products, key = { it.id }) { product ->
+                        val offer = uiState.offers.find { it.id == product.offerId }
+                        SwipeableProductCard(
+                            product = product,
+                            offer = offer,
+                            onClick = { productToEdit = product },
+                            onTogglePurchased = { viewModel.toggleProductPurchased(product) },
+                            onRemove = { viewModel.removeProduct(product) },
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
                 }
             }
