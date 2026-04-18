@@ -9,6 +9,7 @@ plugins {
 
 val appVersionBase = providers.gradleProperty("APP_VERSION_BASE").orElse("0.8.13").get()
 val appTestNumber = providers.gradleProperty("APP_TEST_NUMBER").orElse("25").get().toInt()
+val fixedSigningKeystore = rootProject.file("signing/milo-debug.keystore")
 
 android {
     namespace = "com.jose.listacompra"
@@ -27,14 +28,28 @@ android {
         }
     }
 
+    signingConfigs {
+        create("miloFixed") {
+            if (fixedSigningKeystore.exists()) {
+                storeFile = fixedSigningKeystore
+                storePassword = "android"
+                keyAlias = "androiddebugkey"
+                keyPassword = "android"
+            }
+        }
+    }
+
     buildTypes {
         debug {
             applicationIdSuffix = ".dev"
             versionNameSuffix = "-dev"
+            if (fixedSigningKeystore.exists()) {
+                signingConfig = signingConfigs.getByName("miloFixed")
+            }
         }
         release {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (fixedSigningKeystore.exists()) signingConfigs.getByName("miloFixed") else signingConfigs.getByName("debug")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
