@@ -14,6 +14,12 @@ interface ArticuloDao {
     @Query("SELECT * FROM articulos ORDER BY name ASC")
     fun getAllArticulos(): Flow<List<ArticuloEntity>>
 
+    @Query("SELECT * FROM articulos ORDER BY id ASC")
+    suspend fun getAllArticulosOnce(): List<ArticuloEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(articulos: List<ArticuloEntity>)
+
     @Query("SELECT * FROM articulos WHERE id = :id")
     suspend fun getArticuloById(id: Long): ArticuloEntity?
 

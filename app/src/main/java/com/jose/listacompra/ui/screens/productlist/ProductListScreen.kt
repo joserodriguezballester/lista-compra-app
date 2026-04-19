@@ -1,6 +1,8 @@
 package com.jose.listacompra.ui.screens.productlist
 
+import android.net.Uri
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,6 +15,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -41,9 +45,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -60,6 +66,7 @@ import com.jose.listacompra.ui.navigation.DrawerDestination
 import com.jose.listacompra.ui.screens.ColorSettingsDialog
 import com.jose.listacompra.ui.viewmodel.ProductListViewModel
 import com.jose.listacompra.utils.calculateOfferPrice
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -92,6 +99,30 @@ fun ProductListScreen(
 
     // Color actual
     val currentColor by viewModel.primaryColor.collectAsState(initial = 0)
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var pendingImportUri by remember { mutableStateOf<Uri?>(null) }
+    var showImportConfirmDialog by remember { mutableStateOf(false) }
+
+    val exportBackupLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        uri?.let {
+            scope.launch {
+                val message = viewModel.exportBackupToUri(context, it)
+                Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    val importBackupLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        uri?.let {
+            pendingImportUri = it
+            showImportConfirmDialog = true
+        }
+    }
 
     // Leer datos del scanner al volver
     LaunchedEffect(navController?.currentBackStackEntry?.savedStateHandle) {
@@ -131,6 +162,8 @@ fun ProductListScreen(
             DropdownMenuItem(text = { Text("    Vaciar") }, onClick = { showClearConfirmDialog = true; onDismiss() }, leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) }, colors = MenuDefaults.itemColors(textColor = MaterialTheme.colorScheme.error))
             HorizontalDivider()
             DropdownMenuItem(text = { Text("📁 Datos") }, onClick = { }, enabled = false, colors = MenuDefaults.itemColors(textColor = MaterialTheme.colorScheme.primary, disabledTextColor = MaterialTheme.colorScheme.primary))
+            DropdownMenuItem(text = { Text("    Exportar datos") }, onClick = { exportBackupLauncher.launch("lista-compra-backup.json"); onDismiss() })
+            DropdownMenuItem(text = { Text("    Importar datos") }, onClick = { importBackupLauncher.launch(arrayOf("application/json", "text/plain", "*/*")); onDismiss() })
             DropdownMenuItem(text = { Text("    Limpiar datos") }, onClick = { showResetConfirmDialog = true; onDismiss() }, leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) }, colors = MenuDefaults.itemColors(textColor = MaterialTheme.colorScheme.error))
         },
         bottomBar = {
@@ -319,8 +352,8 @@ fun ProductListScreen(
         AlertDialog(
             onDismissRequest = { showResetConfirmDialog = false },
             title = { Text("Limpiar datos") },
-            text = { 
-                Text("¿Eliminar todos los datos de usuario?\n\nSe mantendrán:\n• Supermercados\n• Categorías\n• Pasillos Carrefour\n• Ofertas por defecto\n\nSe eliminarán:\n• Artículos creados\n• Productos en listas\n• Historial de precios\n• Compras anteriores") 
+            text = {
+                Text("¿Eliminar todos los datos de usuario?\n\nSe mantendrán:\n• Supermercados\n• Categorías\n• Pasillos Carrefour\n• Ofertas por defecto\n\nSe eliminarán:\n• Artículos creados\n• Productos en listas\n• Historial de precios\n• Compras anteriores")
             },
             confirmButton = {
                 TextButton(
@@ -339,6 +372,59 @@ fun ProductListScreen(
             dismissButton = {
                 TextButton(onClick = { showResetConfirmDialog = false }) {
                     Text("Cancelar")
+                }
+            }
+        )
+    }
+
+    if (showImportConfirmDialog && pendingImportUri != null) {
+        AlertDialog(
+            onDismissRequest = {
+                showImportConfirmDialog = false
+                pendingImportUri = null
+            },
+            title = { Text("Importar datos") },
+            text = {
+                Text("Se reemplazarán los datos exportados/importados por el contenido del backup seleccionado. ¿Quieres continuar?")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val uri = pendingImportUri
+                        showImportConfirmDialog = false
+                        pendingImportUri = null
+                        if (uri != null) {
+                            scope.launch {
+                                val message = viewModel.importBackupFromUri(context, uri)
+                                Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                            }
+                        }
+                    }
+                ) {
+                    Text("Importar")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showImportConfirmDialog = false
+                        pendingImportUri = null
+                    }
+                ) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
+    uiState.error?.let { error ->
+        AlertDialog(
+            onDismissRequest = { viewModel.clearError() },
+            title = { Text("Error") },
+            text = { Text(error) },
+            confirmButton = {
+                TextButton(onClick = { viewModel.clearError() }) {
+                    Text("Aceptar")
                 }
             }
         )

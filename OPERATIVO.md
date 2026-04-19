@@ -1,19 +1,26 @@
 # lista-compra-app — operativo vivo
 
-**Última actualización:** 2026-04-16  
+**Última actualización:** 2026-04-19  
 **Ruta principal:** `~/proyectos/privado/Jose/lista-compra-app/`  
-**Rama actual:** `feat/ticket-save-history`
+**Rama actual:** `feat/import-export-datos`  
+**Base de trabajo:** `origin/main` en `5e71732`  
+**Versión release declarada:** `0.8.13-test28`
+
+> **Regla fija al entrar en este proyecto:** leer este `OPERATIVO.md` antes de tocar código, builds o releases.
+>
+> **Regla fija para releases a GitHub:** cuando Jose pida “subir la release” o “subir a GH con APK”, usar por defecto el flujo de **release de test/prerelease con APK adjunto** pensado para actualizar fácil: misma firma canónica, nuevo `APP_TEST_NUMBER`/`versionCode`, tag tipo `vX.Y.Z-testNN` y publicación compatible con que la app detecte la última prerelease con APK. Solo usar otro tipo de release si Jose lo pide explícitamente.
+>
+> **Bloque siguiente acordado con Jose (v1): import/export de datos.** En esta rama se implementará un **backup lógico** en JSON para poder exportar datos reales e importarlos/restaurarlos en otra versión de la app. La regla de diseño acordada es: **no separar base vs custom dentro de un bloque exportado**; si un conjunto de tablas entra en el backup, debe entrar como **bloque completo y coherente**, salvo razón fuerte en contra. La importación v1 será en modo **restaurar reemplazando**, no merge. La ubicación UI acordada es el **overflow de "Datos"**.
 
 ---
 
 ## 1. Propósito de este fichero
 
 Este documento sirve como **sitio único operativo** del proyecto para concentrar:
-- estado real del bloque en curso,
+- estado real del bloque vigente,
 - bugs y rarezas activas,
 - deuda técnica,
-- tests legacy rotos o desactivados,
-- mejoras propuestas,
+- tests útiles y tests legacy desfasados,
 - verificaciones manuales,
 - próximos pasos.
 
@@ -21,103 +28,120 @@ La idea es no repartir esto entre chat, memoria diaria, notas sueltas y varios m
 
 ---
 
-## 2. Estado actual del bloque en curso — guardar ticket → histórico
+## 2. Estado actual del bloque en curso — navegación centralizada / drawer / test27
 
 ### Objetivo
-Al guardar un ticket importado:
-1. guardar el ticket normal,
-2. crear entrada en histórico global de compra,
-3. guardar histórico por producto para líneas macheadas,
-4. actualizar frecuencia de compra,
-5. usar siempre la **fecha del ticket** y no `now`.
+Cerrar bien el refactor reciente de navegación principal de la app:
+1. centralizar la navegación en `AppNavigator` + `DrawerDestination`,
+2. unificar `drawer` + `top bar` + `scaffold` en pantallas principales,
+3. evitar estados raros durante transiciones de navegación,
+4. asegurar que `Inicio` siga visible en el drawer,
+5. integrar `Importar ticket` en el mismo armazón general,
+6. dejar el updater/overflow apuntando a la última prerelease correcta.
 
 ### Estado actual
-**Hecho y validado hoy:**
-- `SaveTicketUseCase` ya guarda también histórico global + histórico por producto + frecuencia.
-- Se usa **`ticket.fecha`** como fecha operativa del histórico.
-- El precio histórico por producto sale de **`line.precioUnitario`** del ticket.
-- Solo entran al histórico por producto las **líneas macheadas** (`articuloId != null`) y no descuento.
-- Se enlaza compra global ↔ líneas de precio con `purchaseId`.
+**Bloque cerrado y mergeado en `main`:**
+- Se introdujo navegación centralizada con `AppNavigator` y `DrawerDestination`.
+- Se creó `AppDrawerScaffold` como base compartida para pantallas principales.
+- Se migraron varias pantallas al scaffold común del drawer.
+- Se endureció `AppDrawer` para tolerar mejor transiciones con destino actual nulo.
+- Se forzó que `Inicio` siga visible en el drawer.
+- `TicketImportScreen` quedó alineada con el scaffold común.
+- El updater del overflow quedó ajustado para seguir la última prerelease.
+- La build de Milo quedó apuntando al keystore canónico del repo.
+- La versión declarada actual es **`0.8.13-test27`**.
 
 ### Archivos tocados en este bloque
-- `app/src/main/java/com/jose/listacompra/domain/usecase/ticket/SaveTicketUseCase.kt`
-- `app/src/main/java/com/jose/listacompra/domain/usecase/history/ProductHistoryUseCases.kt`
-- `app/src/main/java/com/jose/listacompra/domain/usecase/history/CompletePurchaseUseCase.kt`
-- `app/src/main/java/com/jose/listacompra/domain/repository/IHistoryRepository.kt`
-- `app/src/main/java/com/jose/listacompra/data/repository/HistoryRepositoryImpl.kt`
+- `app/build.gradle.kts`
+- `app/src/androidTest/java/com/jose/listacompra/ui/components/AppDrawerDestinationTest.kt`
+- `app/src/main/java/com/jose/listacompra/ui/AppUiConfig.kt`
+- `app/src/main/java/com/jose/listacompra/ui/components/AppDrawer.kt`
+- `app/src/main/java/com/jose/listacompra/ui/components/AppDrawerScaffold.kt`
+- `app/src/main/java/com/jose/listacompra/ui/components/CommonTopBar.kt`
+- `app/src/main/java/com/jose/listacompra/ui/navigation/AppNavigation.kt`
+- `app/src/main/java/com/jose/listacompra/ui/navigation/AppNavigator.kt`
+- `app/src/main/java/com/jose/listacompra/ui/navigation/AppNavigatorImpl.kt`
+- `app/src/main/java/com/jose/listacompra/ui/navigation/DrawerDestination.kt`
+- `app/src/main/java/com/jose/listacompra/ui/screens/catalogo/CatalogoScreen.kt`
+- `app/src/main/java/com/jose/listacompra/ui/screens/categories/CategoriesScreen.kt`
+- `app/src/main/java/com/jose/listacompra/ui/screens/history/HistoryScreen.kt`
+- `app/src/main/java/com/jose/listacompra/ui/screens/home/HomeScreen.kt`
+- `app/src/main/java/com/jose/listacompra/ui/screens/offers/OffersScreen.kt`
+- `app/src/main/java/com/jose/listacompra/ui/screens/productlist/ProductListScreen.kt`
+- `app/src/main/java/com/jose/listacompra/ui/screens/supermarket/SupermarketListScreen.kt`
+- `app/src/main/java/com/jose/listacompra/ui/screens/ticket/TicketImportScreen.kt`
+- `gradle.properties`
+- `signing/milo-debug.keystore`
 
 ### Verificación hecha hoy
-- Compilación OK:
-  - `./gradlew :app:compileDebugKotlin --no-daemon`
-- Test específico OK:
-  - `./gradlew :app:testDebugUnitTest --tests com.jose.listacompra.SaveTicketUseCaseTest --no-daemon`
+- `git fetch origin --prune` OK.
+- `HEAD` local = `origin/main` = `5e71732` (`merge: close app navigator centralization work`).
+- Diferencia con remoto: **`0 ahead / 0 behind`**.
+- El commit de `test27` (`01dd444`, `fix: make overflow updater track latest prerelease for test27`) está incluido en `HEAD`.
+- Árbol de trabajo limpio.
 
-### Concepto clave: `purchaseId`
-No es nada raro: es el **ID de la compra global** en `purchase_history`.  
-Cada línea de `product_price_history` guarda ese mismo ID para saber a qué ticket/compra pertenece.
+### Observaciones operativas
+- Este fichero estaba atrasado en el bloque `ticket-save-history`; queda realineado hoy al estado real de `main`.
+- El versionado real lo marcan `APP_VERSION_BASE=0.8.13` y `APP_TEST_NUMBER=27`.
+- En `release-artifacts/lista-compra-app/` solo están archivados `test22`, `test23` y `test24`.
+- En el repo sí existe un `app/build/outputs/apk/release/app-release.apk` local reciente.
+- Si queremos conservar `test27` como artefacto canónico fuera de `app/build/`, falta archivarlo explícitamente.
+- **Semilla / producción:** para builds normales de la app se fija `DataConfig.LOAD_FULL_DATA = false`, dejando solo el llenado mínimo (supermercados, categorías, ofertas, pasillos y lista por defecto) y evitando catálogo/productos/historial de ejemplo.
+- **Persistencia entre releases:** pasar de una release a otra del tipo `testNN` sin cambiar la versión Room (actual `14`) no debería borrar la BD existente: no hay `fallbackToDestructiveMigration()` y el seeder solo inserta mínimos si faltan registros, no hace wipe.
+- **Ojo técnico pendiente:** en `DatabaseModule` no se está registrando `MIGRATION_10_11` aunque existe en `Database.kt`. Esto no afecta al salto normal `test27` → siguiente `testNN` si la BD sigue en `14`, pero conviene corregirlo antes de futuras migraciones reales o saltos desde bases antiguas.
 
 ---
 
-## 3. Tests legacy anulados temporalmente
+## 3. Tests y verificaciones activas
 
-Para poder correr el test de hoy sin que petaran tests viejos desfasados, se han sacado temporalmente del source set:
+### Tests útiles activos
+- `app/src/test/java/com/jose/listacompra/SaveTicketUseCaseTest.kt`
+  - Sigue cubriendo bien el bloque anterior de guardar ticket → histórico.
+- `app/src/androidTest/java/com/jose/listacompra/ui/components/AppDrawerDestinationTest.kt`
+  - Test útil del bloque actual de drawer / navegación.
 
+### Tests legacy desactivados temporalmente
 - `app/src/test/java/com/jose/listacompra/DomainModelTest.kt.disabled`
 - `app/src/test/java/com/jose/listacompra/JsonExportTest.kt.disabled`
 - `app/src/test/java/com/jose/listacompra/OfferCalculationTest.kt.disabled`
 
-### Motivo
-No fallaban por este ticket, sino por desincronización con el modelo actual:
-- `DomainModelTest` → usa `product.totalPrice()` que ya no cuadra con el modelo actual.
-- `JsonExportTest` → expectativas antiguas con nullability / tipos.
-- `OfferCalculationTest` → crea `OfferEntity` con constructor viejo (faltan campos nuevos).
+#### Motivo heredado
+No estaban rompiendo por el drawer, sino por desincronización previa con el modelo actual.
 
-### Criterio temporal aplicado
-No se han borrado.  
-Se han dejado **fuera del source set** para no bloquear el test actual.
-
-### Tarea pendiente
-Rehacer estos tests legacy y devolverlos a `.kt` normales.
+### Alcance de la verificación hecha hoy
+En esta actualización del operativo **no** se ha relanzado compilación ni suite de tests.
+Lo verificado hoy ha sido:
+- sincronía real con remoto,
+- versión declarada actual,
+- presencia efectiva de `test27` en `HEAD`,
+- ramas vivas y estado limpio del repo.
 
 ---
 
-## 4. Test nuevo útil que sí merece quedarse
+## 4. Estado git funcional actual
 
-### Test creado hoy
-- `app/src/test/java/com/jose/listacompra/SaveTicketUseCaseTest.kt`
+### Rama principal
+- `main` → `5e71732` → `merge: close app navigator centralization work`
 
-### Qué valida
-- usa `ticket.fecha`,
-- usa `line.precioUnitario`,
-- crea `purchase_history`,
-- enlaza `product_price_history` con `purchaseId`,
-- solo mete líneas macheadas,
-- no contamina con líneas no macheadas o descuentos.
+### Ramas auxiliares que siguen presentes
+- `refactor/app-navigator-centralized` → `737b994`
+- `fix/tickets-import` → `6f6c026`
+- `fix/navigation-drawer-home-list` → `d9c9974`
+- `backup/navigation-drawer-home-list-2026-04-17` → `d9c9974`
 
----
-
-## 5. Estado git funcional actual
-
-### Modificados
-- `app/src/main/java/com/jose/listacompra/data/repository/HistoryRepositoryImpl.kt`
-- `app/src/main/java/com/jose/listacompra/domain/repository/IHistoryRepository.kt`
-- `app/src/main/java/com/jose/listacompra/domain/usecase/history/CompletePurchaseUseCase.kt`
-- `app/src/main/java/com/jose/listacompra/domain/usecase/history/ProductHistoryUseCases.kt`
-- `app/src/main/java/com/jose/listacompra/domain/usecase/ticket/SaveTicketUseCase.kt`
-
-### Nuevos / útiles
-- `app/src/test/java/com/jose/listacompra/SaveTicketUseCaseTest.kt`
-
-### Desactivados temporalmente
-- `app/src/test/java/com/jose/listacompra/DomainModelTest.kt.disabled`
-- `app/src/test/java/com/jose/listacompra/JsonExportTest.kt.disabled`
-- `app/src/test/java/com/jose/listacompra/OfferCalculationTest.kt.disabled`
+### Tags útiles del tramo reciente
+- `v0.8.13-test22`
+- `v0.8.13-test23`
+- `v0.8.13-test24`
+- `v0.8.13-test25`
+- `v0.8.13-test26`
+- `v0.8.13-test27`
 
 ---
 
-## 6. Bugs, deuda y rarezas heredadas del repo
+## 5. Bugs, deuda y rarezas heredadas del repo
 
-### 6.1 Críticos de auditoría
+### 5.1 Críticos de auditoría
 Cruce de `AUDITORIA.md` y `AUDITORIA-2026-04-10.md`:
 
 - **Fuga de arquitectura domain → data**
@@ -135,27 +159,25 @@ Cruce de `AUDITORIA.md` y `AUDITORIA-2026-04-10.md`:
 - **Dependencias duplicadas e inconsistentes en `app/build.gradle.kts`**
   - CameraX / ML Kit duplicados y versiones mezcladas.
 
-### 6.2 Importantes
+### 5.2 Importantes
 - `ProductListViewModel` demasiado grande y con muchas dependencias.
 - Screens muy largas (`HistoryScreen`, `ProductListScreen`, `MainScreen`, `AddProductToListDialog`).
 - Patrones CRUD repetidos entre pantallas y ViewModels.
 - Repositorios/DAO con mucho código repetido.
 - Dropdowns o componentes duplicados.
 
-### 6.3 TODOs visibles ahora mismo en código
-- `ui/screens/productlist/ProductListScreen.kt`
-  - placeholder pendiente.
+### 5.3 TODOs visibles ahora mismo en código
 - `ui/screens/supermarket/SupermarketListScreen.kt`
-  - varias acciones con “implementar con ViewModel”.
+  - varias acciones siguen con “implementar con ViewModel”.
 - `ui/screens/main/MainScreen.kt`
-  - restos comentados y wiring pendiente.
+  - restos comentados y wiring pendiente (`deshacer`, diálogo de voz, placeholders viejos de offers/suggestions).
 - `ui/viewmodel/ProductListViewModel.kt`
   - política de añadir producto sin artículo pendiente de definir.
 - `data/repository/HistoryRepositoryImpl.kt`
   - estadísticas de gasto sin implementar.
 
-### 6.4 Warnings / suciedad técnica detectada
-De auditorías + compilación:
+### 5.4 Warnings / suciedad técnica detectada
+De auditorías + compilaciones previas:
 - parámetros no usados,
 - variables no usadas,
 - imports no usados,
@@ -165,7 +187,7 @@ De auditorías + compilación:
 
 ---
 
-## 7. Documentos heredados útiles leídos hoy
+## 6. Documentos útiles ahora mismo
 
 ### `AUDITORIA.md`
 Útil para:
@@ -196,7 +218,7 @@ De auditorías + compilación:
 ### `docs/test-v0.7.4-tickets.md`
 Útil para:
 - flujo de prueba manual de importación de tickets,
-- revisar si el bloque ticket-save-history queda bien probado en dispositivo.
+- revisar el bloque ticket → histórico cuando volvamos a tocarlo.
 
 ### `DOCUMENTACION.md`
 Útil para:
@@ -209,125 +231,50 @@ De auditorías + compilación:
 
 ---
 
-## 8. Pruebas manuales recomendadas ahora
+## 7. Pruebas manuales recomendadas ahora
 
-### Ticket importado
-Usar como base `docs/test-v0.7.4-tickets.md` y añadir estas verificaciones nuevas:
-- guardar ticket,
-- comprobar que aparece entrada global en historial,
-- comprobar que productos macheados aparecen en histórico de precio,
-- comprobar que la fecha reflejada es la del ticket,
-- comprobar que el precio guardado coincide con el del ticket,
-- comprobar que líneas no macheadas no contaminan histórico por producto.
+### Navegación / drawer / test27
+- Abrir la app en `Inicio`.
+- Abrir/cerrar el drawer desde Home y desde varias pantallas principales.
+- Navegar entre Home, Catálogo, Categorías, Historial, Ofertas, Supermercados e Importar ticket.
+- Confirmar que título/top bar y acción principal siguen siendo coherentes.
+- Comprobar que `Inicio` no desaparece del drawer durante la navegación.
+- Comprobar que no aparece estado raro por destino actual nulo al cambiar rápido de pantalla.
+- Revisar que `Importar ticket` usa el scaffold común y no queda “fuera” del drawer.
+- Revisar el overflow/updater y confirmar que sigue la última prerelease esperada.
 
-### Suite de tests
-Estado actual:
-- el test específico del ticket pasa,
-- el suite completo no representa aún un estado sano porque hay tests legacy desfasados.
+### Ticket importado / histórico (arrastrado del bloque anterior)
+- Usar como base `docs/test-v0.7.4-tickets.md`.
+- Comprobar guardar ticket → histórico global.
+- Comprobar histórico por producto de líneas macheadas.
+- Comprobar fecha del ticket y precio unitario.
+- Comprobar que líneas no macheadas o descuentos no contaminan histórico por producto.
 
 ---
 
-## 9. Mejoras UX pendientes detectadas
+## 8. Próximos pasos recomendados
 
-### Historial
-- **UX pendiente:** en la primera etiqueta/card del historial, permitir **añadir a la lista** con pulsación directa, evitando pasos intermedios.
-- **UX pendiente:** en esa misma primera etiqueta/card del historial, permitir también **navegar al detalle con gráfica de precios**, para consultar la evolución del producto desde la propia card.
+### Opción A — cerrar bien `test27`
+1. Validación manual de navegación/drawer en dispositivo.
+2. Si va bien, archivar artefacto `test27` en `release-artifacts/lista-compra-app/`.
+3. Apuntar cualquier matiz real de UX o navegación que aparezca al probar.
 
-### Navegación general
-- **Revisar la navegación del drawer** para asegurar que el orden, las entradas visibles y el comportamiento real coinciden con la navegación deseada de la app.
+### Opción B — arrancar `test28`
+1. Elegir siguiente bug/ajuste.
+2. Subir `APP_TEST_NUMBER` a `28` cuando toque.
+3. Compilar en Milo y guardar artefacto canónico.
 
-### Importación de tickets
-- **UI pendiente:** en la pantalla de **Importar ticket**, volver a mostrar el **número de test que corresponda** al parser/iteración actual. No dejarlo borrado sin más: si cambia el caso de prueba, actualizar el número visible al que toque.
-
-## 10. Próximos pasos recomendados
-
-### Opción A — cerrar bien este bloque
-1. Probar visualmente en la app guardar ticket → histórico.
-2. Commit de la rama con mensaje claro.
-3. Revisar si falta prueba de integración / DB real.
-
-### Opción B — sanear base de tests
+### Opción C — sanear base de tests y deuda
 1. Rehacer `DomainModelTest`.
 2. Rehacer `JsonExportTest`.
 3. Rehacer `OfferCalculationTest`.
 4. Restaurarlos a `.kt`.
 5. Ejecutar `testDebugUnitTest` completo.
+6. Retomar limpieza de `build.gradle.kts` y fugas entre capas.
 
-### Opción C — deuda técnica estructural
-1. Limpiar `build.gradle.kts`.
-2. Revisar migraciones / `fallbackToDestructiveMigration()`.
-3. Atacar fugas de capa entre domain, data y UI.
-4. Dividir pantallas / ViewModels gigantes.
-
----
-
-## 11. Regla práctica acordada
-
-Cuando aparezcan:
-- errores viejos,
-- tests rotos,
-- rarezas operativas,
-- deuda técnica,
-- decisiones de implementación,
-- mejoras pendientes,
-
-consolidarlos aquí en vez de dejarlos dispersos entre memoria diaria, chat o varios markdown sueltos.
-
-Este fichero debe funcionar como:
-- **bitácora técnica operativa**,
-- **estado real del proyecto**,
-- **sitio único para pendientes y rarezas**.
-
----
-
-## 12. Checklist de validación — fase guardar ticket → historial
-
-### 1. Importación y parseo del ticket
-- **1.1** Se puede abrir la pantalla de **Importar ticket**
-- **1.2** El PDF se carga correctamente
-- **1.3** El parser extrae las líneas del ticket
-- **1.3-1 (fecha)** La **fecha** del ticket se detecta bien
-- **1.3-2 (total)** El **total** del ticket se detecta bien
-- **1.3-3 (líneas)** El número y contenido de líneas tiene sentido
-
-> Nota: el supermercado **no se fuerza como punto de validación** en esta fase, porque el caso real revisado ahora mismo es **Carrefour** y no estamos validando todavía importación multi-supermercado.
-
-### 2. Matching antes de guardar
-- **2.1** Las líneas ya macheadas salen correctas
-- **2.2** Las líneas sin match se pueden confirmar manualmente
-- **2.3** Las líneas sin match también se pueden dejar sin machear
-- **2.4** Las líneas de descuento no se comportan como producto normal
-
-### 3. Guardado del ticket
-- **3.1** El botón **Guardar ticket** responde
-- **3.2** El ticket se guarda sin error
-- **3.3** La pantalla termina correctamente el flujo de guardado
-
-### 4. Historial global de compra
-- **4.1** Tras guardar, aparece una compra nueva en **Historial**
-- **4.2** La **fecha mostrada** corresponde a la del ticket, no a la fecha actual
-- **4.3** El **total** mostrado coincide con el ticket
-- **4.4** El número de productos mostrado tiene sentido
-- **4.5** No aparece una compra duplicada al guardar una sola vez
-
-### 5. Historial por producto
-- **5.1** Los productos **macheados** aparecen en histórico
-- **5.2** El **precio guardado** es el del ticket, no el del artículo del catálogo
-- **5.3** La **fecha** del histórico del producto es la del ticket
-- **5.4** La **cantidad** guardada tiene sentido
-- **5.5** Si un producto tenía precio distinto en catálogo, en histórico sigue mandando el del ticket
-
-### 6. Exclusiones correctas
-- **6.1** Las líneas **no macheadas** no crean histórico por artículo
-- **6.2** Las líneas de **descuento** no contaminan el histórico por producto
-- **6.3** Guardar el ticket no rompe la pantalla de Historial
-
-### 7. Coherencia general
-- **7.1** El histórico visible en la app refleja el dato recién guardado
-- **7.2** No parece usar `now` en vez de `ticket.fecha`
-- **7.3** No parece usar el precio del catálogo en vez de `precioUnitario` del ticket
-
-### 8. Semillas de historial
-- **8.1** Distinguir si lo que se ve en Historial es dato real o seed
-- **8.2** Si la prueba real funciona, dejar apuntado quitar las seeds de historial
-- **8.3** Evitar mezclar validación funcional con datos fake viejos
+### Opción D — implementar import/export de datos (rama actual)
+1. Ajustar el backup al criterio acordado con Jose: exportar **bloques completos y coherentes de tablas**, sin separar base/custom dentro del bloque salvo motivo fuerte.
+2. Implementar exportación de datos reales.
+3. Implementar importación en modo **restaurar reemplazando**.
+4. Exponer la función en el **overflow de Datos**.
+5. Verificar restauración entre releases de test sin perder la BD real del usuario.

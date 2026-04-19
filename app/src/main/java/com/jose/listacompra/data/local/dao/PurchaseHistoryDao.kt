@@ -17,6 +17,9 @@ interface PurchaseHistoryDao {
     @Insert(onConflict = OnConflictStrategy.Companion.REPLACE)
     suspend fun insertPurchase(purchase: PurchaseHistoryEntity): Long
 
+    @Insert(onConflict = OnConflictStrategy.Companion.REPLACE)
+    suspend fun insertAll(purchases: List<PurchaseHistoryEntity>)
+
     @Query("SELECT * FROM purchase_history ORDER BY fecha DESC LIMIT 1")
     suspend fun getLastPurchase(): PurchaseHistoryEntity?
 
