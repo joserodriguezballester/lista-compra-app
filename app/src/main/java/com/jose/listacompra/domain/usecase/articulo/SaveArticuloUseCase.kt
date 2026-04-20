@@ -2,13 +2,14 @@ package com.jose.listacompra.domain.usecase.articulo
 
 import com.jose.listacompra.domain.model.Articulo
 import com.jose.listacompra.domain.repository.IArticuloRepository
+import com.jose.listacompra.domain.storage.ArticuloPhotoStorage
 import javax.inject.Inject
 
-class SaveArticuloUseCase@Inject constructor(
-    private val repository: IArticuloRepository
-){
+class SaveArticuloUseCase @Inject constructor(
+    private val repository: IArticuloRepository,
+    private val articuloPhotoStorage: ArticuloPhotoStorage
+) {
     suspend operator fun invoke(articulo: Articulo): Result<Unit> {
-        // Reglas de negocio
         if (articulo.name.isBlank()) {
             return Result.failure(Exception("El nombre del artículo no puede estar vacío"))
         }
@@ -16,7 +17,15 @@ class SaveArticuloUseCase@Inject constructor(
             return Result.failure(Exception("El tamaño debe ser mayor que cero"))
         }
 
-        repository.saveArticulo(articulo)
-        return Result.success(Unit)
+        return try {
+            val normalizedPhotoUri = articulo.photoUri
+                ?.takeIf { it.isNotBlank() }
+                ?.let { articuloPhotoStorage.centralizeIfNeeded(it) }
+
+            repository.saveArticulo(articulo.copy(photoUri = normalizedPhotoUri))
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 }
