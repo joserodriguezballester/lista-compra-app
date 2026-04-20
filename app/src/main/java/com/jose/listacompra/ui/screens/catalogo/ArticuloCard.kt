@@ -151,16 +151,6 @@ fun ArticuloCard(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                Text(
-                    text = "photoUri: ${articulo.photoUri ?: "<null>"}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.tertiary,
-                    maxLines = 4,
-                    overflow = TextOverflow.Ellipsis
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
