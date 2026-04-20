@@ -41,6 +41,12 @@ interface ProductDao {
     @Query("DELETE FROM products")
     suspend fun deleteAll()
 
+    @Query("SELECT * FROM products ORDER BY shoppingListId ASC, aisleId ASC, orderIndex ASC")
+    suspend fun getAllProductsOnce(): List<ProductEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(products: List<ProductEntity>)
+
     @Query("SELECT MAX(orderIndex) FROM products WHERE shoppingListId = :listId AND aisleId = :aisleId")
     suspend fun getMaxOrderIndexInAisle(listId: Long, aisleId: Long): Int?
     

@@ -23,4 +23,10 @@ interface ArticuloSupermarketDefaultDao {
     
     @Query("DELETE FROM articulo_supermarket_defaults")
     suspend fun deleteAll()
+
+    @Query("SELECT * FROM articulo_supermarket_defaults ORDER BY articuloId ASC, supermarketId ASC")
+    suspend fun getAllOnce(): List<ArticuloSupermarketDefaultEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(defaults: List<ArticuloSupermarketDefaultEntity>)
 }

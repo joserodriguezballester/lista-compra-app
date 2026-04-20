@@ -24,6 +24,12 @@ interface ProductHistoryDao {
     @Query("SELECT * FROM product_history ORDER BY usageCount DESC LIMIT 20")
     suspend fun getMostFrequent(): List<ProductHistoryEntity>
 
+    @Query("SELECT * FROM product_history ORDER BY usageCount DESC, lastUsed DESC")
+    suspend fun getAll(): List<ProductHistoryEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(histories: List<ProductHistoryEntity>)
+
     @Query("DELETE FROM product_history")
     suspend fun deleteAll()
 }

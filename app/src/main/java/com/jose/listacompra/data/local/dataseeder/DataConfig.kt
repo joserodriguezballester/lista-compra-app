@@ -9,5 +9,5 @@ package com.jose.listacompra.data.local.dataseeder
  * Cambiar a false antes de generar APK de producción
  */
 object DataConfig {
-    const val LOAD_FULL_DATA = true
+    const val LOAD_FULL_DATA = false
 }

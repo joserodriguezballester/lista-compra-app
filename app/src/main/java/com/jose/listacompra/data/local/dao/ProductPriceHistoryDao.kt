@@ -47,6 +47,12 @@ interface ProductPriceHistoryDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPriceHistory(priceHistory: ProductPriceHistoryEntity)
 
+    @Query("SELECT * FROM product_price_history ORDER BY fecha DESC")
+    suspend fun getAll(): List<ProductPriceHistoryEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(priceHistories: List<ProductPriceHistoryEntity>)
+
     @Query("DELETE FROM product_price_history")
     suspend fun deleteAll()
 }

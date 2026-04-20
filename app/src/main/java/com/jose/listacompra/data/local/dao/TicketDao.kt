@@ -92,6 +92,19 @@ interface TicketDao {
     @Transaction
     @Query("SELECT * FROM tickets ORDER BY fecha DESC")
     fun getAllTicketsWithLines(): Flow<List<TicketWithLines>>
+
+    @Transaction
+    @Query("SELECT * FROM tickets ORDER BY fecha DESC")
+    suspend fun getAllTicketsWithLinesOnce(): List<TicketWithLines>
+
+    @Query("DELETE FROM tickets")
+    suspend fun deleteAllTickets()
+
+    @Transaction
+    suspend fun insertTicketWithLinesPreservingIds(ticket: TicketEntity, lines: List<TicketLineEntity>) {
+        insertTicket(ticket)
+        insertTicketLines(lines)
+    }
 }
 
 /**

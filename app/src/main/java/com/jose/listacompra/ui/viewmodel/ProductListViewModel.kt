@@ -1,5 +1,7 @@
 package com.jose.listacompra.ui.viewmodel
 
+import android.content.Context
+import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -24,6 +26,7 @@ import com.jose.listacompra.domain.usecase.product.UpdateProductUseCase
 import com.jose.listacompra.domain.usecase.supermarket.GetAllSupermarketsFlowUseCase
 import com.jose.listacompra.ui.state.ProductListUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -33,6 +36,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -54,7 +58,9 @@ class ProductListViewModel @Inject constructor(
     private val updateProductFrequencyUseCase: UpdateProductFrequencyUseCase,
     private val savePriceHistoryUseCase: SavePriceHistoryUseCase,
     private val themePreferences: ThemePreferences,
-    private val resetDataToProductionUseCase: com.jose.listacompra.domain.usecase.data.ResetDataToProductionUseCase
+    private val resetDataToProductionUseCase: com.jose.listacompra.domain.usecase.data.ResetDataToProductionUseCase,
+    private val exportUserDataBackupUseCase: com.jose.listacompra.domain.usecase.data.ExportUserDataBackupUseCase,
+    private val importUserDataBackupUseCase: com.jose.listacompra.domain.usecase.data.ImportUserDataBackupUseCase
 ) : ViewModel() {
 
     private val TAG = "ProductListViewModel"
@@ -483,6 +489,52 @@ class ProductListViewModel @Inject constructor(
                 Log.e(TAG, "Error resetting data", e)
                 _uiState.update { it.copy(error = "Error al limpiar datos: ${e.message}") }
             }
+        }
+    }
+
+    fun clearError() {
+        _uiState.update { it.copy(error = null) }
+    }
+
+    suspend fun exportBackupToUri(context: Context, uri: Uri): String = withContext(Dispatchers.IO) {
+        try {
+            val json = exportUserDataBackupUseCase()
+            context.contentResolver.openOutputStream(uri)?.bufferedWriter(Charsets.UTF_8)?.use { writer ->
+                writer.write(json)
+            } ?: error("No se pudo abrir el fichero de destino")
+
+            "Backup exportado correctamente"
+        } catch (e: Exception) {
+            Log.e(TAG, "Error exporting backup", e)
+            _uiState.update { it.copy(error = "Error al exportar datos: ${e.message}") }
+            "Error al exportar datos"
+        }
+    }
+
+    suspend fun importBackupFromUri(context: Context, uri: Uri): String = withContext(Dispatchers.IO) {
+        try {
+            val json = context.contentResolver.openInputStream(uri)?.bufferedReader(Charsets.UTF_8)?.use { reader ->
+                reader.readText()
+            } ?: error("No se pudo leer el fichero seleccionado")
+
+            importUserDataBackupUseCase(json)
+            currentListId = getDefaultListUseCase()
+            _uiState.update {
+                it.copy(
+                    productsByAisle = emptyMap(),
+                    totalItems = 0,
+                    purchasedItems = 0,
+                    totalPrice = 0f,
+                    error = null
+                )
+            }
+            loadAislesAndProducts(_uiState.value.selectedSupermarketId)
+
+            "Backup importado correctamente"
+        } catch (e: Exception) {
+            Log.e(TAG, "Error importing backup", e)
+            _uiState.update { it.copy(error = "Error al importar datos: ${e.message}") }
+            "Error al importar datos"
         }
     }
 }

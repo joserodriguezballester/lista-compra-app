@@ -43,6 +43,9 @@ interface CategorySupermarketOrderDao {
     
     @Query("DELETE FROM category_supermarket_orders")
     suspend fun deleteAll()
+
+    @Query("SELECT * FROM category_supermarket_orders ORDER BY supermarketId ASC, orderIndex ASC")
+    suspend fun getAllOnce(): List<CategorySupermarketOrderEntity>
     
     @Query("SELECT MAX(orderIndex) FROM category_supermarket_orders WHERE supermarketId = :supermarketId")
     suspend fun getMaxOrderIndex(supermarketId: Long): Int?
