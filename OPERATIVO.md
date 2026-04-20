@@ -37,7 +37,7 @@ Antes de compilar en Milo:
 - no compilar tests y app en paralelo.
 
 ### Releases de GitHub
-Cuando Jose pida “subir la release” o “subir a GH con APK”, usar por defecto el flujo de:
+Cuando Jose pida "subir la release" o "subir a GH con APK", usar por defecto el flujo de:
 - **release de test / prerelease**,
 - **APK adjunto**,
 - **misma firma canónica**,
@@ -49,22 +49,45 @@ Solo usar otro tipo de release si Jose lo pide explícitamente.
 
 ---
 
-## 3. Estado activo del repo base
+## 3. Rama activa
 
-### Frente funcional abierto
-- **En este estado base no hay un frente funcional activo declarado todavía.**
-- El último bloque cerrado ha sido **import/export de datos de usuario**.
-- Su conocimiento estable ya no vive en este fichero, sino en documentación permanente.
+### Identificación de la rama
+- **Rama actual:** `feat/centralizar-fotos-articulos`
+- **Base de trabajo:** `origin/main` en `23f11a7`
+- **Frente funcional:** centralización de fotos nuevas de artículos
 
-### Cierre del bloque import/export
-Al cerrar ese bloque, queda como conocimiento estable:
-- documentación de uso en `docs/import-export-datos-uso.md`;
-- documentación técnica en `docs/import-export-datos-tecnico.md`;
-- validación manual hecha por Jose;
-- compilación OK de `:app:testDebugUnitTest`, `:app:compileDebugAndroidTestKotlin` y `:app:assembleRelease`;
-- prerelease publicada `v0.8.13-test28`.
+### Objetivo
+Centralizar las **fotos nuevas de artículos** en una carpeta visible y canónica del dispositivo, sin migrar por ahora las fotos antiguas.
 
-Los pendientes que sobreviven al cierre se gestionan desde `TAREAS.md`, no desde este fichero.
+### Decisiones vigentes
+- **Alcance v1:** solo fotos nuevas de artículos.
+- **Carpeta canónica visible:** `Pictures/ListaCompra/Articulos/`
+- **Migración de fotos antiguas:** no en esta fase.
+- **Referencia en BD:** se mantiene `photoUri: String?`.
+- **Normalización:** al guardar/editar artículo, no en el momento de preview.
+- **Nombres de fichero:** `articulo-<uuid>.jpg`.
+
+### Regla operativa
+La normalización de la imagen se hará al confirmar `Guardar`:
+- **Galería** -> copiar a carpeta canónica.
+- **Cámara** -> copiar/mover desde temporal a carpeta canónica.
+- **Escáner/OpenFoodFacts** -> descargar URL remota a carpeta canónica.
+- **Imagen ya centralizada** -> no duplicar.
+
+### Diseño técnico previsto
+1. Crear `ArticuloPhotoStorage` (o `PhotoStorage` genérico).
+2. Inyectarlo con Hilt.
+3. Integrarlo en `SaveArticuloUseCase` y `UpdateArticuloUseCase`.
+4. Mantener la UI ligera: preview con URI temporal/remota, normalización solo al guardar.
+
+### Fuera de alcance en esta fase
+- migrar fotos antiguas;
+- borrar automáticamente fotos antiguas sustituidas;
+- meter binarios de imagen dentro del backup JSON;
+- centralizar fotos de `products` salvo rebote natural desde `articulos`.
+
+### Documentación de referencia
+- Plan completo: `docs/fotos-articulos-centralizacion.md`
 
 ---
 
@@ -86,6 +109,9 @@ Los pendientes que sobreviven al cierre se gestionan desde `TAREAS.md`, no desde
 - `DOCUMENTACION.md`
   - índice corto de documentación técnica viva
 
+- `docs/fotos-articulos-centralizacion.md`
+  - plan completo de centralización de fotos
+
 - `docs/import-export-datos-uso.md`
   - uso funcional del backup/import de datos de usuario
 
@@ -93,22 +119,21 @@ Los pendientes que sobreviven al cierre se gestionan desde `TAREAS.md`, no desde
   - diseño técnico y límites actuales del bloque import/export
 
 - `docs/modelo-bd-entidad-relacion.md`
-  - modelo real de BD, relaciones y contexto útil para import/export
+  - modelo real de BD, relaciones y contexto útil
 
 - `docs/modelo-bd-diagrama-er.md`
-  - diagrama ER complementario basado en las `Entity` reales
+  - diagrama ER complementario
 
 - `docs/navegacion.md`
   - navegación actual, drawer y rutas principales
 
-- `docs/fotos-articulos-centralizacion.md`
-  - plan aprobado para el siguiente frente sobre fotos de artículos
-
 ---
 
-## 6. Qué hacer cuando se abra una rama nueva
+## 6. Siguientes pasos inmediatos
 
-Cuando un nuevo frente pase a ser trabajo activo:
-1. declararlo aquí con su rama real,
-2. mover aquí sus decisiones vigentes,
-3. dejar en `TAREAS.md` solo lo que no forme parte del bloque activo.
+1. Crear interfaz `ArticuloPhotoStorage`.
+2. Implementar copia/descarga a carpeta canónica.
+3. Inyectar con Hilt.
+4. Integrar en `SaveArticuloUseCase`.
+5. Integrar en `UpdateArticuloUseCase`.
+6. Compilar y validar manualmente los flujos de galería, cámara y escáner.

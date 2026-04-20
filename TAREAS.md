@@ -13,17 +13,6 @@ Backlog vivo de `lista-compra-app`.
 
 ---
 
-## Urgente
-
-- [urgente] Implementar la centralización de fotos nuevas de artículos en carpeta visible
-  - Referencia: `docs/fotos-articulos-centralizacion.md`
-  - Decisión vigente: **solo fotos nuevas**, carpeta visible **`Pictures/ListaCompra/Articulos/`**, sin migrar fotos antiguas en esta fase.
-  - Contexto: hoy entran fotos desde galería, cámara y URL remota, y algunas rutas temporales o heterogéneas no son una base limpia para el producto.
-  - Alcance v1: centralizar al guardar/editar artículo; mantener `photoUri` como `String?`; no abrir migración Room por este cambio; no borrar automáticamente fotos antiguas sustituidas; el backup JSON sigue exportando la URI pero no el binario.
-  - Hecho cuando: las fotos nuevas de artículos quedan guardadas en la carpeta visible canónica, la app las sigue cargando tras reinicio y los flujos de galería, cámara y escáner quedan cubiertos.
-
----
-
 ## Media
 
 - [media] Revisar y reorganizar los overflow de todas las screens
