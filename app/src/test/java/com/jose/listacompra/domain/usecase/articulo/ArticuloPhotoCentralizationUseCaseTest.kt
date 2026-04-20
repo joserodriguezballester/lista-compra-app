@@ -29,7 +29,10 @@ class ArticuloPhotoCentralizationUseCaseTest {
         )
 
         assertTrue(result.isSuccess)
-        assertEquals(listOf("content://temp/new-photo"), photoStorage.requests)
+        assertEquals(
+            listOf(CentralizeRequest("content://temp/new-photo", "Tomate frito")),
+            photoStorage.requests
+        )
         assertEquals(
             "content://media/external/images/media/100",
             repository.savedArticulo?.photoUri
@@ -104,7 +107,7 @@ class ArticuloPhotoCentralizationUseCaseTest {
 
         assertTrue(result.isSuccess)
         assertEquals(
-            listOf("https://images.example.com/new-photo.jpg"),
+            listOf(CentralizeRequest("https://images.example.com/new-photo.jpg", "Tomate frito")),
             photoStorage.requests
         )
         assertEquals(
@@ -207,11 +210,16 @@ class ArticuloPhotoCentralizationUseCaseTest {
     private class FakeArticuloPhotoStorage(
         private val nextResult: String = "content://media/external/images/media/fake"
     ) : ArticuloPhotoStorage {
-        val requests = mutableListOf<String>()
+        val requests = mutableListOf<CentralizeRequest>()
 
-        override suspend fun centralizeIfNeeded(photoUri: String): String {
-            requests += photoUri
+        override suspend fun centralizeIfNeeded(photoUri: String, articuloName: String): String {
+            requests += CentralizeRequest(photoUri, articuloName)
             return nextResult
         }
     }
+
+    private data class CentralizeRequest(
+        val photoUri: String,
+        val articuloName: String
+    )
 }

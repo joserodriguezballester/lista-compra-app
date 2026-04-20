@@ -27,7 +27,7 @@ class UpdateArticuloUseCase @Inject constructor(
             val normalizedPhotoUri = when {
                 articulo.photoUri.isNullOrBlank() -> null
                 articulo.photoUri == existingArticulo.photoUri -> existingArticulo.photoUri
-                else -> articuloPhotoStorage.centralizeIfNeeded(articulo.photoUri)
+                else -> articuloPhotoStorage.centralizeIfNeeded(articulo.photoUri, articulo.name)
             }
 
             repository.updateArticulo(articulo.copy(photoUri = normalizedPhotoUri))

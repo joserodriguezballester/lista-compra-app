@@ -20,7 +20,7 @@ class SaveArticuloUseCase @Inject constructor(
         return try {
             val normalizedPhotoUri = articulo.photoUri
                 ?.takeIf { it.isNotBlank() }
-                ?.let { articuloPhotoStorage.centralizeIfNeeded(it) }
+                ?.let { articuloPhotoStorage.centralizeIfNeeded(it, articulo.name) }
 
             repository.saveArticulo(articulo.copy(photoUri = normalizedPhotoUri))
             Result.success(Unit)

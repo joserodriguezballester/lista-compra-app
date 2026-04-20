@@ -18,6 +18,7 @@ import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLConnection
+import java.text.Normalizer
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -33,33 +34,34 @@ class MediaStoreArticuloPhotoStorage @Inject constructor(
         private const val RELATIVE_PATH = "Pictures/ListaCompra/Articulos/"
     }
 
-    override suspend fun centralizeIfNeeded(photoUri: String): String = withContext(Dispatchers.IO) {
+    override suspend fun centralizeIfNeeded(photoUri: String, articuloName: String): String = withContext(Dispatchers.IO) {
         if (photoUri.isBlank() || isAlreadyCentralized(photoUri)) {
             return@withContext photoUri
         }
 
         val uri = Uri.parse(photoUri)
         return@withContext when (uri.scheme?.lowercase()) {
-            "http", "https" -> downloadRemoteImage(photoUri)
-            "content", "file" -> copyLocalImage(uri)
-            null -> copyLocalPath(photoUri)
-            else -> copyLocalImage(uri)
+            "http", "https" -> downloadRemoteImage(photoUri, articuloName)
+            "content", "file" -> copyLocalImage(uri, articuloName)
+            null -> copyLocalPath(photoUri, articuloName)
+            else -> copyLocalImage(uri, articuloName)
         }
     }
 
-    private fun copyLocalPath(path: String): String {
+    private fun copyLocalPath(path: String, articuloName: String): String {
         val file = File(path)
         require(file.exists()) { "No se pudo abrir la imagen local: $path" }
 
         FileInputStream(file).use { input ->
             return writeToCanonicalLocation(
                 input = input,
-                mimeType = guessMimeTypeFromName(file.name) ?: DEFAULT_MIME
+                mimeType = guessMimeTypeFromName(file.name) ?: DEFAULT_MIME,
+                articuloName = articuloName
             )
         }
     }
 
-    private fun copyLocalImage(uri: Uri): String {
+    private fun copyLocalImage(uri: Uri, articuloName: String): String {
         val resolver = context.contentResolver
         val mimeType = resolver.getType(uri)
             ?: guessMimeTypeFromName(uri.lastPathSegment)
@@ -72,11 +74,11 @@ class MediaStoreArticuloPhotoStorage @Inject constructor(
         } ?: throw IllegalArgumentException("No se pudo abrir la imagen local: $uri")
 
         inputStream.use { input ->
-            return writeToCanonicalLocation(input, mimeType)
+            return writeToCanonicalLocation(input, mimeType, articuloName)
         }
     }
 
-    private fun downloadRemoteImage(url: String): String {
+    private fun downloadRemoteImage(url: String, articuloName: String): String {
         val connection = (URL(url).openConnection() as HttpURLConnection).apply {
             connectTimeout = 10_000
             readTimeout = 15_000
@@ -93,27 +95,27 @@ class MediaStoreArticuloPhotoStorage @Inject constructor(
                 ?: DEFAULT_MIME
 
             connection.inputStream.use { input ->
-                writeToCanonicalLocation(input, mimeType)
+                writeToCanonicalLocation(input, mimeType, articuloName)
             }
         } finally {
             connection.disconnect()
         }
     }
 
-    private fun writeToCanonicalLocation(input: InputStream, mimeType: String): String {
+    private fun writeToCanonicalLocation(input: InputStream, mimeType: String, articuloName: String): String {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            writeToMediaStore(input, sanitizeMimeType(mimeType))
+            writeToMediaStore(input, sanitizeMimeType(mimeType), articuloName)
         } else {
-            writeToPublicPicturesDirectory(input, sanitizeMimeType(mimeType))
+            writeToPublicPicturesDirectory(input, sanitizeMimeType(mimeType), articuloName)
         }
     }
 
-    private fun writeToMediaStore(input: InputStream, mimeType: String): String {
+    private fun writeToMediaStore(input: InputStream, mimeType: String, articuloName: String): String {
         val resolver = context.contentResolver
         val targetUri = resolver.insert(
             MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
             ContentValues().apply {
-                put(MediaStore.Images.Media.DISPLAY_NAME, buildDisplayName(mimeType))
+                put(MediaStore.Images.Media.DISPLAY_NAME, buildDisplayName(mimeType, articuloName))
                 put(MediaStore.Images.Media.MIME_TYPE, mimeType)
                 put(MediaStore.Images.Media.RELATIVE_PATH, RELATIVE_PATH)
                 put(MediaStore.Images.Media.IS_PENDING, 1)
@@ -142,7 +144,7 @@ class MediaStoreArticuloPhotoStorage @Inject constructor(
     }
 
     @Suppress("DEPRECATION")
-    private fun writeToPublicPicturesDirectory(input: InputStream, mimeType: String): String {
+    private fun writeToPublicPicturesDirectory(input: InputStream, mimeType: String, articuloName: String): String {
         val picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
         val targetDir = File(picturesDir, DIRECTORY_SEGMENT)
         if (!targetDir.exists()) {
@@ -150,7 +152,7 @@ class MediaStoreArticuloPhotoStorage @Inject constructor(
         }
         require(targetDir.exists()) { "No se pudo crear la carpeta de fotos de artículos" }
 
-        val targetFile = File(targetDir, buildDisplayName(mimeType))
+        val targetFile = File(targetDir, buildDisplayName(mimeType, articuloName))
         FileOutputStream(targetFile).use { output ->
             input.copyTo(output)
         }
@@ -203,14 +205,27 @@ class MediaStoreArticuloPhotoStorage @Inject constructor(
         return mimeType.takeIf { it.startsWith("image/") } ?: DEFAULT_MIME
     }
 
-    private fun buildDisplayName(mimeType: String): String {
+    private fun buildDisplayName(mimeType: String, articuloName: String): String {
         val extension = when (mimeType.lowercase()) {
             "image/png" -> "png"
             "image/webp" -> "webp"
             "image/gif" -> "gif"
             else -> "jpg"
         }
-        return "articulo-${UUID.randomUUID()}.$extension"
+        val shortId = UUID.randomUUID().toString().substringBefore('-')
+        val slug = slugifyName(articuloName)
+        return "$slug-$shortId.$extension"
+    }
+
+    private fun slugifyName(articuloName: String): String {
+        val normalized = Normalizer.normalize(articuloName.trim(), Normalizer.Form.NFD)
+        return normalized
+            .replace("\\p{M}+".toRegex(), "")
+            .lowercase()
+            .replace("[^a-z0-9]+".toRegex(), "-")
+            .trim('-')
+            .take(40)
+            .ifBlank { "articulo" }
     }
 
     private fun guessMimeTypeFromName(name: String?): String? {
