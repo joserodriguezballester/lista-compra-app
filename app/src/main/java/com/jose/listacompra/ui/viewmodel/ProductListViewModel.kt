@@ -12,7 +12,6 @@ import com.jose.listacompra.domain.usecase.aisle.GetAislesBySupermarketUseCase
 import com.jose.listacompra.domain.usecase.articulo.SearchArticulosUseCase
 import com.jose.listacompra.domain.usecase.category.GetAllCategoriesFlowUseCase
 import com.jose.listacompra.domain.usecase.history.GetProductHistorySuggestionsUseCase
-import com.jose.listacompra.domain.usecase.history.UpdateProductFrequencyUseCase
 import com.jose.listacompra.domain.usecase.list.GetDefaultListUseCase
 import com.jose.listacompra.domain.usecase.offers.CalculatePriceUseCase
 import com.jose.listacompra.domain.usecase.offers.GetAllOffersUseCase
@@ -54,7 +53,6 @@ class ProductListViewModel @Inject constructor(
     private val getDefaultListUseCase: GetDefaultListUseCase,
     private val calculatePriceUseCase: CalculatePriceUseCase,
     private val getProductHistorySuggestionsUseCase: GetProductHistorySuggestionsUseCase,
-    private val updateProductFrequencyUseCase: UpdateProductFrequencyUseCase,
     private val themePreferences: ThemePreferences,
     private val resetDataToProductionUseCase: com.jose.listacompra.domain.usecase.data.ResetDataToProductionUseCase,
     private val exportUserDataBackupUseCase: com.jose.listacompra.domain.usecase.data.ExportUserDataBackupUseCase,
@@ -204,17 +202,6 @@ class ProductListViewModel @Inject constructor(
                 return@launch
             }
 
-            try {
-                updateProductFrequencyUseCase(
-                    name = name,
-                    aisleId = selectedAisleId,
-                    quantity = quantity,
-                    price = price,
-                    supermarketId = selectedSupermarketId
-                )
-            } catch (e: Exception) {
-                Log.e(TAG, "Product added but frequency update failed", e)
-            }
         }
     }
 
@@ -408,14 +395,6 @@ class ProductListViewModel @Inject constructor(
             
             addProductUseCase(product)
             Log.d(TAG, "Product added from voice: ${articulo.name} x$quantity")
-            
-            updateProductFrequencyUseCase(
-                name = articulo.name,
-                aisleId = 0L,
-                quantity = quantity,
-                price = articulo.finalPrice,
-                supermarketId = supermarketId // Usar el supermarketId ya calculado
-            )
         }
     }
     

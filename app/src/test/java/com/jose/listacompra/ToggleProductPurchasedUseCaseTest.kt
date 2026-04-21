@@ -10,19 +10,21 @@ import com.jose.listacompra.domain.model.Supermarket
 import com.jose.listacompra.domain.repository.IHistoryRepository
 import com.jose.listacompra.domain.repository.IProductRepository
 import com.jose.listacompra.domain.repository.ISupermarketRepository
+import com.jose.listacompra.domain.usecase.history.CompletePurchaseUseCase
 import com.jose.listacompra.domain.usecase.history.SavePriceHistoryUseCase
 import com.jose.listacompra.domain.usecase.product.ToggleProductPurchasedUseCase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ToggleProductPurchasedUseCaseTest {
 
     @Test
-    fun `marking product as purchased stores manual purchase and price history`() = runBlocking {
+    fun `marking product as purchased stores manual purchase, price history and frequency`() = runBlocking {
         val productRepository = FakeProductRepository()
         val historyRepository = FakeHistoryRepository()
         val supermarketRepository = FakeSupermarketRepository()
@@ -30,7 +32,8 @@ class ToggleProductPurchasedUseCaseTest {
             productRepository = productRepository,
             historyRepository = historyRepository,
             supermarketRepository = supermarketRepository,
-            savePriceHistoryUseCase = SavePriceHistoryUseCase(historyRepository)
+            savePriceHistoryUseCase = SavePriceHistoryUseCase(historyRepository),
+            completePurchaseUseCase = CompletePurchaseUseCase(historyRepository)
         )
 
         useCase(
@@ -60,10 +63,18 @@ class ToggleProductPurchasedUseCaseTest {
         assertEquals("tomate frito", priceHistory.productName)
         assertEquals(1.50f, priceHistory.price)
         assertEquals(2, priceHistory.quantity)
+
+        val frequency = historyRepository.frequencyRecords["tomate frito"]
+        assertNotNull(frequency)
+        assertEquals(1, frequency?.timesPurchased)
+        assertEquals(2f, frequency?.lastQuantity)
+        assertEquals(1.50f, frequency?.lastPrice)
+        assertEquals(3L, frequency?.lastAisleId)
+        assertEquals(2L, frequency?.lastSupermarketId)
     }
 
     @Test
-    fun `marking product without price only toggles purchased state`() = runBlocking {
+    fun `marking product without price still updates frequency but not price history`() = runBlocking {
         val productRepository = FakeProductRepository()
         val historyRepository = FakeHistoryRepository()
         val supermarketRepository = FakeSupermarketRepository()
@@ -71,7 +82,8 @@ class ToggleProductPurchasedUseCaseTest {
             productRepository = productRepository,
             historyRepository = historyRepository,
             supermarketRepository = supermarketRepository,
-            savePriceHistoryUseCase = SavePriceHistoryUseCase(historyRepository)
+            savePriceHistoryUseCase = SavePriceHistoryUseCase(historyRepository),
+            completePurchaseUseCase = CompletePurchaseUseCase(historyRepository)
         )
 
         useCase(
@@ -90,18 +102,36 @@ class ToggleProductPurchasedUseCaseTest {
         assertEquals(listOf(7L to true), productRepository.toggles)
         assertTrue(historyRepository.purchaseHistoryRecords.isEmpty())
         assertTrue(historyRepository.priceHistoryRecords.isEmpty())
+
+        val frequency = historyRepository.frequencyRecords["pan"]
+        assertNotNull(frequency)
+        assertEquals(1, frequency?.timesPurchased)
+        assertEquals(1f, frequency?.lastQuantity)
+        assertEquals(0f, frequency?.lastPrice)
     }
 
     @Test
-    fun `unmarking purchased product does not write history again`() = runBlocking {
+    fun `unmarking purchased product does not write history or frequency again`() = runBlocking {
         val productRepository = FakeProductRepository()
-        val historyRepository = FakeHistoryRepository()
+        val historyRepository = FakeHistoryRepository().apply {
+            frequencyRecords["leche"] = ProductFrequencyEntity(
+                productName = "leche",
+                originalName = "Leche",
+                timesPurchased = 3,
+                lastQuantity = 1f,
+                lastPrice = 1.25f,
+                lastAisleId = 2L,
+                lastSupermarketId = 1L,
+                lastPurchaseDate = 1_700_000_000_000L
+            )
+        }
         val supermarketRepository = FakeSupermarketRepository()
         val useCase = ToggleProductPurchasedUseCase(
             productRepository = productRepository,
             historyRepository = historyRepository,
             supermarketRepository = supermarketRepository,
-            savePriceHistoryUseCase = SavePriceHistoryUseCase(historyRepository)
+            savePriceHistoryUseCase = SavePriceHistoryUseCase(historyRepository),
+            completePurchaseUseCase = CompletePurchaseUseCase(historyRepository)
         )
 
         useCase(
@@ -120,6 +150,7 @@ class ToggleProductPurchasedUseCaseTest {
         assertEquals(listOf(9L to false), productRepository.toggles)
         assertTrue(historyRepository.purchaseHistoryRecords.isEmpty())
         assertTrue(historyRepository.priceHistoryRecords.isEmpty())
+        assertEquals(3, historyRepository.frequencyRecords["leche"]?.timesPurchased)
     }
 
     private class FakeProductRepository : IProductRepository {
@@ -148,11 +179,16 @@ class ToggleProductPurchasedUseCaseTest {
     private class FakeHistoryRepository : IHistoryRepository {
         val purchaseHistoryRecords = mutableListOf<PurchaseHistoryEntity>()
         val priceHistoryRecords = mutableListOf<ProductPriceHistoryEntity>()
+        val frequencyRecords = mutableMapOf<String, ProductFrequencyEntity>()
 
-        override suspend fun getFrequency(productName: String): ProductFrequencyEntity? = null
-        override suspend fun updateFrequency(entity: ProductFrequencyEntity) = Unit
-        override suspend fun insertFrequency(entity: ProductFrequencyEntity) = Unit
-        override suspend fun getAllFrequencies(): List<ProductFrequencyEntity> = emptyList()
+        override suspend fun getFrequency(productName: String): ProductFrequencyEntity? = frequencyRecords[productName]
+        override suspend fun updateFrequency(entity: ProductFrequencyEntity) {
+            frequencyRecords[entity.productName] = entity
+        }
+        override suspend fun insertFrequency(entity: ProductFrequencyEntity) {
+            frequencyRecords[entity.productName] = entity
+        }
+        override suspend fun getAllFrequencies(): List<ProductFrequencyEntity> = frequencyRecords.values.toList()
         override suspend fun getPriceHistory(productName: String): List<ProductPriceHistoryEntity> = emptyList()
         override suspend fun getPriceStats(productName: String): PriceStats? = null
         override suspend fun savePriceHistory(priceHistory: ProductPriceHistoryEntity) {
