@@ -27,6 +27,9 @@ interface SupermarketDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(supermarkets: List<SupermarketEntity>)
 
+    @Query("INSERT OR IGNORE INTO supermarkets(id, name, emoji, isDefault) VALUES(:id, :name, :emoji, :isDefault)")
+    suspend fun insertBuiltinSupermarket(id: Long, name: String, emoji: String, isDefault: Boolean)
+
     @Query("DELETE FROM supermarkets WHERE id = :id")
     suspend fun deleteSupermarket(id: Long)
 
