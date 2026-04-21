@@ -1,6 +1,6 @@
 # lista-compra-app — operativo vivo
 
-**Última actualización:** 2026-04-20  
+**Última actualización:** 2026-04-21
 **Ruta principal:** `~/proyectos/privado/Jose/lista-compra-app/`
 
 ---
@@ -37,7 +37,7 @@ Antes de compilar en Milo:
 - no compilar tests y app en paralelo.
 
 ### Releases de GitHub
-Cuando Jose pida “subir la release” o “subir a GH con APK”, usar por defecto el flujo de:
+Cuando Jose pida "subir la release" o "subir a GH con APK", usar por defecto el flujo de:
 - **release de test / prerelease**,
 - **APK adjunto**,
 - **misma firma canónica**,
@@ -49,26 +49,35 @@ Solo usar otro tipo de release si Jose lo pide explícitamente.
 
 ---
 
-## 3. Estado activo del repo base
+## 3. Frente recién cerrado
 
-### Frente funcional abierto
-- **En este estado base no hay un frente funcional activo declarado todavía.**
-- El último bloque cerrado ha sido **import/export de datos de usuario**.
-- Su conocimiento estable ya no vive en este fichero, sino en documentación permanente.
+### Rama cerrada
+- **Rama:** `feat/centralizar-fotos-articulos`
+- **Base usada:** `origin/main` en `23f11a7`
+- **Bloque cerrado:** centralización de fotos nuevas de artículos
 
-### Cierre del bloque import/export
-Al cerrar ese bloque, queda como conocimiento estable:
-- documentación de uso en `docs/import-export-datos-uso.md`;
-- documentación técnica en `docs/import-export-datos-tecnico.md`;
-- validación manual hecha por Jose;
-- compilación OK de `:app:testDebugUnitTest`, `:app:compileDebugAndroidTestKotlin` y `:app:assembleRelease`;
-- prerelease publicada `v0.8.13-test28`.
+### Resultado estable que queda en código
+- existe `ArticuloPhotoStorage` como contrato de dominio;
+- existe `MediaStoreArticuloPhotoStorage` como implementación real;
+- Hilt lo inyecta mediante `StorageModule`;
+- `SaveArticuloUseCase` centraliza la foto antes de persistir cuando procede;
+- `UpdateArticuloUseCase` evita duplicar si la foto no cambia y centraliza si cambia;
+- la ubicación canónica queda en `Pictures/ListaCompra/Articulos/`;
+- los nombres de archivo pasan a ser legibles con slug + identificador corto.
 
-Los pendientes que sobreviven al cierre se gestionan desde `TAREAS.md`, no desde este fichero.
+### Fuera de alcance que sigue fuera
+- migrar fotos antiguas;
+- borrar automáticamente fotos sustituidas;
+- meter binarios en el backup JSON;
+- extender todavía este patrón a otros bloques fuera de artículos.
 
----
+### Documentación viva del bloque
+- `docs/fotos-articulos-centralizacion.md`
 
 ## 4. Tests vivos relevantes
+
+- `app/src/test/java/com/jose/listacompra/domain/usecase/articulo/ArticuloPhotoCentralizationUseCaseTest.kt`
+  - cobertura útil del bloque de centralización de fotos nuevas de artículos
 
 - `app/src/test/java/com/jose/listacompra/SaveTicketUseCaseTest.kt`
   - cobertura útil del bloque guardar ticket -> histórico
@@ -86,6 +95,9 @@ Los pendientes que sobreviven al cierre se gestionan desde `TAREAS.md`, no desde
 - `DOCUMENTACION.md`
   - índice corto de documentación técnica viva
 
+- `docs/fotos-articulos-centralizacion.md`
+  - comportamiento actual, diseño técnico y límites del bloque de centralización de fotos
+
 - `docs/import-export-datos-uso.md`
   - uso funcional del backup/import de datos de usuario
 
@@ -93,22 +105,21 @@ Los pendientes que sobreviven al cierre se gestionan desde `TAREAS.md`, no desde
   - diseño técnico y límites actuales del bloque import/export
 
 - `docs/modelo-bd-entidad-relacion.md`
-  - modelo real de BD, relaciones y contexto útil para import/export
+  - modelo real de BD, relaciones y contexto útil
 
 - `docs/modelo-bd-diagrama-er.md`
-  - diagrama ER complementario basado en las `Entity` reales
+  - diagrama ER complementario
 
 - `docs/navegacion.md`
   - navegación actual, drawer y rutas principales
 
-- `docs/fotos-articulos-centralizacion.md`
-  - plan aprobado para el siguiente frente sobre fotos de artículos
-
 ---
 
-## 6. Qué hacer cuando se abra una rama nueva
+## 6. Siguientes pasos inmediatos
 
-Cuando un nuevo frente pase a ser trabajo activo:
-1. declararlo aquí con su rama real,
-2. mover aquí sus decisiones vigentes,
-3. dejar en `TAREAS.md` solo lo que no forme parte del bloque activo.
+1. Partir de `main` actualizado para una rama nueva de saneamiento/errores.
+2. Reparar y renombrar el ticket de prueba de `Importar ticket` para que deje de depender de `aaa.pdf`.
+3. Revisar el `FOREIGN KEY constraint failed` al añadir a la lista un artículo recién creado desde ticket.
+4. Ajustar `AddProductToListDialog` para que el campo `Notas` se vea completo.
+5. Reestructurar `EditProductDialog` para acercarlo a `AddProductToListDialog`.
+6. Unificar la edición de artículos de catálogo entre `AddEditArticuloDialog` y `ArticuloDetailDialog`.

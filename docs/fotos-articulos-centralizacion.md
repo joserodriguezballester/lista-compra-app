@@ -1,132 +1,118 @@
-# Centralización de fotos nuevas de artículos
+# Centralización de fotos de artículos
 
-## Resumen
+## Qué quedó implementado
 
-Plan para centralizar **las fotos nuevas de artículos** en una carpeta visible y canónica del dispositivo, sin migrar por ahora las fotos antiguas ni abrir una migración de Room innecesaria.
+La app ya centraliza **las fotos nuevas o modificadas de artículos** al guardar cambios, usando una ubicación canónica y visible del dispositivo.
 
-## Decisión vigente
+El alcance cerrado en esta ronda es deliberadamente limitado:
 
-- **Alcance de esta ronda:** solo fotos nuevas de artículos.
-- **Visibilidad:** la carpeta debe ser **visible** desde Archivos / Galería.
-- **Migración de fotos antiguas:** **no** en esta fase.
-- **Referencia en BD:** se mantiene `photoUri: String?`.
+- **sí** cubre fotos de artículos al crear o editar;
+- **no** migra fotos antiguas;
+- **no** mete binarios dentro del backup JSON;
+- **no** extiende todavía la centralización a otros flujos fuera del bloque de artículos.
 
-## Problema actual
+## Comportamiento actual
 
-Hoy la app acepta fotos de artículo desde varias fuentes distintas:
+### Al guardar un artículo nuevo
 
-- galería (`content://...`);
-- cámara (en algunos flujos con fichero temporal en caché o almacenamiento app-específico);
-- escáner / OpenFoodFacts (URL remota `https://...`).
+`SaveArticuloUseCase` centraliza `photoUri` antes de persistir si la foto viene informada y no está vacía.
 
-Eso deja el sistema con referencias heterogéneas y con riesgo real de fotos temporales o poco estables, especialmente cuando la cámara usa caché.
+### Al editar un artículo existente
 
-## Objetivo funcional
+`UpdateArticuloUseCase` aplica estas reglas:
 
-Toda foto nueva de artículo debe acabar guardada en una **ubicación canónica única** del dispositivo.
+- si `photoUri` pasa a `null` o vacío -> la foto se elimina en persistencia;
+- si `photoUri` no cambia respecto al artículo ya guardado -> se conserva tal cual, sin duplicar;
+- si `photoUri` cambia -> se centraliza antes de actualizar.
 
-Carpeta objetivo:
+## Piezas implicadas
 
-- **`Pictures/ListaCompra/Articulos/`**
+### Contrato de almacenamiento
+- `app/src/main/java/com/jose/listacompra/domain/storage/ArticuloPhotoStorage.kt`
 
-La app seguirá guardando en BD solo la referencia (`photoUri`), pero esa referencia deberá corresponder a la copia **centralizada y estable**.
+Expone una operación única:
+- `centralizeIfNeeded(photoUri, articuloName)`
 
-## Regla operativa
+### Implementación actual
+- `app/src/main/java/com/jose/listacompra/data/storage/MediaStoreArticuloPhotoStorage.kt`
 
-La normalización de la imagen se hará **al guardar el artículo**, no en el momento de selección de preview.
+Responsabilidades principales:
+- detectar si la imagen ya está centralizada;
+- copiar imágenes locales (`content://`, `file://` o ruta cruda);
+- descargar imágenes remotas (`http://`, `https://`);
+- escribir el resultado en la ubicación canónica final.
 
-### Casos de entrada
+### Inyección
+- `app/src/main/java/com/jose/listacompra/di/StorageModule.kt`
 
-- **Galería** -> copiar imagen a la carpeta canónica.
-- **Cámara** -> copiar o mover la imagen temporal a la carpeta canónica.
-- **Escáner / OpenFoodFacts** -> descargar la imagen remota y guardarla en la carpeta canónica al guardar el artículo.
-- **Imagen ya centralizada** -> no duplicarla.
+Hilt enlaza `ArticuloPhotoStorage` con `MediaStoreArticuloPhotoStorage` como implementación singleton.
 
-## Diseño propuesto
+## Ubicación canónica
 
-### 1. Pieza de almacenamiento dedicada
+### Android Q o superior
+Se usa `MediaStore` con:
+- `RELATIVE_PATH = Pictures/ListaCompra/Articulos/`
 
-Crear una pieza tipo:
+### Android anterior a Q
+Se usa almacenamiento público en:
+- `Pictures/ListaCompra/Articulos/`
 
-- `ArticuloPhotoStorage`
-  o, si se prefiere más genérico,
-- `PhotoStorage`
+y luego se lanza `MediaScannerConnection` para visibilidad en el dispositivo.
 
-Responsabilidades:
+## Nombres de fichero
 
-- detectar si una imagen ya está centralizada;
-- importar una imagen desde `Uri` local;
-- descargar una imagen desde URL remota;
-- generar la referencia final canónica que se persistirá en BD.
+Los nombres ya no son opacos tipo UUID puro.
 
-### 2. Mantener la UI ligera
+Formato actual:
+- `<slug-del-articulo>-<shortId>.<ext>`
 
-La UI actual puede seguir usando la imagen temporal/remota para preview.
+Ejemplos esperables:
+- `tomate-frito-a1b2c3d4.jpg`
+- `leche-entera-9f2e1abc.png`
 
-La lógica de almacenamiento **no** debería vivir en la UI, sino ejecutarse al confirmar `Guardar`.
+Detalles:
+- el slug se genera a partir del nombre del artículo;
+- se eliminan tildes y caracteres raros;
+- se limita la longitud;
+- la extensión final depende del MIME detectado (`jpg`, `png`, `webp`, `gif`).
 
-### 3. Punto de integración principal
+## Entradas soportadas
 
-Integrar la centralización en:
+La centralización actual contempla:
 
-- `SaveArticuloUseCase`
-- `UpdateArticuloUseCase`
+- imagen local vía `content://...`;
+- imagen local vía `file://...`;
+- ruta local cruda;
+- URL remota `http/https`;
+- imagen ya centralizada, que se devuelve sin duplicar.
 
-Comportamiento esperado:
+## Límites conocidos que quedan fuera del cierre
 
-- **alta** -> si la foto no es canónica, centralizar antes de persistir;
-- **edición sin cambio de foto** -> no duplicar;
-- **edición con foto nueva** -> centralizar la nueva referencia antes de guardar;
-- **eliminar foto** -> persistir `null`.
+- migración de fotos antiguas ya existentes en base de datos;
+- borrado automático de archivos viejos al sustituir una foto;
+- portabilidad binaria de imágenes en export/import JSON;
+- centralización explícita de fotos fuera del bloque de artículos.
 
-## Impacto en datos
+## Validación automatizada
 
-### Room / esquema
+Cobertura unitaria relevante:
+- `app/src/test/java/com/jose/listacompra/domain/usecase/articulo/ArticuloPhotoCentralizationUseCaseTest.kt`
 
-No debería hacer falta migración de BD en esta fase porque:
+Casos cubiertos:
+- alta con foto nueva;
+- alta con foto vacía;
+- edición sin cambio de foto;
+- edición con foto nueva;
+- edición eliminando foto;
+- fallo al actualizar un artículo inexistente.
 
-- `articulos.photoUri` ya existe;
-- el tipo almacenado sigue siendo `String?`.
+## Nota operativa
 
-### Nombres de fichero
+Si en el futuro se vuelve a tocar este bloque, la validación manual útil sigue siendo:
 
-Usar nombres robustos y desacoplados del nombre del artículo, por ejemplo:
-
-- `articulo-<uuid>.jpg`
-
-## Visibilidad en Android
-
-Como la carpeta debe ser visible, la implementación debe apoyarse en almacenamiento público de imágenes (p. ej. `MediaStore` en `Pictures/ListaCompra/Articulos`) y no en caché efímera.
-
-## Fuera de alcance en esta fase
-
-- migrar fotos antiguas;
-- borrar automáticamente fotos antiguas sustituidas;
-- meter los binarios de imagen dentro del backup JSON;
-- centralizar todavía todas las fotos de `products` salvo el rebote natural desde `articulos`.
-
-## Nota importante sobre backup
-
-El backup lógico JSON actual exporta la **URI** de la imagen, pero **no** el fichero binario asociado.
-
-Por tanto, este plan mejora el almacenamiento local en el dispositivo, pero **no resuelve todavía** la portabilidad completa de imágenes entre dispositivos vía export/import.
-
-## Validación manual mínima
-
-1. Crear artículo con foto desde galería.
-2. Crear artículo con foto desde cámara.
-3. Crear artículo desde escáner con imagen remota.
-4. Editar artículo sin cambiar la foto y comprobar que no se duplica.
-5. Editar artículo cambiando la foto y comprobar que la nueva queda centralizada.
-6. Reiniciar la app y verificar que la imagen sigue cargando.
-7. Verificar en Archivos / Galería que la carpeta visible existe y recibe imágenes.
-
-## Orden sugerido de implementación
-
-1. Crear `ArticuloPhotoStorage`.
-2. Inyectarlo con Hilt.
-3. Integrarlo en `SaveArticuloUseCase`.
-4. Integrarlo en `UpdateArticuloUseCase`.
-5. Compilar.
-6. Probar alta y edición manual.
-7. Documentar el resultado final si el comportamiento queda bueno.
+1. crear artículo con foto desde galería;
+2. crear artículo con foto desde cámara;
+3. crear artículo desde escáner/OpenFoodFacts con imagen remota;
+4. editar sin cambiar foto y verificar que no duplica;
+5. editar cambiando foto y verificar que queda centralizada;
+6. revisar la carpeta visible del dispositivo.

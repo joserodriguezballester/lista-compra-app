@@ -10,7 +10,7 @@ Documentación técnica viva de `lista-compra-app`.
 - **Modelo de base de datos / entidad-relación (texto):** `docs/modelo-bd-entidad-relacion.md`
 - **Modelo de base de datos / entidad-relación (diagrama):** `docs/modelo-bd-diagrama-er.md`
 - **Navegación actual / drawer / rutas principales:** `docs/navegacion.md`
-- **Plan de centralización de fotos nuevas de artículos:** `docs/fotos-articulos-centralizacion.md`
+- **Centralización de fotos de artículos (comportamiento actual):** `docs/fotos-articulos-centralizacion.md`
 
 ## Notas rápidas
 

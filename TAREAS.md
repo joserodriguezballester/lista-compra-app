@@ -15,14 +15,19 @@ Backlog vivo de `lista-compra-app`.
 
 ## Urgente
 
-- [urgente] Implementar la centralización de fotos nuevas de artículos en carpeta visible
-  - Referencia: `docs/fotos-articulos-centralizacion.md`
-  - Decisión vigente: **solo fotos nuevas**, carpeta visible **`Pictures/ListaCompra/Articulos/`**, sin migrar fotos antiguas en esta fase.
-  - Contexto: hoy entran fotos desde galería, cámara y URL remota, y algunas rutas temporales o heterogéneas no son una base limpia para el producto.
-  - Alcance v1: centralizar al guardar/editar artículo; mantener `photoUri` como `String?`; no abrir migración Room por este cambio; no borrar automáticamente fotos antiguas sustituidas; el backup JSON sigue exportando la URI pero no el binario.
-  - Hecho cuando: las fotos nuevas de artículos quedan guardadas en la carpeta visible canónica, la app las sigue cargando tras reinicio y los flujos de galería, cámara y escáner quedan cubiertos.
+- [urgente] Revisar error al añadir a la lista un artículo recién creado desde ticket
+  - Secuencia observada por Jose: crear artículo desde una línea de ticket -> volver a "Mi lista" -> intentar añadir ese artículo a la lista de la compra -> salta "Error al añadir" con `FOREIGN KEY constraint failed`.
+  - Diagnóstico actual: el flujo de `addProduct` probablemente intenta guardar el producto en `products` y después registrar histórico/frecuencia en la misma acción; hay una sospecha fuerte de que el fallo venga del guardado de histórico de precio con `purchaseId = 0` cuando el artículo arrastra precio desde el ticket.
+  - Duda pendiente a confirmar: separar qué paso falla exactamente (alta en lista, frecuencia o histórico) porque el mensaje actual mezcla todo bajo "Error al añadir" y puede ocultar que el producto sí se haya insertado antes del fallo posterior.
+  - Hecho cuando: quede identificado con certeza el paso que rompe, se corrija el flujo para que no falle al añadir desde ticket y el mensaje de error deje de mezclar operaciones distintas.
 
----
+- [urgente] Reparar y renombrar el ticket de prueba/debug en `Importar ticket`
+  - Síntoma observado por Jose: al pulsar el botón del ticket de prueba en la pantalla `Importar ticket`, aparece `PDF error`.
+  - Traza visible en captura: `Seleccionado debug asset: aaa.pdf` seguido de `PDF error`.
+  - Diagnóstico rápido: ahora mismo el proyecto no tiene `app/src/main/assets` ni existe el asset `aaa.pdf`; además, `ImportTicketUseCase` oculta la causa real devolviendo solo `PDF error`.
+  - Cambio funcional deseado: renombrar **el archivo real de ejemplo** a un nombre con sentido (por ejemplo `ticket-prueba.pdf` o similar) y dejar el texto visible del botón alineado con ese nombre/uso. `aaa.pdf` no es un nombre válido a nivel de producto ni de mantenimiento.
+  - Contexto: no está claro qué cambio reciente ha roto este flujo, pero ahora mismo el ticket de prueba ya no sirve para validar ni depurar la importación.
+  - Hecho cuando: exista de nuevo el PDF de ejemplo con un nombre claro, el botón/use case/logs de debug apunten a ese nombre correcto y el error deje de quedar oculto tras un `PDF error` genérico.
 
 ## Media
 
@@ -30,6 +35,21 @@ Backlog vivo de `lista-compra-app`.
   - Contexto: no se trata solo del bloque de import/export; la revisión debe mirar **todas las acciones** disponibles en los overflow de las distintas pantallas.
   - Objetivo: que la organización de acciones por screen sea más coherente, mantenible y fácil de usar.
   - Hecho cuando: quede definida y aplicada una estructura más clara de overflow a nivel transversal de app.
+
+- [media] Compactar el layout de `AddProductToListDialog` para que el campo `Notas` se vea completo
+  - Contexto: en el diálogo de añadir hay demasiada separación vertical entre componentes y el campo de notas no llega a verse completo de forma cómoda.
+  - Objetivo: reducir espacios/márgenes entre componentes sin perder legibilidad general del formulario.
+  - Hecho cuando: el diálogo de añadir muestre completo el campo `Notas` en pantalla normal, sin que quede cortado por exceso de separación entre bloques.
+
+- [media] Reestructurar `EditProductDialog` para que tenga una organización similar a `AddProductToListDialog`
+  - Contexto: ahora el diálogo de editar tiene una composición distinta al de añadir producto, y eso rompe consistencia visual y de uso.
+  - Objetivo: acercar orden de bloques, jerarquía visual y disposición general de controles al patrón de `AddProductToListDialog`, adaptando solo lo necesario a acciones propias de edición.
+  - Hecho cuando: editar y añadir producto compartan una estructura claramente parecida y la experiencia resulte coherente entre ambos diálogos.
+
+- [media] Unificar la edición de artículo en catálogo para evitar el doble camino `AddEditArticuloDialog` / `ArticuloDetailDialog`
+  - Contexto: ahora mismo la creación/edición de artículo y la edición desde detalle no siguen exactamente el mismo patrón, y `ArticuloDetailDialog` en modo edición queda sin cabecera clara.
+  - Objetivo: dejar un flujo coherente y unificado para editar artículos del catálogo, evitando divergencias visuales y de comportamiento entre ambos diálogos.
+  - Hecho cuando: la edición de artículo use un único patrón claro, con estructura consistente y sin pérdidas de contexto como la falta de título/cabecera en edición.
 
 ---
 
