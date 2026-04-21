@@ -1,6 +1,6 @@
 # lista-compra-app — operativo vivo
 
-**Última actualización:** 2026-04-20  
+**Última actualización:** 2026-04-21
 **Ruta principal:** `~/proyectos/privado/Jose/lista-compra-app/`
 
 ---
@@ -49,49 +49,35 @@ Solo usar otro tipo de release si Jose lo pide explícitamente.
 
 ---
 
-## 3. Rama activa
+## 3. Frente recién cerrado
 
-### Identificación de la rama
-- **Rama actual:** `feat/centralizar-fotos-articulos`
-- **Base de trabajo:** `origin/main` en `23f11a7`
-- **Frente funcional:** centralización de fotos nuevas de artículos
+### Rama cerrada
+- **Rama:** `feat/centralizar-fotos-articulos`
+- **Base usada:** `origin/main` en `23f11a7`
+- **Bloque cerrado:** centralización de fotos nuevas de artículos
 
-### Objetivo
-Centralizar las **fotos nuevas de artículos** en una carpeta visible y canónica del dispositivo, sin migrar por ahora las fotos antiguas.
+### Resultado estable que queda en código
+- existe `ArticuloPhotoStorage` como contrato de dominio;
+- existe `MediaStoreArticuloPhotoStorage` como implementación real;
+- Hilt lo inyecta mediante `StorageModule`;
+- `SaveArticuloUseCase` centraliza la foto antes de persistir cuando procede;
+- `UpdateArticuloUseCase` evita duplicar si la foto no cambia y centraliza si cambia;
+- la ubicación canónica queda en `Pictures/ListaCompra/Articulos/`;
+- los nombres de archivo pasan a ser legibles con slug + identificador corto.
 
-### Decisiones vigentes
-- **Alcance v1:** solo fotos nuevas de artículos.
-- **Carpeta canónica visible:** `Pictures/ListaCompra/Articulos/`
-- **Migración de fotos antiguas:** no en esta fase.
-- **Referencia en BD:** se mantiene `photoUri: String?`.
-- **Normalización:** al guardar/editar artículo, no en el momento de preview.
-- **Nombres de fichero:** `articulo-<uuid>.jpg`.
-
-### Regla operativa
-La normalización de la imagen se hará al confirmar `Guardar`:
-- **Galería** -> copiar a carpeta canónica.
-- **Cámara** -> copiar/mover desde temporal a carpeta canónica.
-- **Escáner/OpenFoodFacts** -> descargar URL remota a carpeta canónica.
-- **Imagen ya centralizada** -> no duplicar.
-
-### Diseño técnico previsto
-1. Crear `ArticuloPhotoStorage` (o `PhotoStorage` genérico).
-2. Inyectarlo con Hilt.
-3. Integrarlo en `SaveArticuloUseCase` y `UpdateArticuloUseCase`.
-4. Mantener la UI ligera: preview con URI temporal/remota, normalización solo al guardar.
-
-### Fuera de alcance en esta fase
+### Fuera de alcance que sigue fuera
 - migrar fotos antiguas;
-- borrar automáticamente fotos antiguas sustituidas;
-- meter binarios de imagen dentro del backup JSON;
-- centralizar fotos de `products` salvo rebote natural desde `articulos`.
+- borrar automáticamente fotos sustituidas;
+- meter binarios en el backup JSON;
+- extender todavía este patrón a otros bloques fuera de artículos.
 
-### Documentación de referencia
-- Plan completo: `docs/fotos-articulos-centralizacion.md`
-
----
+### Documentación viva del bloque
+- `docs/fotos-articulos-centralizacion.md`
 
 ## 4. Tests vivos relevantes
+
+- `app/src/test/java/com/jose/listacompra/domain/usecase/articulo/ArticuloPhotoCentralizationUseCaseTest.kt`
+  - cobertura útil del bloque de centralización de fotos nuevas de artículos
 
 - `app/src/test/java/com/jose/listacompra/SaveTicketUseCaseTest.kt`
   - cobertura útil del bloque guardar ticket -> histórico
@@ -110,7 +96,7 @@ La normalización de la imagen se hará al confirmar `Guardar`:
   - índice corto de documentación técnica viva
 
 - `docs/fotos-articulos-centralizacion.md`
-  - plan completo de centralización de fotos
+  - comportamiento actual, diseño técnico y límites del bloque de centralización de fotos
 
 - `docs/import-export-datos-uso.md`
   - uso funcional del backup/import de datos de usuario
@@ -131,9 +117,9 @@ La normalización de la imagen se hará al confirmar `Guardar`:
 
 ## 6. Siguientes pasos inmediatos
 
-1. Crear interfaz `ArticuloPhotoStorage`.
-2. Implementar copia/descarga a carpeta canónica.
-3. Inyectar con Hilt.
-4. Integrar en `SaveArticuloUseCase`.
-5. Integrar en `UpdateArticuloUseCase`.
-6. Compilar y validar manualmente los flujos de galería, cámara y escáner.
+1. Partir de `main` actualizado para una rama nueva de saneamiento/errores.
+2. Reparar y renombrar el ticket de prueba de `Importar ticket` para que deje de depender de `aaa.pdf`.
+3. Revisar el `FOREIGN KEY constraint failed` al añadir a la lista un artículo recién creado desde ticket.
+4. Ajustar `AddProductToListDialog` para que el campo `Notas` se vea completo.
+5. Reestructurar `EditProductDialog` para acercarlo a `AddProductToListDialog`.
+6. Unificar la edición de artículos de catálogo entre `AddEditArticuloDialog` y `ArticuloDetailDialog`.
