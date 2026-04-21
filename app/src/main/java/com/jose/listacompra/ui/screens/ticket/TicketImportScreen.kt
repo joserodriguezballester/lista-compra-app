@@ -154,7 +154,7 @@ private fun SelectFileStep(
         OutlinedButton(onClick = onDebugTicket) {
             Icon(Icons.Default.BugReport, contentDescription = null)
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Debug ticket ejemplo (AAA.pdf)")
+            Text("Abrir ticket de prueba (Carrefour)")
         }
 
         Spacer(modifier = Modifier.height(16.dp))

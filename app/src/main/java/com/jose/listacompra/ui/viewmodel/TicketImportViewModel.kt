@@ -19,6 +19,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+private const val DEBUG_TICKET_ASSET = "ticket-prueba-carrefour.pdf"
+
 @HiltViewModel
 class TicketImportViewModel @Inject constructor(
     private val importTicketUseCase: ImportTicketUseCase,
@@ -45,8 +47,8 @@ class TicketImportViewModel @Inject constructor(
     }
 
     fun importDebugTicket() {
-        runImport(initialLog = "Seleccionado debug asset: aaa.pdf") {
-            importTicketUseCase.invokeDebugAsset(assetName = "aaa.pdf", articulos = _uiState.value.articulos, categories = _uiState.value.categories)
+        runImport(initialLog = "Seleccionado ticket de prueba: $DEBUG_TICKET_ASSET") {
+            importTicketUseCase.invokeDebugAsset(assetName = DEBUG_TICKET_ASSET, articulos = _uiState.value.articulos, categories = _uiState.value.categories)
         }
     }
 

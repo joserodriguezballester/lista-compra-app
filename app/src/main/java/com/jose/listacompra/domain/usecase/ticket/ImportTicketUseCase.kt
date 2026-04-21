@@ -58,7 +58,10 @@ class ImportTicketUseCase @Inject constructor(
             debug += "SOURCE=$sourceLabel"
 
             if (textResult.isFailure) {
-                return Result.failure(Exception("PDF error"))
+                val cause = textResult.exceptionOrNull()
+                val causeMessage = cause?.message ?: "Error desconocido al leer el PDF"
+                debug += "TEXT_EXTRACTION_ERROR=$causeMessage"
+                return Result.failure(Exception(debug.joinToString(" | "), cause))
             }
 
             val rawText = textResult.getOrNull() ?: ""
