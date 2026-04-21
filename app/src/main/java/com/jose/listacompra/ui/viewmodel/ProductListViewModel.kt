@@ -12,7 +12,6 @@ import com.jose.listacompra.domain.usecase.aisle.GetAislesBySupermarketUseCase
 import com.jose.listacompra.domain.usecase.articulo.SearchArticulosUseCase
 import com.jose.listacompra.domain.usecase.category.GetAllCategoriesFlowUseCase
 import com.jose.listacompra.domain.usecase.history.GetProductHistorySuggestionsUseCase
-import com.jose.listacompra.domain.usecase.history.SavePriceHistoryUseCase
 import com.jose.listacompra.domain.usecase.history.UpdateProductFrequencyUseCase
 import com.jose.listacompra.domain.usecase.list.GetDefaultListUseCase
 import com.jose.listacompra.domain.usecase.offers.CalculatePriceUseCase
@@ -56,7 +55,6 @@ class ProductListViewModel @Inject constructor(
     private val calculatePriceUseCase: CalculatePriceUseCase,
     private val getProductHistorySuggestionsUseCase: GetProductHistorySuggestionsUseCase,
     private val updateProductFrequencyUseCase: UpdateProductFrequencyUseCase,
-    private val savePriceHistoryUseCase: SavePriceHistoryUseCase,
     private val themePreferences: ThemePreferences,
     private val resetDataToProductionUseCase: com.jose.listacompra.domain.usecase.data.ResetDataToProductionUseCase,
     private val exportUserDataBackupUseCase: com.jose.listacompra.domain.usecase.data.ExportUserDataBackupUseCase,
@@ -179,28 +177,34 @@ class ProductListViewModel @Inject constructor(
                 return@launch
             }
 
+            val finalPrice = calculateFinalPrice(quantity, price, offerId)
+            val selectedAisleId = aisleId ?: _uiState.value.aisles.firstOrNull()?.id ?: 0L
+            // T4: Usar el supermarketId pasado, o "Cualquiera" (0) si no se especifica
+            val selectedSupermarketId = supermarketId ?: 0L
+
+            val product = Product(
+                shoppingListId = currentListId,
+                name = name,
+                quantity = quantity,
+                aisleId = selectedAisleId,
+                supermarketId = selectedSupermarketId,
+                estimatedPrice = price,
+                finalPrice = finalPrice,
+                offerId = offerId,
+                notes = notes ?: "",
+                photoUri = photoUri
+            )
+
             try {
-                val finalPrice = calculateFinalPrice(quantity, price, offerId)
-                val selectedAisleId = aisleId ?: _uiState.value.aisles.firstOrNull()?.id ?: 0L
-                // T4: Usar el supermarketId pasado, o "Cualquiera" (0) si no se especifica
-                val selectedSupermarketId = supermarketId ?: 0L
-
-                val product = Product(
-                    shoppingListId = currentListId,
-                    name = name,
-                    quantity = quantity,
-                    aisleId = selectedAisleId,
-                    supermarketId = selectedSupermarketId,
-                    estimatedPrice = price,
-                    finalPrice = finalPrice,
-                    offerId = offerId,
-                    notes = notes ?: "",
-                    photoUri = photoUri
-                )
-
                 addProductUseCase(product)
                 Log.d(TAG, "Product added: $name")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error adding product", e)
+                _uiState.update { it.copy(error = "Error al añadir: ${e.message}") }
+                return@launch
+            }
 
+            try {
                 updateProductFrequencyUseCase(
                     name = name,
                     aisleId = selectedAisleId,
@@ -208,17 +212,8 @@ class ProductListViewModel @Inject constructor(
                     price = price,
                     supermarketId = selectedSupermarketId
                 )
-
-                if (price != null) {
-                    savePriceHistoryUseCase(
-                        productName = name,
-                        price = price,
-                        quantity = quantity.toInt()
-                    )
-                }
             } catch (e: Exception) {
-                Log.e(TAG, "Error adding product", e)
-                _uiState.update { it.copy(error = "Error al añadir: ${e.message}") }
+                Log.e(TAG, "Product added but frequency update failed", e)
             }
         }
     }
