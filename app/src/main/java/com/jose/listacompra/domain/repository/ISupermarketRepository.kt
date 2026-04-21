@@ -9,5 +9,6 @@ interface ISupermarketRepository {
     suspend fun getDefaultSupermarket(): Supermarket?
     suspend fun insertSupermarket(supermarket: Supermarket): Long
     suspend fun insertAll(supermarkets: List<Supermarket>)
+    suspend fun ensureBuiltinSupermarkets()
     suspend fun deleteSupermarket(id: Long)
 }

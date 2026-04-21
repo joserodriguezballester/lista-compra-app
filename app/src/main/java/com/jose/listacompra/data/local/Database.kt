@@ -54,7 +54,7 @@ import com.jose.listacompra.data.local.entities.TicketLineEntity
         TicketEntity::class,
         TicketLineEntity::class
     ],
-    version = 14,
+    version = 15,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -194,6 +194,18 @@ abstract class ShoppingListDatabase : RoomDatabase() {
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_ticket_lines_ticketId ON ticket_lines(ticketId)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_ticket_lines_articuloId ON ticket_lines(articuloId)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_ticket_lines_nombreNormalizado ON ticket_lines(nombreNormalizado)")
+            }
+        }
+
+        // Migración 14→15: asegurar supermercados fijos del sistema, incluido id=0 ("Cualquiera")
+        val MIGRATION_14_15 = object : Migration(14, 15) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("INSERT OR IGNORE INTO supermarkets(id, name, emoji, isDefault) VALUES(0, 'Cualquiera', '📦', 0)")
+                db.execSQL("INSERT OR IGNORE INTO supermarkets(id, name, emoji, isDefault) VALUES(1, 'Carrefour La Alberca', '🛒', 1)")
+                db.execSQL("INSERT OR IGNORE INTO supermarkets(id, name, emoji, isDefault) VALUES(2, 'Mercadona Mislata', '🟢', 0)")
+                db.execSQL("INSERT OR IGNORE INTO supermarkets(id, name, emoji, isDefault) VALUES(3, 'Lidl', '🔵', 0)")
+                db.execSQL("INSERT OR IGNORE INTO supermarkets(id, name, emoji, isDefault) VALUES(4, 'Aldi', '🟡', 0)")
+                db.execSQL("INSERT OR IGNORE INTO supermarkets(id, name, emoji, isDefault) VALUES(5, 'Consum', '🟠', 0)")
             }
         }
     }

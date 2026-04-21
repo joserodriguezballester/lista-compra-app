@@ -1,6 +1,7 @@
 package com.jose.listacompra.data.repository
 
 import com.jose.listacompra.data.local.dao.SupermarketDao
+import com.jose.listacompra.data.local.dataseeder.defaultSupermarkets
 import com.jose.listacompra.data.local.entities.SupermarketEntity
 import com.jose.listacompra.domain.model.Supermarket
 import com.jose.listacompra.domain.repository.ISupermarketRepository
@@ -32,6 +33,17 @@ class SupermarketRepository @Inject constructor(
     
     override suspend fun insertAll(supermarkets: List<Supermarket>) {
         dao.insertAll(supermarkets.map { SupermarketEntity.fromDomain(it) })
+    }
+
+    override suspend fun ensureBuiltinSupermarkets() {
+        defaultSupermarkets.forEach { supermarket ->
+            dao.insertBuiltinSupermarket(
+                id = supermarket.id,
+                name = supermarket.name,
+                emoji = supermarket.emoji,
+                isDefault = supermarket.isDefault
+            )
+        }
     }
     
     override suspend fun deleteSupermarket(id: Long) {

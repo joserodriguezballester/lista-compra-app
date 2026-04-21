@@ -65,15 +65,11 @@ class InitialDataSeeder @Inject constructor(
     }
 
     /**
-     * Inserta supermercados por defecto si la tabla está vacía
+     * Asegura supermercados fijos del sistema, incluido el id=0 ("Cualquiera")
      */
     suspend fun seedSupermarketsIfNeeded() {
-        if (supermarketRepository.getDefaultSupermarket() == null) {
-            Log.d(TAG, "Seeding supermarkets...")
-            val supermarkets = defaultSupermarkets.map { it.toDomain() }
-            supermarketRepository.insertAll(supermarkets)
-            Log.d(TAG, "Inserted ${supermarkets.size} supermarkets")
-        }
+        Log.d(TAG, "Ensuring builtin supermarkets...")
+        supermarketRepository.ensureBuiltinSupermarkets()
     }
 
     /**

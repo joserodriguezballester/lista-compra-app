@@ -212,6 +212,7 @@ class ToggleProductPurchasedUseCaseTest {
         override suspend fun getDefaultSupermarket(): Supermarket? = null
         override suspend fun insertSupermarket(supermarket: Supermarket): Long = 0L
         override suspend fun insertAll(supermarkets: List<Supermarket>) = Unit
+        override suspend fun ensureBuiltinSupermarkets() = Unit
         override suspend fun deleteSupermarket(id: Long) = Unit
     }
 }

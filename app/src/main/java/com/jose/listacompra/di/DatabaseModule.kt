@@ -19,6 +19,7 @@ import com.jose.listacompra.data.local.dao.SupermarketDao
 import com.jose.listacompra.data.local.dao.TicketDao
 import com.jose.listacompra.data.local.ShoppingListDatabase.Companion.MIGRATION_11_12
 import com.jose.listacompra.data.local.ShoppingListDatabase.Companion.MIGRATION_13_14
+import com.jose.listacompra.data.local.ShoppingListDatabase.Companion.MIGRATION_14_15
 import com.jose.listacompra.data.local.ShoppingListDatabase.Companion.MIGRATION_7_8
 import com.jose.listacompra.data.repository.AisleRepositoryImpl
 import com.jose.listacompra.data.repository.ArticuloSupermarketDefaultRepository
@@ -54,7 +55,7 @@ object DatabaseModule {
             ShoppingListDatabase::class.java,
             "shopping_list_db"
         )
-            .addMigrations(MIGRATION_7_8, MIGRATION_11_12, MIGRATION_13_14)
+            .addMigrations(MIGRATION_7_8, MIGRATION_11_12, MIGRATION_13_14, MIGRATION_14_15)
             .build()
     }
 
