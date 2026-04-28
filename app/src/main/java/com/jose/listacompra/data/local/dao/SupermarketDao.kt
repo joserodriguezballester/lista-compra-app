@@ -30,12 +30,12 @@ interface SupermarketDao {
     @Query("INSERT OR IGNORE INTO supermarkets(id, name, emoji, isDefault) VALUES(:id, :name, :emoji, :isDefault)")
     suspend fun insertBuiltinSupermarket(id: Long, name: String, emoji: String, isDefault: Boolean)
 
-    @Query("DELETE FROM supermarkets WHERE id = :id")
+    @Query("DELETE FROM supermarkets WHERE id = :id AND id NOT IN (0, 1, 2, 3, 4, 5)")
     suspend fun deleteSupermarket(id: Long)
 
     @Query("DELETE FROM supermarkets WHERE id NOT IN (0, 1, 2, 3, 4, 5)")
     suspend fun deleteCustomSupermarkets()
 
-    @Query("DELETE FROM supermarkets")
+    @Query("DELETE FROM supermarkets WHERE id NOT IN (0, 1, 2, 3, 4, 5)")
     suspend fun deleteAll()
 }

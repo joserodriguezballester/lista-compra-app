@@ -49,6 +49,7 @@ fun AddProductToListDialog(
     initialImageUrl: String? = null,
     initialCategoryId: Long? = null,
     initialQuantity: String? = null,
+    initialSupermarketId: Long? = null,
     onSearch: (String) -> Unit = {},
     onOpenScanner: () -> Unit = {},
     onImageSelected: (Uri?) -> Unit = {},
@@ -64,7 +65,7 @@ fun AddProductToListDialog(
     var notes by remember { mutableStateOf("") }
     var selectedAisleId by remember { mutableStateOf<Long?>(initialCategoryId) }
     var selectedOfferId by remember { mutableStateOf<Long?>(null) }
-    var selectedSupermarketId by remember { mutableStateOf<Long?>(0L) } // T4: Por defecto "Cualquiera"
+    var selectedSupermarketId by remember { mutableStateOf<Long?>(initialSupermarketId ?: 0L) } // T4: Por defecto supermercado activo o "Cualquiera"
     var photoUri by remember { mutableStateOf<Uri?>(initialImageUrl?.let { Uri.parse(it) }) }
     
     var aisleExpanded by remember { mutableStateOf(false) }
@@ -268,6 +269,7 @@ fun AddProductToListDialog(
                                 onClick = {
                                     name = articulo.name
                                     articulo.finalPrice?.let { price = it.toString() }
+                                    articulo.photoUri?.let { photoUri = Uri.parse(it) }
                                     showSuggestions = false
                                 }
                             )

@@ -258,6 +258,10 @@ fun ProductListScreen(
             initialImageUrl = scannedImageUrl,
             initialCategoryId = scannedCategoryId?.toLongOrNull(),
             initialQuantity = scannedPrice?.toString(),
+            initialSupermarketId = uiState.selectedSupermarketId
+                ?: uiState.supermarkets.firstOrNull { it.isDefault }?.id
+                ?: uiState.supermarkets.firstOrNull { it.id > 0 }?.id
+                ?: 0L,
             onSearch = { query -> viewModel.searchArticles(query) },
             onOpenScanner = onNavigateToScanner,
             onDismiss = {

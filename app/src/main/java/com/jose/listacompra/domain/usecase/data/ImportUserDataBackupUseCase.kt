@@ -115,7 +115,7 @@ class ImportUserDataBackupUseCase @Inject constructor(
         offerDao.deleteAll()
         aisleDao.deleteAll()
         categoryDao.deleteAll()
-        supermarketDao.deleteAll()
+        supermarketDao.deleteCustomSupermarkets()
     }
 
     private suspend fun insertBackup(backup: UserDataBackup) {
