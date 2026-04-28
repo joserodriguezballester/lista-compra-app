@@ -5,16 +5,16 @@ val articulosBase = listOf(
     
     // Aceites y Grasas
     SeedArticulo("Aceite de Girasol 5L", 23, 10.75f, 5f, "L", "8410100033833",
-        "https://jcarrefour.vtexassets.com/arquivos/ids/2202611/8410100033833_01.jpg"),
+        "https://static.carrefour.es/hd_510x_/img_pim_food/947835_00_1.jpg"),
 
     // Limpieza e Higiene
     SeedArticulo("Fairy Poder 900ML", 36, 5.39f, 900f, "ml", "8006540833162",
-        "https://jcarrefour.vtexassets.com/arquivos/ids/2202611/8006540833162_01.jpg"),
+        "https://static.carrefour.es/hd_510x_/img_pim_food/400830_00_1.jpg"),
     SeedArticulo("Papel Aluminio 50M", 36, 7.99f, 50f, "m", "8410100021052",
-        "https://jcarrefour.vtexassets.com/arquivos/ids/2202611/8410100021052_01.jpg"),
+        "https://static.carrefour.es/hd_510x_/img_pim_food/697644_00_1.jpg"),
     SeedArticulo("Papel Cocina Foxy", 36, 2.75f, 3f, "ud", "8004260492143",
-        "https://jcarrefour.vtexassets.com/arquivos/ids/2202611/8004260492143_01.jpg"),
-    SeedArticulo("Recambios Maquinilla", 35, 3.45f, 1f, "ud", null, null),
+        "https://static.carrefour.es/hd_510x_/img_pim_food/215560_00_1.jpg"),
+    SeedArticulo("Recambios Maquinilla", 35, 3.45f, 1f, "ud", null, "https://static.carrefour.es/hd_510x_/img_pim_food/484601_00_1.jpg"),
 
     // Bebidas y Café
     SeedArticulo("Cafe Cortado Nescafé", 3, 8.35f, 16f, "ud", "7613032431442",
