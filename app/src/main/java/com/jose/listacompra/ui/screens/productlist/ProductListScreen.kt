@@ -277,7 +277,7 @@ fun ProductListScreen(
                 navController?.currentBackStackEntry?.savedStateHandle?.remove<String>("scannedQuantity")
                 navController?.currentBackStackEntry?.savedStateHandle?.remove<String>("scannedCategoryId")
             },
-            onAdd = { name, quantity, aisleId, price, offerId, notes, photoUri, supermarketId -> // T4
+            onAdd = { name, quantity, aisleId, price, offerId, notes, photoUri, supermarketId, articuloId -> // T4
                 viewModel.addProduct(
                     name,
                     quantity,
@@ -286,7 +286,8 @@ fun ProductListScreen(
                     offerId,
                     notes,
                     photoUri,
-                    supermarketId
+                    supermarketId,
+                    articuloId
                 )
                 showAddProductDialog = false
                 scannedName = null

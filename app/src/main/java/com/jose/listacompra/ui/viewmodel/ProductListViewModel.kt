@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jose.listacompra.data.preferences.ThemePreferences
 import com.jose.listacompra.domain.model.Aisle
+import com.jose.listacompra.domain.model.ArticuloSupermarketDefault
 import com.jose.listacompra.domain.model.Product
 import com.jose.listacompra.domain.repository.IArticuloSupermarketDefaultRepository
 import com.jose.listacompra.domain.usecase.aisle.GetAislesBySupermarketUseCase
@@ -169,7 +170,7 @@ class ProductListViewModel @Inject constructor(
     }
 
     // T4: supermarketId ahora es parámetro, no sacado del estado
-    fun addProduct(name: String, quantity: Float, aisleId: Long?, price: Float?, offerId: Long?, notes: String?, photoUri: String?, supermarketId: Long? = null) {
+    fun addProduct(name: String, quantity: Float, aisleId: Long?, price: Float?, offerId: Long?, notes: String?, photoUri: String?, supermarketId: Long? = null, articuloId: Long? = null) {
         viewModelScope.launch {
             if (currentListId == 0L) {
                 Log.e(TAG, "Cannot add product: currentListId is 0")
@@ -187,6 +188,7 @@ class ProductListViewModel @Inject constructor(
                 name = name,
                 quantity = quantity,
                 aisleId = selectedAisleId,
+                articuloId = articuloId,
                 supermarketId = selectedSupermarketId,
                 estimatedPrice = price,
                 finalPrice = finalPrice,
@@ -197,6 +199,15 @@ class ProductListViewModel @Inject constructor(
 
             try {
                 addProductUseCase(product)
+                if (articuloId != null && selectedSupermarketId > 0L) {
+                    articuloSupermarketDefaultRepository.insertOrUpdate(
+                        ArticuloSupermarketDefault(
+                            articuloId = articuloId,
+                            supermarketId = selectedSupermarketId,
+                            aisleId = selectedAisleId
+                        )
+                    )
+                }
                 Log.d(TAG, "Product added: $name")
             } catch (e: Exception) {
                 Log.e(TAG, "Error adding product", e)
@@ -218,6 +229,15 @@ class ProductListViewModel @Inject constructor(
 
                 val updated = product.copy(finalPrice = finalPrice)
                 updateProductUseCase(updated)
+                if (updated.articuloId != null && updated.supermarketId > 0L) {
+                    articuloSupermarketDefaultRepository.insertOrUpdate(
+                        ArticuloSupermarketDefault(
+                            articuloId = updated.articuloId,
+                            supermarketId = updated.supermarketId,
+                            aisleId = updated.aisleId
+                        )
+                    )
+                }
                 Log.d(TAG, "Product updated: ${product.name}")
             } catch (e: Exception) {
                 Log.e(TAG, "Error updating product", e)

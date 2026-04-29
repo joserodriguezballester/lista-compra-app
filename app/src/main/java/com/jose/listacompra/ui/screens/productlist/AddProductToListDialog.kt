@@ -55,7 +55,7 @@ fun AddProductToListDialog(
     onOpenScanner: () -> Unit = {},
     onImageSelected: (Uri?) -> Unit = {},
     onDismiss: () -> Unit,
-    onAdd: (name: String, quantity: Float, aisleId: Long?, price: Float?, offerId: Long?, notes: String?, photoUri: String?, supermarketId: Long?) -> Unit // T4
+    onAdd: (name: String, quantity: Float, aisleId: Long?, price: Float?, offerId: Long?, notes: String?, photoUri: String?, supermarketId: Long?, articuloId: Long?) -> Unit // T4
 ) {
     val TAG = "AddProductDialog"
     val context = LocalContext.current
@@ -67,6 +67,7 @@ fun AddProductToListDialog(
     var selectedAisleId by remember { mutableStateOf<Long?>(initialCategoryId) }
     var selectedOfferId by remember { mutableStateOf<Long?>(null) }
     var selectedSupermarketId by remember { mutableStateOf<Long?>(initialSupermarketId ?: 0L) } // T4: Por defecto supermercado activo o "Cualquiera"
+    var selectedArticuloId by remember { mutableStateOf<Long?>(null) }
     var photoUri by remember { mutableStateOf<Uri?>(initialImageUrl?.let { Uri.parse(it) }) }
     
     var aisleExpanded by remember { mutableStateOf(false) }
@@ -221,7 +222,7 @@ fun AddProductToListDialog(
                 ) {
                     OutlinedTextField(
                         value = name,
-                        onValueChange = { name = it },
+                        onValueChange = { name = it; selectedArticuloId = null },
                         label = { Text("Nombre del producto") },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -235,7 +236,7 @@ fun AddProductToListDialog(
                         },
                         trailingIcon = {
                             if (name.isNotEmpty()) {
-                                IconButton(onClick = { name = "" }) {
+                                IconButton(onClick = { name = ""; selectedArticuloId = null }) {
                                     Icon(Icons.Default.Close, "Limpiar")
                                 }
                             }
@@ -269,6 +270,7 @@ fun AddProductToListDialog(
                                 },
                                 onClick = {
                                     name = articulo.name
+                                    selectedArticuloId = articulo.id
                                     articulo.finalPrice?.let { price = it.toString() }
                                     articulo.photoUri?.let { photoUri = Uri.parse(it) }
                                     articleDefaultAisleIds[articulo.id]?.let { selectedAisleId = it }
@@ -438,7 +440,8 @@ fun AddProductToListDialog(
                         selectedOfferId,
                         notes.ifBlank { null },
                         photoUri?.toString(),
-                        selectedSupermarketId // T4
+                        selectedSupermarketId, // T4
+                        selectedArticuloId
                     )
                 },
                 enabled = name.isNotBlank()
