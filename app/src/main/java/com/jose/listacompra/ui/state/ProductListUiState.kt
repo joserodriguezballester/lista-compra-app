@@ -21,6 +21,7 @@ data class ProductListUiState(
     val categories: List<Category> = emptyList(),
     val offers: List<Offer> = emptyList(),
     val articleSuggestions: List<Articulo> = emptyList(),
+    val articleDefaultAisleIds: Map<Long, Long> = emptyMap(),
     val collapsedAisles: Set<Long> = emptySet(),
     val historySuggestions: List<ProductFrequencyEntity> = emptyList()
 )

@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.jose.listacompra.data.preferences.ThemePreferences
 import com.jose.listacompra.domain.model.Aisle
 import com.jose.listacompra.domain.model.Product
+import com.jose.listacompra.domain.repository.IArticuloSupermarketDefaultRepository
 import com.jose.listacompra.domain.usecase.aisle.GetAislesBySupermarketUseCase
 import com.jose.listacompra.domain.usecase.articulo.SearchArticulosUseCase
 import com.jose.listacompra.domain.usecase.category.GetAllCategoriesFlowUseCase
@@ -56,7 +57,8 @@ class ProductListViewModel @Inject constructor(
     private val themePreferences: ThemePreferences,
     private val resetDataToProductionUseCase: com.jose.listacompra.domain.usecase.data.ResetDataToProductionUseCase,
     private val exportUserDataBackupUseCase: com.jose.listacompra.domain.usecase.data.ExportUserDataBackupUseCase,
-    private val importUserDataBackupUseCase: com.jose.listacompra.domain.usecase.data.ImportUserDataBackupUseCase
+    private val importUserDataBackupUseCase: com.jose.listacompra.domain.usecase.data.ImportUserDataBackupUseCase,
+    private val articuloSupermarketDefaultRepository: IArticuloSupermarketDefaultRepository
 ) : ViewModel() {
 
     private val TAG = "ProductListViewModel"
@@ -278,10 +280,21 @@ class ProductListViewModel @Inject constructor(
                 if (query.length >= 2) {
                     val catalogResults = searchArticulosUseCase(query)
                     val historyResults = getProductHistorySuggestionsUseCase(query)
+                    val activeSupermarketId = _uiState.value.selectedSupermarketId ?: 0L
+                    val articleDefaultAisleIds = if (activeSupermarketId > 0L) {
+                        catalogResults.mapNotNull { articulo ->
+                            articuloSupermarketDefaultRepository
+                                .getDefaultAisle(articulo.id, activeSupermarketId)
+                                ?.let { articulo.id to it.aisleId }
+                        }.toMap()
+                    } else {
+                        emptyMap()
+                    }
 
                     _uiState.update {
                         it.copy(
                             articleSuggestions = catalogResults,
+                            articleDefaultAisleIds = articleDefaultAisleIds,
                             historySuggestions = historyResults
                         )
                     }
@@ -289,6 +302,7 @@ class ProductListViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             articleSuggestions = emptyList(),
+                            articleDefaultAisleIds = emptyMap(),
                             historySuggestions = emptyList()
                         )
                     }

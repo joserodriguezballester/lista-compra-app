@@ -45,6 +45,7 @@ fun AddProductToListDialog(
     offers: List<Offer> = emptyList(),
     supermarkets: List<Supermarket> = emptyList(), // T4
     suggestions: List<Articulo> = emptyList(),
+    articleDefaultAisleIds: Map<Long, Long> = emptyMap(),
     initialName: String? = null,
     initialImageUrl: String? = null,
     initialCategoryId: Long? = null,
@@ -270,6 +271,7 @@ fun AddProductToListDialog(
                                     name = articulo.name
                                     articulo.finalPrice?.let { price = it.toString() }
                                     articulo.photoUri?.let { photoUri = Uri.parse(it) }
+                                    articleDefaultAisleIds[articulo.id]?.let { selectedAisleId = it }
                                     showSuggestions = false
                                 }
                             )

@@ -254,6 +254,7 @@ fun ProductListScreen(
             offers = uiState.offers,
             supermarkets = uiState.supermarkets, // T4
             suggestions = uiState.articleSuggestions,
+            articleDefaultAisleIds = uiState.articleDefaultAisleIds,
             initialName = scannedName,
             initialImageUrl = scannedImageUrl,
             initialCategoryId = scannedCategoryId?.toLongOrNull(),
