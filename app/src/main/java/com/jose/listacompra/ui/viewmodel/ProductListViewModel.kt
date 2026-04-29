@@ -414,11 +414,20 @@ class ProductListViewModel @Inject constructor(
                 else -> 0L
             }
             
+            val defaultAisleId = if (supermarketId > 0L) {
+                articuloSupermarketDefaultRepository
+                    .getDefaultAisle(articulo.id, supermarketId)
+                    ?.aisleId ?: 0L
+            } else {
+                0L
+            }
+
             val product = Product(
                 shoppingListId = currentListId,
                 name = articulo.name,
                 quantity = quantity,
-                aisleId = 0L, // Sin supermercado específico por ahora
+                aisleId = defaultAisleId,
+                articuloId = articulo.id,
                 supermarketId = supermarketId,
                 estimatedPrice = articulo.finalPrice,
                 finalPrice = articulo.finalPrice,
@@ -428,7 +437,7 @@ class ProductListViewModel @Inject constructor(
             )
             
             addProductUseCase(product)
-            Log.d(TAG, "Product added from voice: ${articulo.name} x$quantity")
+            Log.d(TAG, "Product added from voice: ${articulo.name} x$quantity (supermarketId=$supermarketId, aisleId=$defaultAisleId, articuloId=${articulo.id})")
         }
     }
     
