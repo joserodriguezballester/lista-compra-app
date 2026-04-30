@@ -49,6 +49,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -167,42 +168,68 @@ fun ProductListScreen(
             DropdownMenuItem(text = { Text("    Limpiar datos") }, onClick = { showResetConfirmDialog = true; onDismiss() }, leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) }, colors = MenuDefaults.itemColors(textColor = MaterialTheme.colorScheme.error))
         },
         bottomBar = {
-            if (uiState.productsByAisle.isNotEmpty()) {
-                val allProducts = uiState.productsByAisle.flatMap { it.value }
-                val purchasedProducts = allProducts.filter { it.isPurchased }
-                val totalProducts = allProducts.size
-                val purchasedCount = purchasedProducts.size
-                val purchasedTotal = purchasedProducts.sumOf { product ->
-                    val offer = uiState.offers.find { it.id == product.offerId }
-                    val unitPrice = product.finalPrice ?: product.estimatedPrice ?: 0f
-                    val finalPrice = when {
-                        offer != null -> calculateOfferPrice(unitPrice, product.quantity, offer)
-                        else -> unitPrice * product.quantity
-                    }
-                    finalPrice.toDouble()
-                }
-                val listTotal = allProducts.sumOf { product ->
-                    val offer = uiState.offers.find { it.id == product.offerId }
-                    val unitPrice = product.finalPrice ?: product.estimatedPrice ?: 0f
-                    val finalPrice = when {
-                        offer != null -> calculateOfferPrice(unitPrice, product.quantity, offer)
-                        else -> unitPrice * product.quantity
-                    }
-                    finalPrice.toDouble()
-                }
-                Surface(modifier = Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.95f)) {
-                    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        Column {
-                            Text(text = "Comprados: $purchasedCount/$totalProducts", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
-                            if (purchasedCount > 0) {
-                                Text(text = "Llevas: €${String.format("%.2f", purchasedTotal)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
-                            }
+            Column {
+                if (uiState.productsByAisle.isNotEmpty()) {
+                    val allProducts = uiState.productsByAisle.flatMap { it.value }
+                    val purchasedProducts = allProducts.filter { it.isPurchased }
+                    val totalProducts = allProducts.size
+                    val purchasedCount = purchasedProducts.size
+                    val purchasedTotal = purchasedProducts.sumOf { product ->
+                        val offer = uiState.offers.find { it.id == product.offerId }
+                        val unitPrice = product.finalPrice ?: product.estimatedPrice ?: 0f
+                        val finalPrice = when {
+                            offer != null -> calculateOfferPrice(unitPrice, product.quantity, offer)
+                            else -> unitPrice * product.quantity
                         }
-                        Text(text = "Total: €${String.format("%.2f", listTotal)}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        finalPrice.toDouble()
+                    }
+                    val listTotal = allProducts.sumOf { product ->
+                        val offer = uiState.offers.find { it.id == product.offerId }
+                        val unitPrice = product.finalPrice ?: product.estimatedPrice ?: 0f
+                        val finalPrice = when {
+                            offer != null -> calculateOfferPrice(unitPrice, product.quantity, offer)
+                            else -> unitPrice * product.quantity
+                        }
+                        finalPrice.toDouble()
+                    }
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        tonalElevation = 4.dp
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            SummaryMetricCard(
+                                label = "Productos",
+                                value = "$purchasedCount/$totalProducts",
+                                modifier = Modifier.weight(1f)
+                            )
+                            SummaryMetricCard(
+                                label = "Gastado",
+                                value = "€${formatCurrency(purchasedTotal)}",
+                                valueColor = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.weight(1f)
+                            )
+                            SummaryMetricCard(
+                                label = "Total",
+                                value = "€${formatCurrency(listTotal)}",
+                                valueColor = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
                     }
                 }
+                ListBottomBar(
+                    supermarkets = uiState.supermarkets,
+                    selectedSupermarketId = uiState.selectedSupermarketId,
+                    onSupermarketSelected = viewModel::selectSupermarket,
+                    onHomeClick = onNavigateToHome
+                )
             }
-            ListBottomBar(supermarkets = uiState.supermarkets, selectedSupermarketId = uiState.selectedSupermarketId, onSupermarketSelected = viewModel::selectSupermarket, onHomeClick = onNavigateToHome)
         }
     ) { paddingValues ->
         if (uiState.isLoading) {
@@ -437,6 +464,42 @@ fun ProductListScreen(
     }
 }
 
+@Composable
+private fun SummaryMetricCard(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+    valueColor: Color = MaterialTheme.colorScheme.onSurface
+) {
+    Surface(
+        modifier = modifier,
+        color = MaterialTheme.colorScheme.surface,
+        shape = MaterialTheme.shapes.medium,
+        tonalElevation = 1.dp
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = valueColor
+            )
+        }
+    }
+}
+
+private fun formatCurrency(amount: Double): String = String.format("%.2f", amount)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

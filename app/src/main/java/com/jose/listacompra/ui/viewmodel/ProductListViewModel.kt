@@ -108,15 +108,19 @@ class ProductListViewModel @Inject constructor(
                 getAllSupermarketsFlowUseCase()
                     .catch { e -> Log.e(TAG, "Error loading supermarkets", e) }
                     .collect { supermarketList ->
+                        val defaultSupermarketId = supermarketList
+                            .firstOrNull { it.name.equals("Carrefour La Alberca", ignoreCase = true) }
+                            ?.id ?: supermarketList.firstOrNull()?.id
+
                         _uiState.update { state ->
                             state.copy(
                                 supermarkets = supermarketList,
-                                selectedSupermarketId = state.selectedSupermarketId ?: supermarketList.firstOrNull()?.id,
+                                selectedSupermarketId = state.selectedSupermarketId ?: defaultSupermarketId,
                                 isLoading = false
                             )
                         }
 
-                        supermarketList.firstOrNull()?.id?.let { supermarketId ->
+                        ( _uiState.value.selectedSupermarketId ?: defaultSupermarketId )?.let { supermarketId ->
                             loadAislesAndProducts(supermarketId)
                         }
                     }
