@@ -58,6 +58,7 @@ fun ProductCard(
     val supermarketLogoRes = getSupermarketLogo(product.supermarketId)
     val offerStatus = calculateOfferStatus(product.quantity, offer)
     val total = calculateTotal(product, offer, offerStatus)
+    val showOfferTotalInline = offer != null && !offerStatus.needsMore && total != null && !product.isPurchased
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -158,36 +159,51 @@ fun ProductCard(
             // Oferta debajo del nombre (si hay)
             if (offer != null && !product.isPurchased) {
                 Spacer(modifier = Modifier.height(4.dp))
-                Surface(
-                    shape = RoundedCornerShape(6.dp),
-                    color = if (offerStatus.needsMore) 
-                        MaterialTheme.colorScheme.errorContainer
-                    else 
-                        MaterialTheme.colorScheme.primaryContainer
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = if (offerStatus.needsMore)
+                            MaterialTheme.colorScheme.errorContainer
+                        else
+                            MaterialTheme.colorScheme.primaryContainer
                     ) {
-                        Text(
-                            text = offer.name,
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = if (offerStatus.needsMore)
-                                MaterialTheme.colorScheme.onErrorContainer
-                            else
-                                MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                        
-                        if (offerStatus.needsMore) {
-                            Spacer(modifier = Modifier.width(4.dp))
+                        Row(
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Text(
-                                text = "+${offerStatus.remaining}",
+                                text = offer.name,
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onErrorContainer
+                                color = if (offerStatus.needsMore)
+                                    MaterialTheme.colorScheme.onErrorContainer
+                                else
+                                    MaterialTheme.colorScheme.onPrimaryContainer
                             )
+
+                            if (offerStatus.needsMore) {
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "+${offerStatus.remaining}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onErrorContainer
+                                )
+                            }
                         }
+                    }
+
+                    if (showOfferTotalInline && total != null) {
+                        Text(
+                            text = "${String.format("%.2f", total)} €",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
             }
@@ -217,7 +233,7 @@ fun ProductCard(
                     }
                 }
 
-                if (total != null) {
+                if (total != null && !showOfferTotalInline) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if (offer != null && !offerStatus.needsMore && product.estimatedPrice != null) {
                             val originalTotal = product.estimatedPrice * product.quantity
@@ -231,7 +247,7 @@ fun ProductCard(
                                 Spacer(modifier = Modifier.width(6.dp))
                             }
                         }
-                        
+
                         Text(
                             text = "${String.format("%.2f", total)} €",
                             style = MaterialTheme.typography.titleMedium,

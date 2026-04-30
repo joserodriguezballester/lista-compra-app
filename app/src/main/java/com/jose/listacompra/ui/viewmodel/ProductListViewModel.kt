@@ -182,33 +182,55 @@ class ProductListViewModel @Inject constructor(
                 return@launch
             }
 
-            val finalPrice = calculateFinalPrice(quantity, price, offerId)
-            val selectedAisleId = aisleId ?: _uiState.value.aisles.firstOrNull()?.id ?: 0L
-            // T4: Usar el supermarketId pasado, o "Cualquiera" (0) si no se especifica
+            // Resolver artículo exacto aunque el diálogo haya perdido selectedArticuloId
+            val resolvedArticulo = if (articuloId == null) {
+                searchArticulosUseCase(name.trim())
+                    .firstOrNull { articulo ->
+                        articulo.name.equals(name.trim(), ignoreCase = true) &&
+                            (photoUri.isNullOrBlank() || articulo.photoUri == photoUri) &&
+                            (price == null || articulo.finalPrice == null || kotlin.math.abs(articulo.finalPrice - price) < 0.01f)
+                    }
+            } else {
+                null
+            }
+
+            val resolvedArticuloId = articuloId ?: resolvedArticulo?.id
+            val resolvedPrice = price ?: resolvedArticulo?.finalPrice
+            val resolvedPhotoUri = photoUri ?: resolvedArticulo?.photoUri
             val selectedSupermarketId = supermarketId ?: 0L
+            val resolvedAisleId = when {
+                aisleId != null -> aisleId
+                resolvedArticuloId != null && selectedSupermarketId > 0L -> {
+                    articuloSupermarketDefaultRepository
+                        .getDefaultAisle(resolvedArticuloId, selectedSupermarketId)
+                        ?.aisleId ?: (_uiState.value.aisles.firstOrNull()?.id ?: 0L)
+                }
+                else -> _uiState.value.aisles.firstOrNull()?.id ?: 0L
+            }
+            val finalPrice = calculateFinalPrice(quantity, resolvedPrice, offerId)
 
             val product = Product(
                 shoppingListId = currentListId,
                 name = name,
                 quantity = quantity,
-                aisleId = selectedAisleId,
-                articuloId = articuloId,
+                aisleId = resolvedAisleId,
+                articuloId = resolvedArticuloId,
                 supermarketId = selectedSupermarketId,
-                estimatedPrice = price,
+                estimatedPrice = resolvedPrice,
                 finalPrice = finalPrice,
                 offerId = offerId,
                 notes = notes ?: "",
-                photoUri = photoUri
+                photoUri = resolvedPhotoUri
             )
 
             try {
                 addProductUseCase(product)
-                if (articuloId != null && selectedSupermarketId > 0L) {
+                if (resolvedArticuloId != null && selectedSupermarketId > 0L) {
                     articuloSupermarketDefaultRepository.insertOrUpdate(
                         ArticuloSupermarketDefault(
-                            articuloId = articuloId,
+                            articuloId = resolvedArticuloId,
                             supermarketId = selectedSupermarketId,
-                            aisleId = selectedAisleId
+                            aisleId = resolvedAisleId
                         )
                     )
                 }
